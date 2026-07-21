@@ -305,6 +305,17 @@ class Orchestrator:
         except Exception as e:
             logger.debug(f"Hybrid LLM components unavailable: {e}")
         
+        # Initialize Operational API Server (HITL + XAI)
+        self._intervention_manager = InterventionManager()
+        self._api_server = None
+        try:
+            from comms.api_server import create_api_server
+            self._api_server = create_api_server(self, self._intervention_manager)
+            if self._api_server:
+                self._api_server.start()
+        except Exception as e:
+            logger.debug(f"Operational API unavailable: {e}")
+        
         # Track best across all episodes
         overall_best_fitness = self.best_fitness
         overall_best_genome = elite
@@ -312,6 +323,33 @@ class Orchestrator:
         for episode in range(1, self.num_episodes + 1):
             # Reset environment
             obs = env.reset()
+            
+            # Check for human interventions before running this episode
+            if hasattr(self, '_intervention_manager'):
+                constraints = self._intervention_manager.get_constraints()
+                if constraints:
+                    logger.info(f"Applying {len(constraints)} intervention constraints")
+                    # Force novelty weight override
+                    if 'force_novelty_weight' in constraints:
+                        if hasattr(self, '_secretary_council') and self._secretary_council:
+                            from brain.reasoning.secretary_council import StrategicDirective
+                            self._current_directive = StrategicDirective(
+                                weights={
+                                    'effectiveness_weight': 1.0 - constraints['force_novelty_weight'],
+                                    'efficiency_weight': 0.0,
+                                    'novelty_weight': constraints['force_novelty_weight'],
+                                },
+                                focus='human_override',
+                                notes='Human forced novelty via API'
+                            )
+                    # Blacklist actions (e.g., blacklist STRIKE)
+                    if 'blacklist_action' in constraints:
+                        blacklisted = constraints['blacklist_action'].upper()
+                        if blue_commander and hasattr(blue_commander, 'action_weights'):
+                            # Zero out the blacklisted action weight
+                            for action in list(blue_commander.action_weights.keys()):
+                                if action.upper() == blacklisted:
+                                    blue_commander.action_weights[action] = 0.0
             
             # Get current Blue and Red genomes
             blue_commander = self.coevolution.blue_active if self.use_coevolution else None
