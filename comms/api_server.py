@@ -214,13 +214,3 @@ def _interpret_actions(top_actions: List[tuple]) -> str:
         return "maneuver to optimal engagement positions"
     else:
         return "execute a balanced multi-action strategy"
-
-</parameter>
-<parameter name="task_progress">
-- [x] Install FastAPI and uvicorn
-- [ ] Create comms/api_server.py with FastAPI endpoints
-- [ ] Create InterventionManager class
-- [ ] Update orchestrator to run API in background thread
-- [ ] Run tests and push to GitHub
-</parameter>
-</write_to_file>
