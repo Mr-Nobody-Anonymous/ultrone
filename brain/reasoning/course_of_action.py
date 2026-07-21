@@ -1,12 +1,55 @@
 # Copyright (c) Ultrone Contributors. All rights reserved.
 """Course of Action generation and scoring."""
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, TYPE_CHECKING
 import random
 
 logger = logging.getLogger("Ultrone.Brain.Reasoning.COA")
+
+if TYPE_CHECKING:
+    from ..perception.situational_awareness import COPContact
+
+
+class Action:
+    """Primitive tactical actions that can be combined into COAs."""
+    
+    # Primitive actions - these are the building blocks
+    JAM = "jam"
+    STRIKE = "strike"
+    SCAN = "scan"
+    HACK = "hack"
+    RECON = "recon"
+    DECOY = "decoy"
+    SILENCE = "silence"
+    SUPPRESS = "suppress"
+    PINPOINT = "pinpoint"
+    ASSASSINATE = "assassinate"
+    
+    # Action compatibility matrix - which actions can combine
+    COMPATIBLE_COMBINATIONS = {
+        (JAM, STRIKE): "Cyber-Kinetic Sync",  # Electronic warfare + kinetic strike
+        (JAM, HACK): "Layered Cyber Attack",
+        (SCAN, PINPOINT): "Sensor Lock",
+        (DECOY, STRIKE): "Feint and Strike",
+        (HACK, ASSASSINATE): "Digital Elimination",
+        (SILENCE, RECON): "Covert Observation",
+        (SUPPRESS, STRIKE): "Suppression Then Assault",
+    }
+    
+    # Synergy multipliers for combined actions
+    SYNERGY_BONUSES = {
+        (JAM, STRIKE): 0.8,  # High synergy
+        (JAM, HACK): 0.7,
+        (SCAN, PINPOINT): 0.6,
+        (DECOY, STRIKE): 0.65,
+        (HACK, ASSASSINATE): 0.75,
+        (SILENCE, RECON): 0.55,
+        (SUPPRESS, STRIKE): 0.6,
+    }
 
 
 @dataclass
@@ -20,7 +63,7 @@ class CourseOfAction:
     required_assets: List[str]  # Asset types needed
     estimated_time_ms: float
     risk_level: float  # 0.0-1.0
-    
+
     # Scoring axes (0.0-1.0)
     effectiveness_score: float = 0.0
     efficiency_score: float = 0.0
@@ -29,6 +72,9 @@ class CourseOfAction:
     sustainability_score: float = 0.0
     scalability_score: float = 0.0
     
+    # Novelty score for generated COAs (0.0-1.0)
+    novelty_score: float = 0.0
+
     def get_total_score(self) -> float:
         """Calculate weighted total score."""
         weights = {
@@ -47,7 +93,7 @@ class CourseOfAction:
             self.sustainability_score * weights["sustainability"] +
             self.scalability_score * weights["scalability"]
         )
-    
+
     def to_dict(self) -> dict:
         return {
             "coa_id": self.coa_id,
@@ -57,42 +103,47 @@ class CourseOfAction:
             "total_score": self.get_total_score(),
             "risk_level": self.risk_level,
             "estimated_time_ms": self.estimated_time_ms,
+            "novelty_score": self.novelty_score,
+            "phases": self.phases,
         }
 
 
 class COAScorer:
     """Reviews and scores COAs against effectiveness criteria."""
-    
+
     def __init__(self):
         self.scoring_history: List[Dict] = []
-    
+
     def score(self, coa: CourseOfAction, context: Dict[str, Any] = None) -> CourseOfAction:
         """Score a COA based on context and effectiveness factors."""
         # Simulate scoring based on context
         context = context or {}
-        
+
         # Adjust scores based on enemy disposition if available
         enemy_strength = context.get("enemy_strength", 0.5)
         friendly_strength = context.get("friendly_strength", 0.8)
-        
+
         # Effectiveness - how well it achieves the objective
         coa.effectiveness_score = min(1.0, friendly_strength / max(0.1, enemy_strength))
-        
+
         # Efficiency - resource utilization
         coa.efficiency_score = random.uniform(0.4, 0.95)
-        
-        # Surprise - unexpected nature
-        coa.surprise_score = random.uniform(0.3, 0.9)
-        
-        # Simplicity - ease of execution
+
+        # Surprise - unexpected nature (higher for combinatorial COAs)
+        if coa.novelty_score > 0:
+            coa.surprise_score = min(0.95, coa.novelty_score + random.uniform(0.1, 0.3))
+        else:
+            coa.surprise_score = random.uniform(0.3, 0.9)
+
+        # Simplicity - ease of execution (lower for combined actions)
         coa.simplicity_score = random.uniform(0.5, 0.95)
-        
+
         # Sustainability - can maintain over time
         coa.sustainability_score = random.uniform(0.4, 0.9)
-        
+
         # Scalability - can expand if needed
         coa.scalability_score = random.uniform(0.3, 0.85)
-        
+
         return coa
 
 
@@ -100,17 +151,39 @@ class COAGenerator:
     """
     Generates multiple Courses of Action for a given situation.
     
-    Creates 3+ COAs with different approaches.
+    Creates 3+ COAs with different approaches including combinatorial generation.
     """
-    
+
     def __init__(self):
         self._scorer = COAScorer()
-    
+        self._action_combinations: Dict[str, CourseOfAction] = {}
+
     def generate(self, target_info: Dict[str, Any], context: Dict[str, Any] = None) -> List[CourseOfAction]:
-        """Generate COAs for a target."""
+        """Generate COAs for a target, including dynamic combinatorial tactics."""
         target_type = target_info.get("type", "unknown")
         domain = target_info.get("domain", "air")
         
+        coas = []
+        coas.extend(self._generate_primitive_coas(target_type, domain))
+        coas.extend(self._generate_combinatorial_coas(target_type, domain, context))
+        
+        # Score all COAs
+        for coa in coas:
+            self._scorer.score(coa, context)
+        
+        # Store combinations for reference
+        for coa in coas:
+            if coa.novelty_score > 0:
+                key = tuple(sorted(coa.phases))
+                self._action_combinations[coa.name] = coa
+        
+        # Sort by score descending
+        coas.sort(key=lambda c: c.get_total_score(), reverse=True)
+        
+        return coas
+
+    def _generate_primitive_coas(self, target_type: str, domain: str) -> List[CourseOfAction]:
+        """Generate basic COAs from primitive actions."""
         coas = []
         
         # COA 1: Direct approach
@@ -161,17 +234,102 @@ class COAGenerator:
             risk_level=random.uniform(0.5, 0.9),
         ))
         
-        # Score all COAs
-        for coa in coas:
-            self._scorer.score(coa, context)
+        return coas
+
+    def _generate_combinatorial_coas(
+        self, 
+        target_type: str, 
+        domain: str, 
+        context: Dict[str, Any] = None
+    ) -> List[CourseOfAction]:
+        """
+        Dynamically combine primitive actions to create novel COAs.
         
-        # Sort by score descending
-        coas.sort(key=lambda c: c.get_total_score(), reverse=True)
+        This is the key: takes Action.JAM + Action.STRIKE and creates
+        a new COA(name="Cyber-Kinetic Sync", novelty_score=0.8).
+        """
+        coas = []
+        
+        # Get available primitive actions for this domain
+        primitive_actions = self._get_primitive_actions_for_domain(domain)
+        
+        # Generate all valid combinations
+        for action_a in primitive_actions:
+            for action_b in primitive_actions:
+                if action_a == action_b:
+                    continue
+                    
+                # Check if this combination exists in compatibility matrix
+                combo_key = tuple(sorted([action_a, action_b]))
+                
+                # Also check reverse order
+                if combo_key not in Action.COMPATIBLE_COMBINATIONS:
+                    combo_key = (action_b, action_a)
+                
+                if combo_key in Action.COMPATIBLE_COMBINATIONS:
+                    combo_name = Action.COMPATIBLE_COMBINATIONS[combo_key]
+                    synergy = Action.SYNERGY_BONUSES.get(combo_key, 0.5)
+                    
+                    # Only generate if synergy is significant
+                    if synergy > 0.5:
+                        coa = CourseOfAction(
+                            coa_id=f"COA-COMB-{random.randint(1000, 9999)}",
+                            name=combo_name,
+                            description=f"Combined {action_a} + {action_b} for enhanced effect",
+                            domain=domain,
+                            phases=["prepare", action_a, action_b, "exploit", "assess"],
+                            required_assets=[action_a, action_b],
+                            estimated_time_ms=random.uniform(25000, 80000),
+                            risk_level=random.uniform(0.4, 0.7),
+                            novelty_score=synergy,
+                        )
+                        coas.append(coa)
         
         return coas
-    
+
+    def _get_primitive_actions_for_domain(self, domain: str) -> List[str]:
+        """Get available primitive actions for a domain."""
+        domain_actions = {
+            "air": [Action.STRIKE, Action.DECOY, Action.SCAN],
+            "cyber": [Action.JAM, Action.HACK, Action.SILENCE],
+            "sea": [Action.STRIKE, Action.SUPPRESS, Action.PINPOINT],
+            "land": [Action.STRIKE, Action.SUPPRESS, Action.ASSASSINATE],
+            "space": [Action.SCAN, Action.JAM, Action.DECOY],
+        }
+        return domain_actions.get(domain, [Action.STRIKE, Action.JAM])
+
     def select_best(self, coas: List[CourseOfAction]) -> Optional[CourseOfAction]:
         """Select the highest-scoring COA."""
         if not coas:
             return None
         return coas[0]
+
+    def get_combination(self, action_a: str, action_b: str) -> Optional[CourseOfAction]:
+        """
+        Create a combined COA from two primitive actions dynamically.
+        
+        This is the core combinatorial generation method:
+        Takes Action.JAM + Action.STRIKE and creates a new COA.
+        """
+        combo_key = tuple(sorted([action_a, action_b]))
+        
+        if combo_key not in Action.COMPATIBLE_COMBINATIONS:
+            combo_key = (action_b, action_a)
+        
+        if combo_key in Action.COMPATIBLE_COMBINATIONS:
+            combo_name = Action.COMPATIBLE_COMBINATIONS[combo_key]
+            synergy = Action.SYNERGY_BONUSES.get(combo_key, 0.5)
+            
+            return CourseOfAction(
+                coa_id=f"COA-COMB-{random.randint(1000, 9999)}",
+                name=combo_name,
+                description=f"Combined {action_a} + {action_b} for enhanced effect",
+                domain="all",
+                phases=["prepare", action_a, action_b, "exploit", "assess"],
+                required_assets=[action_a, action_b],
+                estimated_time_ms=random.uniform(25000, 80000),
+                risk_level=random.uniform(0.4, 0.7),
+                novelty_score=synergy,
+            )
+        
+        return None

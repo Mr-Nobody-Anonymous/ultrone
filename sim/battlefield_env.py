@@ -115,45 +115,122 @@ class BattlefieldEnv:
         """Apply COA and advance simulation.
         
         Args:
-            coa_action: Dict with action details:
-                {"action": "strike"|"jam"|"move", "asset_type": "drone", "target": (x,y)}
+            coa_action: Legacy single action or swarm hierarchical COA:
+                Legacy: {"action": "strike"|"jam"|"move", "asset_type": "drone", "target": (x,y)}
+                Swarm: {
+                    "type": "swarm",
+                    "swarm_fleet": [
+                        {"asset_type": "drone", "action": "move", "target": (x,y)},
+                        ...
+                    ],
+                    "commander_genome": {...}
+                }
                 
         Returns:
             observation, reward, done, info
         """
         self.step_count += 1
         reward = 0.0
-        info = {"roe_violation": False, "action_applied": False}
+        info = {"roe_violation": False, "action_applied": False, "swarm_collisions": 0}
         
-        # Apply COA action if provided
-        if coa_action:
+        # Swarm hierarchical COA resolution
+        if coa_action and coa_action.get("type") == "swarm":
+            fleet = coa_action.get("swarm_fleet", [])
+            applied_actions = 0
+            collision_count = 0
+            occupied_cells = {}
+            
+            # First pass: resolve all fleet actions and detect collisions
+            for asset_action in fleet:
+                asset_type = asset_action.get("asset_type", "drone")
+                action = asset_action.get("action", "observe")
+                target = asset_action.get("target")
+                
+                if asset_type not in self.blue_assets or not self.blue_assets[asset_type]:
+                    continue
+                
+                assets = self.blue_assets[asset_type]
+                if not assets:
+                    continue
+                
+                asset = assets[0]
+                
+                if action == "move" and target is not None:
+                    if isinstance(target, (list, tuple)) and len(target) == 2:
+                        new_pos = (
+                            int(max(0, min(self.GRID_SIZE - 1, target[0]))),
+                            int(max(0, min(self.GRID_SIZE - 1, target[1])))
+                        )
+                        asset["position"] = new_pos
+                        applied_actions += 1
+                        
+                        # Track occupied cells for collision detection
+                        cell = new_pos
+                        occupied_cells[cell] = occupied_cells.get(cell, 0) + 1
+                
+                elif action == "strike" and asset_type in self.blue_assets:
+                    if asset.get("ammo", 0) > 0:
+                        asset_pos = asset["position"]
+                        target_pos = self.red_force["position"]
+                        distance = self._distance(asset_pos, target_pos)
+                        
+                        if distance <= asset.get("range", 9999):
+                            self.red_force["health"] -= 50
+                            asset["ammo"] -= 1
+                            reward += 25
+                            applied_actions += 1
+                            
+                            if self.red_force["health"] <= 0:
+                                reward += 100
+                                self.done = True
+                        else:
+                            reward -= 500
+                            info["roe_violation"] = True
+                            asset["ammo"] -= 1
+                
+                elif action == "jam" and asset_type in self.blue_assets:
+                    if asset.get("ammo", 0) > 0:
+                        asset["ammo"] -= 1
+                        applied_actions += 1
+            
+            # Count collisions (multiple assets in same cell)
+            for cell, count in occupied_cells.items():
+                if count > 1:
+                    collision_count += (count - 1)
+            
+            info["action_applied"] = applied_actions > 0
+            info["swarm_collisions"] = collision_count
+            
+            # Swarm collision penalty: discourage stacking
+            if collision_count > 0:
+                reward -= 50 * collision_count
+        
+        # Legacy single-action mode
+        elif coa_action:
             action = coa_action.get("action", "observe")
             asset_type = coa_action.get("asset_type", "drone")
             
             if action == "strike" and asset_type in self.blue_assets:
                 assets = self.blue_assets[asset_type]
                 if assets and assets[0]["ammo"] > 0:
-                    # Check range
                     asset_pos = assets[0]["position"]
                     target_pos = self.red_force["position"]
                     distance = self._distance(asset_pos, target_pos)
                     
                     if distance <= assets[0]["range"]:
-                        # Hit!
                         self.red_force["health"] -= 50
                         assets[0]["ammo"] -= 1
-                        reward += 25  # Partial reward for hit
+                        reward += 25
                         info["action_applied"] = True
                         
                         if self.red_force["health"] <= 0:
-                            reward += 100  # Kill bonus
+                            reward += 100
                             self.done = True
                     else:
-                        # Out of range - ROE violation
-                        reward -= 500  # Heavy penalty for ROE violation
+                        reward -= 500
                         info["roe_violation"] = True
                         info["action_applied"] = False
-                        assets[0]["ammo"] -= 1  # Still consumes ammo
+                        assets[0]["ammo"] -= 1
             
             elif action == "jam" and asset_type in self.blue_assets:
                 assets = self.blue_assets[asset_type]
@@ -165,7 +242,6 @@ class BattlefieldEnv:
                 assets = self.blue_assets[asset_type]
                 if assets:
                     new_pos = coa_action.get("target", (50, 50))
-                    # Validate position is within grid
                     if isinstance(new_pos, (list, tuple)) and len(new_pos) == 2:
                         assets[0]["position"] = (
                             int(max(0, min(self.GRID_SIZE - 1, new_pos[0]))),

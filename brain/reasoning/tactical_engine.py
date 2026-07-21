@@ -1,20 +1,23 @@
 # Copyright (c) Ultrone Contributors. All rights reserved.
 """Core tactical engine - the assess → COA → select → decompose → orders loop."""
 
+from __future__ import annotations
+
 import logging
 import random
 import uuid
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, TYPE_CHECKING
 from dataclasses import dataclass
 
-from ..perception.situational_awareness import SituationalAwareness, COPContact
-from ..reasoning.course_of_action import COAGenerator, CourseOfAction
-from ..reasoning.kill_chain import KillChain, KillChainPhase
-from ..reasoning.resource_allocator import ResourceAllocator, Allocation
-from ...config.doctrine_presets import DoctrinePreset
-from ...data.entities import Unit, Contact, DomainType
-
 logger = logging.getLogger("Ultrone.Brain.Reasoning.TacticalEngine")
+
+if TYPE_CHECKING:
+    from ..perception.situational_awareness import SituationalAwareness, COPContact
+    from ..reasoning.course_of_action import COAGenerator, CourseOfAction
+    from ..reasoning.kill_chain import KillChain, KillChainPhase
+    from ..reasoning.resource_allocator import ResourceAllocator, Allocation
+    from ...config.doctrine_presets import DoctrinePreset
+    from ...data.entities import Unit, Contact, DomainType
 
 
 @dataclass
@@ -22,10 +25,10 @@ class TacticalAssessment:
     """Result of tactical assessment."""
     target_contact_id: str
     threat_score: float
-    selected_coa: Optional[CourseOfAction]
-    assigned_assets: List[Allocation]
+    selected_coa: Optional[Any]  # CourseOfAction
+    assigned_assets: List[Any]  # Allocation
     estimated_success: float
-    
+
     def to_dict(self) -> dict:
         return {
             "target_contact_id": self.target_contact_id,
@@ -39,39 +42,45 @@ class TacticalAssessment:
 class TacticalEngine:
     """
     Core tactical loop.
-    
+
     1. Assess threats from COP
     2. Generate COAs for high-priority targets
     3. Select best COA
     4. Decompose into orders
     5. Dispatch to assets
     """
-    
-    def __init__(self, doctrine: Optional[DoctrinePreset] = None):
-        self.situational_awareness = SituationalAwareness()
-        self.coa_generator = COAGenerator()
-        self.resource_allocator = ResourceAllocator()
-        self.kill_chain = KillChain()
+
+    def __init__(self, doctrine: Optional[Any] = None) -> None:
+        # Late imports to avoid circular dependencies
+        from ..perception.situational_awareness import SituationalAwareness
+        from ..reasoning.course_of_action import COAGenerator
+        from ..reasoning.resource_allocator import ResourceAllocator
+        from ..reasoning.kill_chain import KillChain
+        
+        self.situational_awareness: SituationalAwareness = SituationalAwareness()
+        self.coa_generator: COAGenerator = COAGenerator()
+        self.resource_allocator: ResourceAllocator = ResourceAllocator()
+        self.kill_chain: KillChain = KillChain()
         self.doctrine = doctrine
         self.assessments: List[TacticalAssessment] = []
-    
-    def assess(self, units: List[Unit], feeds: List, min_threat: float = 0.5) -> List[COPContact]:
+
+    def assess(self, units: Any, feeds: Any, min_threat: float = 0.5) -> Any:
         """Assess current situation and return threatening contacts."""
         # Update COP
         self.situational_awareness.update(feeds, units)
-        
+
         # Get threatening contacts
         from ...data.entities import ThreatLevel
         threatening = self.situational_awareness.get_threatening_contacts(
             ThreatLevel.HIGH
         )
-        
+
         return threatening
-    
-    def decide(self, threatening_contacts: List[COPContact], units: List[Unit]) -> List[TacticalAssessment]:
+
+    def decide(self, threatening_contacts: Any, units: Any) -> List[TacticalAssessment]:
         """Generate COAs and assign assets for threats."""
         self.assessments.clear()
-        
+
         for contact in threatening_contacts:
             # Generate COAs
             target_info = {
@@ -79,21 +88,21 @@ class TacticalEngine:
                 "domain": contact.contact.domain.value,
             }
             coas = self.coa_generator.generate(target_info)
-            
+
             # Select best COA
             selected = self.coa_generator.select_best(coas)
-            
+
             # Allocate resources
             contacts_list = [contact.contact]
             allocations = self.resource_allocator.allocate(units, contacts_list)
-            
+
             # Calculate success estimate
             success = 0.0
             if selected:
                 success = selected.get_total_score()
             if allocations:
                 success *= sum(a.expected_effect for a in allocations) / len(allocations)
-            
+
             assessment = TacticalAssessment(
                 target_contact_id=contact.contact.contact_id,
                 threat_score=contact.threat_score.score if contact.threat_score else 0,
@@ -102,13 +111,13 @@ class TacticalEngine:
                 estimated_success=min(1.0, success),
             )
             self.assessments.append(assessment)
-            
+
             # Start kill chain
             if selected and allocations:
                 kc = self.kill_chain.start(contact.contact.contact_id)
-        
+
         return self.assessments
-    
+
     def get_orders(self) -> List[Dict[str, Any]]:
         """Get orders for assets based on assessments."""
         orders = []
@@ -123,12 +132,12 @@ class TacticalEngine:
                     "coa": assessment.selected_coa.name if assessment.selected_coa else "direct",
                 })
         return orders
-    
-    def execute(self, units: Dict[str, Unit]) -> Dict[str, Any]:
+
+    def execute(self, units: Dict[str, Any]) -> Dict[str, Any]:
         """Execute orders against units."""
         orders = self.get_orders()
         results = {"executed": 0, "failed": 0, "details": []}
-        
+
         for order in orders:
             unit = units.get(order["unit_id"])
             if unit and unit.is_operational():
@@ -142,9 +151,9 @@ class TacticalEngine:
                 })
             else:
                 results["failed"] += 1
-        
+
         return results
-    
+
     def get_stats(self) -> dict:
         return {
             "active_assessments": len(self.assessments),

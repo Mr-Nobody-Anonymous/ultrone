@@ -5,13 +5,14 @@ from __future__ import annotations
 
 import random
 import logging
-from typing import Dict, List, Optional, Any, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 from dataclasses import dataclass, field
 
 if TYPE_CHECKING:
     from ..learning.evolution_lab import EvolutionLab
     from ...sim import WorldState
     from ...data.entities import Unit
+    from .swarm_genomes import CommanderGenome, AssetMicroGenome
 
 logger = logging.getLogger("Ultrone.Brain.Reasoning.EvolutionaryCOA")
 
@@ -94,6 +95,11 @@ class EvolutionaryCOAGenerator:
     Evolves tactical DNA to generate optimized COAs.
     
     Uses evolutionary algorithms to improve COA generation over time.
+    
+    Phase 1 Swarm Support:
+    - Population can contain CommanderGenome instances.
+    - When evaluating a CommanderGenome, it spawns AssetMicroGenomes.
+    - Swarm collision penalty is applied in fitness evaluation.
     """
     
     PHASE_NAMES = ["find", "fix", "track", "target", "engage", "assess"]
@@ -103,8 +109,8 @@ class EvolutionaryCOAGenerator:
     def __init__(self, evolution_lab: Optional[Any] = None):
         # Optional integration with EvolutionLab
         self.evolution_lab = evolution_lab
-        self.population: List[EvolutionaryGenome] = []
-        self.active_genome: Optional[EvolutionaryGenome] = None
+        self.population: List[Any] = []  # Can contain EvolutionaryGenome or CommanderGenome
+        self.active_genome: Optional[Any] = None
         self._initialized = False
     
     def initialize_default_genome(self, agent_id: str = "evolutionary-agent") -> EvolutionaryGenome:
@@ -242,14 +248,29 @@ class EvolutionaryCOAGenerator:
         domain = target_info.get("domain", "all")
         target_type = target_info.get("type", "unknown")
         
-        # Select actions based on evolved weights
+        # Swarm mode: CommanderGenome spawns fleet and returns hierarchical COA
+        if hasattr(self.active_genome, 'spawn_asset_micro_genomes'):
+            fleet = self.active_genome.spawn_asset_micro_genomes()
+            coa = CourseOfAction(
+                coa_id=f"COA-SWARM-{random.randint(1000, 9999)}",
+                name="Swarm Tactical Plan",
+                description=f"Hierarchical COA for {domain}/{target_type}",
+                domain=domain,
+                phases=["locate", "engage", "assess"],
+                required_assets=["swarm"],
+                estimated_time_ms=random.uniform(20000, 80000),
+                risk_level=random.uniform(0.3, 0.7),
+                novelty_score=self._calculate_novelty(["swarm"]),
+            )
+            coa.swarm_fleet = fleet
+            coa.commander_genome = self.active_genome
+            return coa
+        
+        # Legacy single-genome mode
         available_actions = [a for a in self.PRIMITIVE_ACTIONS 
                            if self.active_genome.action_weights.get(a, 0) > 0.5]
         
-        # Build action sequence
         phases = ["locate"]
-        
-        # Add weighted actions
         for action in available_actions:
             if random.random() < self.active_genome.action_weights.get(action, 0.5):
                 phases.append(action)
@@ -268,7 +289,6 @@ class EvolutionaryCOAGenerator:
             risk_level=random.uniform(0.3, 0.7),
             novelty_score=self._calculate_novelty(available_actions),
         )
-        
         return coa
     
     def _calculate_novelty(self, actions: List[str]) -> float:
@@ -305,6 +325,134 @@ class EvolutionaryCOAGenerator:
         genome.fitness_score = fitness
         genome.fitness_history.append(fitness)
         return fitness
+
+    def evaluate_commander_fitness(self, commander: "CommanderGenome",
+                                   telemetry_data: Dict[str, Any],
+                                   collision_count: int = 0) -> float:
+        """
+        Evaluate fitness for a CommanderGenome with swarm-specific penalties.
+        
+        Args:
+            commander: The commander genome to evaluate
+            telemetry_data: Standard telemetry data
+            collision_count: Number of friendly asset collisions (same-grid stacking)
+        """
+        # Base fitness from inherited logic
+        base_fitness = self.evaluate_fitness(commander, telemetry_data)
+        
+        # Swarm collision penalty: heavy penalty for stacking assets in same grid square
+        if collision_count > 0:
+            collision_penalty = 0.5 * collision_count
+            base_fitness *= max(0.0, 1.0 - collision_penalty)
+        
+        commander.fitness_score = base_fitness
+        commander.fitness_history.append(base_fitness)
+        return base_fitness
+    
+    def evolve_commander_generation(self, population: Optional[List["CommanderGenome"]] = None) -> Optional["CommanderGenome"]:
+        """
+        Run one generation of evolution for CommanderGenome swarm population.
+        
+        If no population provided, uses self.population.
+        """
+        if population is None:
+            population = [g for g in self.population if hasattr(g, 'spawn_asset_micro_genomes')]
+        
+        if len(population) < 2:
+            return None
+        
+        # Sort by fitness
+        population.sort(key=lambda g: g.fitness_score, reverse=True)
+        
+        # Keep best (elitism)
+        survivors = population[:max(1, len(population) // 2)]
+        
+        # Generate offspring
+        offspring: List["CommanderGenome"] = []
+        while len(survivors) + len(offspring) < len(population):
+            parent_a = random.choice(survivors)
+            parent_b = random.choice(survivors)
+            
+            if random.random() < 0.7:
+                child = self._crossover_commanders(parent_a, parent_b)
+            else:
+                child = self._mutate_commander(parent_a)
+            
+            offspring.append(child)
+        
+        new_population = survivors + offspring
+        self.population = new_population
+        self.active_genome = new_population[0]
+        return self.active_genome
+    
+    def _mutate_commander(self, commander: "CommanderGenome") -> "CommanderGenome":
+        """Mutate a CommanderGenome's strategy weights and allocation."""
+        from .swarm_genomes import CommanderGenome
+        child = CommanderGenome(
+            genome_id=f"GEN-{random.randint(10000, 99999)}",
+            generation=commander.generation + 1,
+            agent_id=commander.agent_id,
+            action_weights=commander.action_weights.copy(),
+            synergy_map=commander.synergy_map.copy(),
+            phase_params={k: PhaseParameters(**v.__dict__) for k, v in commander.phase_params.items()},
+            resource_conservation=commander.resource_conservation,
+            time_optimization=commander.time_optimization,
+            domain=commander.domain,
+            mutation_rate=commander.mutation_rate,
+            allocation_weights=commander.allocation_weights.copy(),
+        )
+        
+        # Mutate allocation weights
+        for key in child.allocation_weights:
+            if random.random() < commander.mutation_rate:
+                child.allocation_weights[key] = max(0.0, min(1.0,
+                    child.allocation_weights[key] + random.gauss(0, 0.1)))
+        
+        # Mutate base tactical parameters too
+        for action in child.action_weights:
+            if random.random() < commander.mutation_rate:
+                sigma = 0.2
+                child.action_weights[action] = max(0.0, min(1.0,
+                    child.action_weights[action] + random.gauss(0, sigma)))
+        
+        return child
+    
+    def _crossover_commanders(self, parent_a: "CommanderGenome", 
+                              parent_b: "CommanderGenome") -> "CommanderGenome":
+        """Crossover two CommanderGenomes, blending strategy and allocations."""
+        from .swarm_genomes import CommanderGenome
+        child = CommanderGenome(
+            genome_id=f"GEN-{random.randint(10000, 99999)}",
+            generation=max(parent_a.generation, parent_b.generation) + 1,
+            agent_id=parent_a.agent_id,
+            domain=parent_a.domain,
+            mutation_rate=random.uniform(0.1, 0.2),
+            action_weights={},
+            synergy_map={},
+            phase_params={},
+        )
+        
+        # Blend action weights
+        all_actions = set(parent_a.action_weights.keys()) | set(parent_b.action_weights.keys())
+        for action in all_actions:
+            a = parent_a.action_weights.get(action, 0.5)
+            b = parent_b.action_weights.get(action, 0.5)
+            alpha = random.uniform(0.4, 0.6)
+            child.action_weights[action] = max(0.0, min(1.0, alpha * a + (1 - alpha) * b))
+        
+        # Blend allocation weights
+        all_keys = set(parent_a.allocation_weights.keys()) | set(parent_b.allocation_weights.keys())
+        for key in all_keys:
+            a = parent_a.allocation_weights.get(key, 0.0)
+            b = parent_b.allocation_weights.get(key, 0.0)
+            alpha = random.uniform(0.4, 0.6)
+            child.allocation_weights[key] = max(0.0, min(1.0, alpha * a + (1 - alpha) * b))
+        
+        # Copy phase_params from parent_a if missing
+        if not child.phase_params and parent_a.phase_params:
+            child.phase_params = {k: PhaseParameters(**v.__dict__) for k, v in parent_a.phase_params.items()}
+        
+        return child
     
     def evolve_generation(self) -> Optional[EvolutionaryGenome]:
         """Run one generation of evolution."""
