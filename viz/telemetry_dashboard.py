@@ -20,17 +20,19 @@ if preferred:
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import matplotlib.gridspec as gridspec
 
 
 class TelemetryDashboard:
     """
-    Live 2x2 telemetry dashboard for ULTRONE training.
+    Live telemetry dashboard for ULTRONE training.
     
     Subplots:
     - Top Left: Rolling Success Rate (%)
     - Top Right: Mutation Rate
-    - Bottom Left: Average Reward per episode
-    - Bottom Right: Best Novelty Score per episode
+    - Middle Left: Average Reward per episode
+    - Middle Right: Best Novelty Score per episode
+    - Bottom: Red Survival Rate %
     """
 
     def __init__(self, max_points: int = 200) -> None:
@@ -42,6 +44,7 @@ class TelemetryDashboard:
         self.mutation_rates: List[float] = []
         self.avg_rewards: List[float] = []
         self.novelty_scores: List[float] = []
+        self.red_survival_rates: List[float] = []
         
         # Plot objects
         self.fig = None
@@ -49,20 +52,26 @@ class TelemetryDashboard:
         self.ax_mutation = None
         self.ax_reward = None
         self.ax_novelty = None
+        self.ax_red_survival = None
         self.line_success = None
         self.line_mutation = None
         self.line_reward = None
         self.line_novelty = None
+        self.line_red_survival = None
         self._initialized = False
 
     def _init_plot(self) -> None:
         """Initialize matplotlib figure and axes."""
         plt.ion()
-        self.fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+        self.fig = plt.figure(figsize=(14, 10))
         self.fig.suptitle("ULTRONE Live Training Telemetry", fontsize=14, fontweight="bold")
+        gs = gridspec.GridSpec(3, 2, figure=self.fig)
         
-        (self.ax_success, self.ax_mutation,
-         self.ax_reward, self.ax_novelty) = axes.flatten()
+        self.ax_success = self.fig.add_subplot(gs[0, 0])
+        self.ax_mutation = self.fig.add_subplot(gs[0, 1])
+        self.ax_reward = self.fig.add_subplot(gs[1, 0])
+        self.ax_novelty = self.fig.add_subplot(gs[1, 1])
+        self.ax_red_survival = self.fig.add_subplot(gs[2, :])
         
         # Top Left: Success Rate
         self.ax_success.set_title("Rolling Success Rate (%)")
@@ -80,14 +89,14 @@ class TelemetryDashboard:
         self.ax_mutation.set_ylim(0, 0.2)
         self.ax_mutation.grid(True, alpha=0.3)
         
-        # Bottom Left: Average Reward
+        # Middle Left: Average Reward
         self.ax_reward.set_title("Average Reward per Episode")
         self.ax_reward.set_xlabel("Episode")
         self.ax_reward.set_ylabel("Avg Reward")
         self.line_reward, = self.ax_reward.plot([], [], linewidth=2, color="tab:blue")
         self.ax_reward.grid(True, alpha=0.3)
         
-        # Bottom Right: Best Novelty Score
+        # Middle Right: Best Novelty Score
         self.ax_novelty.set_title("Best Novelty Score")
         self.ax_novelty.set_xlabel("Episode")
         self.ax_novelty.set_ylabel("Novelty Score")
@@ -95,11 +104,19 @@ class TelemetryDashboard:
         self.ax_novelty.set_ylim(0, 1.0)
         self.ax_novelty.grid(True, alpha=0.3)
         
+        # Bottom: Red Survival Rate
+        self.ax_red_survival.set_title("Red Survival Rate %")
+        self.ax_red_survival.set_xlabel("Episode")
+        self.ax_red_survival.set_ylabel("Survival %")
+        self.line_red_survival, = self.ax_red_survival.plot([], [], linewidth=2, color="tab:orange")
+        self.ax_red_survival.set_ylim(0, 100)
+        self.ax_red_survival.grid(True, alpha=0.3)
+        
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
         self._initialized = True
 
     def update(self, episode: int, success_rate: float, mutation_rate: float,
-               avg_reward: float, novelty_score: float) -> None:
+               avg_reward: float, novelty_score: float, red_survival_rate: float = 0.0) -> None:
         """
         Push new telemetry data and redraw.
         
@@ -109,6 +126,7 @@ class TelemetryDashboard:
             mutation_rate: Current mutation rate
             avg_reward: Average reward over recent episodes
             novelty_score: Best novelty/fitness score
+            red_survival_rate: Red survival rate (0-100)
         """
         if not self._initialized:
             self._init_plot()
@@ -119,6 +137,7 @@ class TelemetryDashboard:
         self.mutation_rates.append(mutation_rate)
         self.avg_rewards.append(avg_reward)
         self.novelty_scores.append(novelty_score)
+        self.red_survival_rates.append(red_survival_rate)
         
         # Trim to max_points
         if len(self.episodes) > self.max_points:
@@ -127,15 +146,17 @@ class TelemetryDashboard:
             self.mutation_rates = self.mutation_rates[-self.max_points:]
             self.avg_rewards = self.avg_rewards[-self.max_points:]
             self.novelty_scores = self.novelty_scores[-self.max_points:]
+            self.red_survival_rates = self.red_survival_rates[-self.max_points:]
         
         # Update lines
         self.line_success.set_data(self.episodes, self.success_rates)
         self.line_mutation.set_data(self.episodes, self.mutation_rates)
         self.line_reward.set_data(self.episodes, self.avg_rewards)
         self.line_novelty.set_data(self.episodes, self.novelty_scores)
+        self.line_red_survival.set_data(self.episodes, self.red_survival_rates)
         
         # Auto-scale x axis
-        for ax in [self.ax_success, self.ax_mutation, self.ax_reward, self.ax_novelty]:
+        for ax in [self.ax_success, self.ax_mutation, self.ax_reward, self.ax_novelty, self.ax_red_survival]:
             ax.relim()
             ax.autoscale_view(scaley=False)
             if self.episodes:
@@ -184,10 +205,10 @@ def get_dashboard(max_points: int = 200) -> TelemetryDashboard:
 
 
 def update_dashboard(episode: int, success_rate: float, mutation_rate: float,
-                     avg_reward: float, novelty_score: float) -> None:
-    """ Convenience function to update the global dashboard."""
+                     avg_reward: float, novelty_score: float, red_survival_rate: float = 0.0) -> None:
+    """Convenience function to update the global dashboard."""
     dashboard = get_dashboard()
-    dashboard.update(episode, success_rate, mutation_rate, avg_reward, novelty_score)
+    dashboard.update(episode, success_rate, mutation_rate, avg_reward, novelty_score, red_survival_rate)
 
 
 def close_dashboard() -> None:

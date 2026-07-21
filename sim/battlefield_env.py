@@ -66,6 +66,10 @@ class BattlefieldEnv:
             "missiles": [{"position": (60, 50), "ammo": 3, "range": 50}],
         }
         
+        # ECM state tracking
+        self._ecm_active = False
+        self._ecm_noise = 0.0
+        
         return self._get_observation()
     
     def _get_observation(self) -> Dict[str, Any]:
@@ -105,13 +109,27 @@ class BattlefieldEnv:
             
             self._perception_done = True
         
+        # Apply ECM noise if active
+        if getattr(self, "_ecm_active", False) and getattr(self, "_ecm_noise", 0.0) > 0:
+            noise = self._ecm_noise
+            if observation["radar_data"] is not None:
+                if random.random() < noise:
+                    observation["radar_data"] = None
+                else:
+                    # Degrade radar confidence proportional to noise strength
+                    if isinstance(observation["radar_data"], dict):
+                        observation["radar_data"]["threat_indicator"] = max(0.0, observation["radar_data"].get("threat_indicator", 0.5) - noise)
+            if observation["visual_data"] is not None:
+                if random.random() < noise:
+                    observation["visual_data"] = None
+        
         return observation
     
     def _distance(self, pos1: Tuple[int, int], pos2: Tuple[int, int]) -> float:
         """Calculate Euclidean distance between positions."""
         return np.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
     
-    def step(self, coa_action: Optional[Dict] = None) -> Tuple[Dict, float, bool, Dict]:
+    def step(self, coa_action: Optional[Dict] = None, red_action: Optional[Dict] = None) -> Tuple[Dict, float, bool, Dict]:
         """Apply COA and advance simulation.
         
         Args:
@@ -125,13 +143,19 @@ class BattlefieldEnv:
                     ],
                     "commander_genome": {...}
                 }
+            red_action: Red Force action from RedForceGenome:
+                {
+                    "evade": bool,
+                    "ecm": bool,
+                    "target": (x,y) or None
+                }
                 
         Returns:
             observation, reward, done, info
         """
         self.step_count += 1
         reward = 0.0
-        info = {"roe_violation": False, "action_applied": False, "swarm_collisions": 0}
+        info = {"roe_violation": False, "action_applied": False, "swarm_collisions": 0, "ecm_active": False}
         
         # Swarm hierarchical COA resolution
         if coa_action and coa_action.get("type") == "swarm":
@@ -249,14 +273,38 @@ class BattlefieldEnv:
                         )
                         info["action_applied"] = True
         
-        # Red Force moves randomly
-        if self.red_force and self.red_force["health"] > 0:
-            dx = random.randint(-self.red_force["speed"], self.red_force["speed"])
-            dy = random.randint(-self.red_force["speed"], self.red_force["speed"])
+        # Resolve Red Force action if provided
+        if red_action:
+            ecm_active = bool(red_action.get("ecm", False))
+            self._ecm_active = ecm_active
+            self._ecm_noise = red_action.get("ecm_noise", 0.3) if ecm_active else 0.0
+            info["ecm_active"] = self._ecm_active
             
-            new_x = max(0, min(self.GRID_SIZE - 1, self.red_force["position"][0] + dx))
-            new_y = max(0, min(self.GRID_SIZE - 1, self.red_force["position"][1] + dy))
-            self.red_force["position"] = (new_x, new_y)
+            if self.red_force and self.red_force["health"] > 0:
+                if red_action.get("evade", False):
+                    self.red_force["heading"] = (self.red_force["heading"] + random.uniform(-45, 45)) % 360
+                    burst = random.randint(0, 2)
+                    new_x = max(0, min(self.GRID_SIZE - 1, int(self.red_force["position"][0] + random.uniform(-1, 1) * (self.red_force["speed"] + burst))))
+                    new_y = max(0, min(self.GRID_SIZE - 1, int(self.red_force["position"][1] + random.uniform(-1, 1) * (self.red_force["speed"] + burst))))
+                    self.red_force["position"] = (new_x, new_y)
+                if red_action.get("target") is not None:
+                    tgt = red_action.get("target")
+                    if isinstance(tgt, (list, tuple)) and len(tgt) == 2:
+                        self.red_force["position"] = (
+                            int(max(0, min(self.GRID_SIZE - 1, tgt[0]))),
+                            int(max(0, min(self.GRID_SIZE - 1, tgt[1])))
+                        )
+        else:
+            self._ecm_active = False
+            self._ecm_noise = 0.0
+            
+            # Default random walk if no red action
+            if self.red_force and self.red_force["health"] > 0:
+                dx = random.randint(-self.red_force["speed"], self.red_force["speed"])
+                dy = random.randint(-self.red_force["speed"], self.red_force["speed"])
+                new_x = max(0, min(self.GRID_SIZE - 1, self.red_force["position"][0] + dx))
+                new_y = max(0, min(self.GRID_SIZE - 1, self.red_force["position"][1] + dy))
+                self.red_force["position"] = (new_x, new_y)
         
         # Time penalty
         reward -= 1.0

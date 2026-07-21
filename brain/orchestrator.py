@@ -72,17 +72,37 @@ class Orchestrator:
         EvolutionaryCOAGenerator = coa_mod.EvolutionaryCOAGenerator
         EvolutionaryGenome = coa_mod.EvolutionaryGenome
         
+        swarm_mod = _load_module_by_path(
+            "brain.reasoning.swarm_genomes",
+            base / "brain" / "reasoning" / "swarm_genomes.py",
+        )
+        CommanderGenome = swarm_mod.CommanderGenome
+        AssetMicroGenome = swarm_mod.AssetMicroGenome
+        
+        coev_mod = _load_module_by_path(
+            "brain.reasoning.coevolution_engine",
+            base / "brain" / "reasoning" / "coevolution_engine.py",
+        )
+        CoevolutionEngine = coev_mod.CoevolutionEngine
+        RedForceGenome = coev_mod.RedForceGenome
+        
         self.BattlefieldEnv = BattlefieldEnv
         self.EvolutionaryCOAGenerator = EvolutionaryCOAGenerator
         self.EvolutionaryGenome = EvolutionaryGenome
+        self.CommanderGenome = CommanderGenome
+        self.AssetMicroGenome = AssetMicroGenome
+        self.CoevolutionEngine = CoevolutionEngine
+        self.RedForceGenome = RedForceGenome
         
         # Training state
         self.episode_rewards: List[float] = []
         self.episode_successes: List[bool] = []
+        self.red_survival_rates: List[float] = []
         self.best_genome: Optional[EvolutionaryGenome] = None
         self.best_fitness: float = 0.0
         self.generation: int = 0
         self.current_mutation_rate = initial_mutation_rate
+        self.use_coevolution = True
         
         # Ensure memory directory exists
         MEMORY_DIR.mkdir(parents=True, exist_ok=True)
@@ -146,24 +166,37 @@ class Orchestrator:
 
     def _adapt_mutation_rate(self) -> None:
         """
-        Dynamically adjust mutation rate based on recent success rate.
+        Dynamically adjust mutation rates for both Blue and Red based on recent performance.
         
+        Blue rules:
         - If last 10 episodes have >80% success: DECREASE by 10% (exploit)
-        - If last 10 episodes have <40% success: INCREASE by 20% (explore)
+        - If last 10 episodes have <50% success: INCREASE by 20% (explore)
+        
+        Red rules:
+        - If last 10 episodes have <50% Red survival: INCREASE by 20% (evade better)
         """
         window = self.success_rate_window
         if len(self.episode_successes) < window:
             return
         
-        recent = self.episode_successes[-window:]
-        success_rate = sum(recent) / len(recent)
+        recent_success = self.episode_successes[-window:]
+        success_rate = sum(recent_success) / len(recent_success)
         
+        # Adaptive Blue mutation rate
         if success_rate > 0.8:
             self.current_mutation_rate *= 0.90
-            logger.info(f"Mutation rate DECREASED to {self.current_mutation_rate:.4f} (exploiting)")
-        elif success_rate < 0.4:
+            logger.info(f"Blue mutation rate DECREASED to {self.current_mutation_rate:.4f} (exploiting)")
+        elif success_rate < 0.5:
             self.current_mutation_rate *= 1.20
-            logger.info(f"Mutation rate INCREASED to {self.current_mutation_rate:.4f} (exploring)")
+            logger.info(f"Blue mutation rate INCREASED to {self.current_mutation_rate:.4f} (exploring)")
+        
+        # Adaptive Red mutation rate based on survival
+        if len(self.red_survival_rates) >= window:
+            recent_survival = self.red_survival_rates[-window:]
+            survival_rate = sum(recent_survival) / len(recent_survival)
+            if survival_rate < 0.5:
+                self.coevolution.red_mutation_rate *= 1.20
+                logger.info(f"Red mutation rate INCREASED to {self.coevolution.red_mutation_rate:.4f} (evading better)")
 
     def _print_dashboard(self, episode: int) -> None:
         """Print clean dashboard every 10 episodes."""
@@ -194,6 +227,11 @@ class Orchestrator:
         print(f"  Generation         : {self.generation}")
         print("=" * 70)
         
+        # Compute red survival rate for this window
+        window_survival = min(10, len(self.red_survival_rates))
+        recent_survival = self.red_survival_rates[-window_survival:] if window_survival > 0 else []
+        red_survival_rate = (sum(recent_survival) / len(recent_survival) * 100) if recent_survival else 0.0
+        
         # Push telemetry to live visualization
         try:
             from viz.telemetry_dashboard import update_dashboard
@@ -203,6 +241,7 @@ class Orchestrator:
                 mutation_rate=self.current_mutation_rate,
                 avg_reward=avg_reward,
                 novelty_score=best_novelty,
+                red_survival_rate=red_survival_rate,
             )
         except Exception as e:
             logger.debug(f"Telemetry dashboard update skipped: {e}")
@@ -222,6 +261,24 @@ class Orchestrator:
         # Initialize environment and evolutionary engine
         env = self.BattlefieldEnv()
         
+        # Initialize coevolution engine
+        if self.use_coevolution and not hasattr(self, 'coevolution'):
+            # Bootstrap populations from loaded elite or defaults
+            blue_commander = None
+            if hasattr(elite, 'spawn_asset_micro_genomes'):
+                blue_commander = elite
+            else:
+                blue_commander = self.CommanderGenome(
+                    genome_id=f"BLUE-{random.randint(10000, 99999)}",
+                    action_weights={a: random.uniform(0.5, 1.0) for a in ["strike", "jam", "move", "engage", "locate", "assess"]},
+                    synergy_map={(a, b): random.uniform(0.0, 1.0) for i, a in enumerate(["strike", "jam", "move", "engage", "locate", "assess"]) for b in ["strike", "jam", "move", "engage", "locate", "assess"][i+1:]},
+                    mutation_rate=self.current_mutation_rate,
+                )
+            red_genome = self.RedForceGenome(genome_id=f"RED-{random.randint(10000, 99999)}")
+            self.coevolution = self.CoevolutionEngine(sample_size=3)
+            self.coevolution.initialize_blue(blue_commander)
+            self.coevolution.initialize_red(red_genome)
+        
         # Track best across all episodes
         overall_best_fitness = self.best_fitness
         overall_best_genome = elite
@@ -230,17 +287,24 @@ class Orchestrator:
             # Reset environment
             obs = env.reset()
             
+            # Get current Blue and Red genomes
+            blue_commander = self.coevolution.blue_active if self.use_coevolution else None
+            red_genome = self.coevolution.red_active if self.use_coevolution else None
+            
             # Initialize evolutionary engine for this episode
             coa_gen = self.EvolutionaryCOAGenerator()
-            
-            # If we have an elite genome, use it as the starting point
-            if elite:
+            if blue_commander:
+                coa_gen.active_genome = blue_commander
+                coa_gen.population = [blue_commander]
+                coa_gen._initialized = True
+            elif elite:
                 coa_gen.active_genome = elite
                 coa_gen.population = [elite]
                 coa_gen._initialized = True
             
             total_reward = 0.0
             success = False
+            red_survived = True
             done = False
             step = 0
             
@@ -248,67 +312,109 @@ class Orchestrator:
             while not done and step < self.max_steps_per_episode:
                 step += 1
                 
-                # Generate COA using evolutionary engine
+                # Generate Blue COA
                 target_info = {
                     "domain": obs.get("red_force", {}).get("type", "unknown"),
                     "type": obs.get("red_force", {}).get("type", "unknown"),
                 }
                 context = {"observation": obs}
-                
                 coa = coa_gen.generate_evolved_coa(target_info, context)
                 
-                # Extract action from COA phases
-                action = None
+                # Extract Blue action from COA phases
+                blue_action = None
+                swarm_coa = None
                 if coa and coa.phases:
-                    for phase in coa.phases:
-                        if phase in ["strike", "jam", "move"]:
-                            action = {"action": phase, "asset_type": "missiles" if phase == "strike" else "jammers"}
-                            if phase == "move":
-                                action["target"] = (50, 50)
-                            break
+                    if hasattr(coa, 'swarm_fleet') and coa.swarm_fleet:
+                        fleet = []
+                        for micro in coa.swarm_fleet:
+                            asset_action = {
+                                "asset_type": micro.asset_type,
+                                "action": "strike" if micro.aggressiveness > 0.6 else "move",
+                                "target": (int(obs.get("red_force", {}).get("position", (50, 50))[0] + random.randint(-10, 10)),
+                                           int(obs.get("red_force", {}).get("position", (50, 50))[1] + random.randint(-10, 10)))
+                            }
+                            fleet.append(asset_action)
+                        swarm_coa = {
+                            "type": "swarm",
+                            "swarm_fleet": fleet,
+                            "commander_genome": blue_commander.to_dict() if blue_commander else None,
+                        }
+                        blue_action = swarm_coa
+                    else:
+                        for phase in coa.phases:
+                            if phase in ["strike", "jam", "move"]:
+                                blue_action = {"action": phase, "asset_type": "missiles" if phase == "strike" else "jammers"}
+                                if phase == "move":
+                                    blue_action["target"] = (50, 50)
+                                break
                 
-                # Step environment
+                # Generate Red action
+                red_action = None
+                if red_genome:
+                    red_action = {
+                        "evade": red_genome.should_evade(),
+                        "ecm": red_genome.should_trigger_ecm(),
+                        "ecm_noise": red_genome.ecm_noise_level,
+                        "target": None,
+                    }
+                
+                # Step environment with both Blue and Red actions
                 try:
-                    obs, reward, done, info = env.step(action)
+                    obs, reward, done, info = env.step(blue_action, red_action)
                     total_reward += reward
                     
                     # Check if target was destroyed (success)
                     if done and reward > 0:
                         success = True
-                        
+                        red_survived = False
+                
                 except Exception as e:
                     logger.error(f"Error during environment step: {e}")
                     break
                 
-                # Evaluate fitness of the genome
+                # Evaluate fitness
                 telemetry = {
                     "hits": 1 if success else 0,
                     "attempts": step,
                     "weapons_used": 1,
                     "weapons_allocated": 3,
                     "actions_used": coa.phases if coa else [],
+                    "blue_on_blue": 1 if info.get("swarm_collisions", 0) > 0 else 0,
+                    "collision_count": info.get("swarm_collisions", 0),
+                    "red_survived": red_survived,
+                    "ecm_active": info.get("ecm_active", False),
                 }
-                fitness = coa_gen.evaluate_fitness(coa_gen.active_genome, telemetry)
+                if blue_commander and self.use_coevolution:
+                    self.coevolution.evaluate_blue_fitness(blue_commander, [red_genome], {red_genome.genome_id: telemetry})
+                else:
+                    fitness = coa_gen.evaluate_fitness(coa_gen.active_genome, telemetry)
                 
                 # Track best genome
-                if fitness > overall_best_fitness:
-                    overall_best_fitness = fitness
-                    overall_best_genome = coa_gen.active_genome
+                current_fitness = blue_commander.fitness_score if blue_commander else fitness
+                if current_fitness > overall_best_fitness:
+                    overall_best_fitness = current_fitness
+                    overall_best_genome = blue_commander or coa_gen.active_genome
                     self.best_fitness = overall_best_fitness
                     self.best_genome = overall_best_genome
             
             # Record episode results
             self.episode_rewards.append(total_reward)
             self.episode_successes.append(success)
+            self.red_survival_rates.append(1.0 if red_survived else 0.0)
             
             # Evolve generation
-            self.generation = coa_gen.active_genome.generation if coa_gen.active_genome else self.generation
+            if self.use_coevolution and blue_commander:
+                new_blue = self.coevolution.evolve_blue_generation()
+                new_red = self.coevolution.evolve_red_generation()
+                if new_blue:
+                    self.generation = new_blue.generation
+                elite = new_blue or blue_commander
+            else:
+                self.generation = coa_gen.active_genome.generation if coa_gen.active_genome else self.generation
+                elite = coa_gen.active_genome
             
             # Adapt mutation rate
             self._adapt_mutation_rate()
-            
-            # Update elite genome for next episode
-            elite = coa_gen.active_genome
             
             # Print dashboard
             self._print_dashboard(episode)
