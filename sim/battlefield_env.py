@@ -333,6 +333,49 @@ class BattlefieldEnv:
             grid_str[y // 10][x // 10] = "D"
         
         return "\n" + "\n".join("".join(row) for row in grid_str)
+    
+    def render_ascii_map(self) -> str:
+        """
+        Generate top-down text grid for LLM/VLM commanders.
+        
+        Shows terrain, Red Force (R), Blue Drones (D), Blue Missiles (M), ECM zones (E).
+        Uses 20x20 scaled view from 100x100 grid.
+        """
+        width, height = 20, 20
+        grid_str = [["." for _ in range(width)] for _ in range(height)]
+        
+        # Red Force
+        if self.red_force:
+            rx, ry = self.red_force["position"]
+            grid_str[min(height - 1, ry // 5)][min(width - 1, rx // 5)] = "R"
+        
+        # Blue assets
+        for drone in self.blue_assets.get("drones", []):
+            x, y = drone["position"]
+            grid_str[min(height - 1, y // 5)][min(width - 1, x // 5)] = "D"
+        
+        for missile in self.blue_assets.get("missiles", []):
+            x, y = missile["position"]
+            grid_str[min(height - 1, y // 5)][min(width - 1, x // 5)] = "M"
+        
+        for jammer in self.blue_assets.get("jammers", []):
+            x, y = jammer["position"]
+            grid_str[min(height - 1, y // 5)][min(width - 1, x // 5)] = "J"
+        
+        # ECM zones (if active, mark area around Red)
+        if getattr(self, "_ecm_active", False):
+            if self.red_force:
+                rx, ry = self.red_force["position"]
+                cx = min(width - 1, rx // 5)
+                cy = min(height - 1, ry // 5)
+                for dy in (-1, 0, 1):
+                    for dx in (-1, 0, 1):
+                        nx, ny = cx + dx, cy + dy
+                        if 0 <= nx < width and 0 <= ny < height:
+                            if grid_str[ny][nx] == ".":
+                                grid_str[ny][nx] = "E"
+        
+        return "\n" + "\n".join("".join(row) for row in grid_str)
 
 
 def test_battlefield_env():

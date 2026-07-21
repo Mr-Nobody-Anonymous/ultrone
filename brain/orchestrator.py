@@ -291,6 +291,20 @@ class Orchestrator:
             except Exception as e:
                 logger.debug(f"Briefing generator unavailable: {e}")
         
+        # Initialize hybrid LLM components
+        self._llm_commander = None
+        self._secretary_council = None
+        self._current_directive = None
+        try:
+            from brain.learning.llm_commander import LLMCommander
+            from brain.reasoning.secretary_council import SecretaryCouncil, analyze_red_behavior, analyze_blue_attrition
+            self._llm_commander = LLMCommander()
+            self._secretary_council = SecretaryCouncil()
+            self._analyze_red_behavior = analyze_red_behavior
+            self._analyze_blue_attrition = analyze_blue_attrition
+        except Exception as e:
+            logger.debug(f"Hybrid LLM components unavailable: {e}")
+        
         # Track best across all episodes
         overall_best_fitness = self.best_fitness
         overall_best_genome = elite
@@ -396,8 +410,9 @@ class Orchestrator:
                     "red_survived": red_survived,
                     "ecm_active": info.get("ecm_active", False),
                 }
+                directive_weights = self._current_directive.weights if self._current_directive else None
                 if blue_commander and self.use_coevolution:
-                    self.coevolution.evaluate_blue_fitness(blue_commander, [red_genome], {red_genome.genome_id: telemetry})
+                    self.coevolution.evaluate_blue_fitness(blue_commander, [red_genome], {red_genome.genome_id: telemetry}, directive=directive_weights)
                 else:
                     fitness = coa_gen.evaluate_fitness(coa_gen.active_genome, telemetry)
                 
@@ -430,6 +445,53 @@ class Orchestrator:
             
             # Print dashboard
             self._print_dashboard(episode)
+            
+            # Hybrid LLM guidance every 20 episodes
+            if episode % 20 == 0:
+                window_survival = min(10, len(self.red_survival_rates))
+                recent_survival = self.red_survival_rates[-window_survival:] if window_survival > 0 else []
+                red_survival_rate = (sum(recent_survival) / len(recent_survival) * 100) if recent_survival else 0.0
+                
+                window_rewards = min(10, len(self.episode_rewards))
+                recent_rewards = self.episode_rewards[-window_rewards:] if window_rewards > 0 else [0.0]
+                avg_reward = sum(recent_rewards) / len(recent_rewards) if recent_rewards else 0.0
+                
+                window_s = min(10, len(self.episode_successes))
+                recent_successes = self.episode_successes[-window_s:] if window_s > 0 else []
+                success_rate = (sum(recent_successes) / len(recent_successes)) if recent_successes else 0.0
+                
+                best_novelty = 0.0
+                if self.best_genome and hasattr(self.best_genome, 'fitness_score'):
+                    best_novelty = self.best_genome.fitness_score
+                
+                telemetry = {
+                    "episode": episode,
+                    "success_rate": success_rate,
+                    "avg_reward": avg_reward,
+                    "mutation_rate": self.current_mutation_rate,
+                    "red_survival_rate": red_survival_rate / 100.0,
+                    "generation": self.generation,
+                    "best_novelty": best_novelty,
+                }
+                
+                # LLM Commander visual-grounding brief
+                if self._llm_commander is not None:
+                    try:
+                        ascii_map = env.render_ascii_map()
+                        self._llm_commander.write_briefing(ascii_map, telemetry)
+                    except Exception as e:
+                        logger.debug(f"LLM commander brief failed: {e}")
+                
+                # Secretary Council strategic directive
+                if self._secretary_council is not None:
+                    try:
+                        red_behavior = self._analyze_red_behavior(red_genome, self.red_survival_rates)
+                        blue_attrition = self._analyze_blue_attrition(obs.get("blue_assets", {}))
+                        directive = self._secretary_council.deliberate(telemetry, red_behavior, blue_attrition)
+                        self._current_directive = directive
+                        logger.info(f"Strategic directive: {directive.focus} - {directive.notes}")
+                    except Exception as e:
+                        logger.debug(f"Secretary council failed: {e}")
             
             # Post-hoc commander briefing every 20 episodes
             if self._briefing_generator is not None:

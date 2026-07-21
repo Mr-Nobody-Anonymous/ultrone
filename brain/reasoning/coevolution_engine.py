@@ -49,7 +49,8 @@ class CoevolutionEngine:
     
     def evaluate_blue_fitness(self, commander: CommanderGenome,
                               red_sample: List[RedForceGenome],
-                              telemetry_by_red: Dict[str, Dict[str, Any]]) -> float:
+                              telemetry_by_red: Dict[str, Dict[str, Any]],
+                              directive: Optional[Dict[str, float]] = None) -> float:
         """
         Evaluate Blue fitness by testing against a sample of Red genomes.
         
@@ -57,12 +58,27 @@ class CoevolutionEngine:
             commander: Blue commander to evaluate
             red_sample: Sample of Red genomes to test against
             telemetry_data: Combined telemetry from battles against red_sample
+            directive: Optional StrategicDirective weights for effectiveness, efficiency, novelty
             
         Returns:
             Fitness score for the Blue commander
         """
         total_fitness = 0.0
         valid_matches = 0
+        
+        if directive:
+            w_effectiveness = directive.get("effectiveness_weight", 0.5)
+            w_efficiency = directive.get("efficiency_weight", 0.3)
+            w_novelty = directive.get("novelty_weight", 0.2)
+            total = w_effectiveness + w_efficiency + w_novelty
+            if total > 0:
+                w_effectiveness /= total
+                w_efficiency /= total
+                w_novelty /= total
+        else:
+            w_effectiveness = 0.5
+            w_efficiency = 0.3
+            w_novelty = 0.2
         
         for red_genome in red_sample:
             telemetry = telemetry_by_red.get(red_genome.genome_id, {})
@@ -81,7 +97,7 @@ class CoevolutionEngine:
             actions_used = telemetry.get("actions_used", [])
             novelty = min(1.0, len(set(actions_used)) / 10)
             
-            fitness = 0.5 * effectiveness + 0.3 * efficiency + 0.2 * novelty
+            fitness = w_effectiveness * effectiveness + w_efficiency * efficiency + w_novelty * novelty
             
             # Penalties
             if telemetry.get("blue_on_blue", 0) > 0:
