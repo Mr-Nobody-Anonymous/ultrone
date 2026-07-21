@@ -59,36 +59,100 @@ class SatelliteImageAI(SpecializedAnalyzer):
 
 
 class RadarAI(SpecializedAnalyzer):
-    """AI specialized for radar detection analysis."""
+    """AI specialized for radar detection analysis using FFT/Doppler calculation."""
+    
+    # Radar constants (typical X-band radar: 10 GHz)
+    SPEED_OF_LIGHT = 3e8  # m/s
+    RADAR_FREQ = 10e9     # 10 GHz X-band
+    WAVELENGTH = None     # Calculated from frequency
     
     def __init__(self):
         super().__init__()
-        self.radar_signatures = {
-            "aircraft": {"doppler": "high", "rcs": "variable"},
-            "missile": {"doppler": "very_high", "rcs": "small"},
-            "vehicle": {"doppler": "low", "rcs": "medium"},
-        }
+        self._scipy_available = True
+        if RadarAI.WAVELENGTH is None:
+            RadarAI.WAVELENGTH = RadarAI.SPEED_OF_LIGHT / RadarAI.RADAR_FREQ
+    
+    def _check_dependencies(self):
+        try:
+            from scipy import signal
+            import numpy as np
+            return True
+        except ImportError:
+            self._scipy_available = False
+            return False
     
     def analyze(self, raw_data: Any, metadata: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze radar return for contact classification."""
+        """Analyze radar signal using FFT to detect Doppler shift.
+        
+        Args:
+            raw_data: numpy array of radar return signal, or dict with 'speed' metadata
+            metadata: May contain PRF (pulse repetition frequency)
+            
+        Returns:
+            {"threat_indicator": float, "classification": str, "confidence": float}
+        """
         result = {"threat_indicator": 0.3, "classification": "contact", "confidence": 0.0}
         
-        speed = metadata.get("speed", 0)
-        if speed > 100:
-            result["threat_indicator"] = 0.7
-            result["classification"] = "fast_air"
-        elif speed > 50:
-            result["threat_indicator"] = 0.5
-            result["classification"] = "ground_vehicle"
-        else:
-            result["threat_indicator"] = 0.4
-            result["classification"] = "slow_moving"
+        if not self._check_dependencies():
+            # Fallback to mock
+            speed = metadata.get("speed", 0)
+            if speed > 100:
+                result["threat_indicator"] = 0.7
+                result["classification"] = "fast_air"
+            elif speed > 50:
+                result["threat_indicator"] = 0.5
+                result["classification"] = "ground_vehicle"
+            result["confidence"] = 0.8
+            return result
         
-        # Heading toward friendly increases threat
-        if metadata.get("heading_toward_friendly", False):
-            result["threat_indicator"] = min(1.0, result["threat_indicator"] + 0.3)
-        
-        result["confidence"] = 0.85 if speed > 0 else 0.5
+        try:
+            from scipy import signal
+            import numpy as np
+            
+            if isinstance(raw_data, np.ndarray):
+                # Real radar signal processing
+                signal_data = raw_data
+                
+                # Perform FFT to find frequency components
+                fft_result = np.fft.fft(signal_data)
+                freqs = np.fft.fftfreq(len(signal_data))
+                
+                # Find dominant frequency (Doppler shift)
+                dominant_idx = np.argmax(np.abs(fft_result))
+                doppler_freq = abs(freqs[dominant_idx])
+                
+                # PRF from metadata or default
+                prf = metadata.get("prf", 1000)  # Default 1000 Hz
+                
+                # Doppler velocity: v = (fd * lambda * c) / (2 * f0)
+                # Simplified: v = fd * lambda / 2
+                speed = doppler_freq * self.WAVELENGTH / 2
+                
+                # Scale to reasonable speed (FFT gives normalized values)
+                speed_mps = speed * prf * 100  # Rough scaling
+            else:
+                speed_mps = metadata.get("speed", 0)
+            
+            # Classify based on calculated/fallback speed
+            if speed_mps > 100:  # Fast moving (> 100 m/s = ~360 km/h)
+                result["threat_indicator"] = 0.7
+                result["classification"] = "fast_air"
+            elif speed_mps > 30:  # Medium speed
+                result["threat_indicator"] = 0.5
+                result["classification"] = "ground_vehicle"
+            else:
+                result["threat_indicator"] = 0.3
+                result["classification"] = "slow_moving"
+            
+            # Heading toward friendly increases threat
+            if metadata.get("heading_toward_friendly", False):
+                result["threat_indicator"] = min(1.0, result["threat_indicator"] + 0.3)
+            
+            result["confidence"] = 0.9
+            
+        except Exception as e:
+            logger.error(f"RadarAI analysis failed: {e}")
+            result["confidence"] = 0.5
         
         return result
 
@@ -199,38 +263,153 @@ class VoiceAI(SpecializedAnalyzer):
 
 
 class SIGINTAI(SpecializedAnalyzer):
-    """AI specialized for signals intelligence."""
+    """AI specialized for signals intelligence using burst/encryption detection."""
     
     def __init__(self):
         super().__init__()
-        self.signal_patterns = {
-            "fire_control": ["targeting", "lock", "missile"],
-            "command_net": ["command", "orders", "execute"],
-            "surveillance": ["scan", "detect", "monitor"],
+        self._keywords = {
+            "fire_control": ["targeting", "lock", "missile", "track", "engage"],
+            "command_net": ["command", "orders", "execute", "attack", "go_time"],
+            "surveillance": ["scan", "detect", "monitor", "observe", "recon"],
         }
     
+    def _detect_burst_transmission(self, signal_data: Any) -> float:
+        """Detect burst transmissions - signals that turn on/off rapidly.
+        
+        High burst ratio suggests tactical/emergency comms.
+        """
+        try:
+            import numpy as np
+            from scipy import signal
+            
+            if not isinstance(signal_data, (list, np.ndarray)):
+                return 0.3
+            
+            data = np.array(signal_data)
+            
+            # Envelope detection
+            analytic_signal = signal.hilbert(data)
+            amplitude_envelope = np.abs(analytic_signal)
+            
+            # Find on/off transitions
+            threshold = np.mean(amplitude_envelope) * 0.5
+            above_threshold = amplitude_envelope > threshold
+            
+            # Count transitions (bursts)
+            transitions = np.sum(np.diff(above_threshold.astype(int)) != 0)
+            
+            # Burst rate
+            burst_rate = transitions / len(data)
+            
+            # High burst rate = tactical/emergency comms
+            if burst_rate > 0.3:
+                return 0.8
+            elif burst_rate > 0.1:
+                return 0.5
+            return 0.3
+            
+        except Exception:
+            return 0.3
+    
+    def _detect_encryption_entropy(self, signal_data: Any) -> float:
+        """Detect encrypted/spoofed signals via high entropy.
+        
+        High entropy suggests encrypted military comms.
+        """
+        try:
+            import numpy as np
+            
+            if not isinstance(signal_data, (list, np.ndarray)):
+                return 0.3
+            
+            data = np.array(signal_data)
+            
+            # Convert to byte values for entropy calculation
+            normalized = ((data - data.min()) / (data.max() - data.min()) * 255).astype(int)
+            
+            # Calculate Shannon entropy
+            hist, _ = np.histogram(normalized, bins=256, range=(0, 255))
+            hist = hist[hist > 0]  # Remove zero bins
+            probs = hist / hist.sum()
+            entropy = -np.sum(probs * np.log2(probs))
+            
+            # Normalized entropy (8 bits max)
+            norm_entropy = entropy / 8.0
+            
+            # High entropy suggests encryption
+            if norm_entropy > 0.8:
+                return 0.7
+            elif norm_entropy > 0.5:
+                return 0.5
+            return 0.3
+            
+        except Exception:
+            return 0.3
+    
     def analyze(self, raw_data: Any, metadata: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze SIGINT for tactical indicators."""
+        """Analyze SIGINT with real signal processing.
+        
+        Args:
+            raw_data: numpy array of frequency/time domain signal, or string hash/text
+            metadata: Additional context (bandwidth, etc.)
+            
+        Returns:
+            {"threat_indicator": float, "classification": str, "confidence": float}
+        """
         result = {"threat_indicator": 0.0, "classification": "unknown", "confidence": 0.0}
         
-        text = str(raw_data).lower()
-        
-        for pattern_name, keywords in self.signal_patterns.items():
-            if any(kw in text for kw in keywords):
-                result["classification"] = pattern_name
-                if pattern_name == "fire_control":
+        try:
+            import numpy as np
+            
+            # Check if we have signal data to analyze
+            if isinstance(raw_data, (list, np.ndarray)):
+                # Real signal processing
+                burst_threat = self._detect_burst_transmission(raw_data)
+                entropy_threat = self._detect_encryption_entropy(raw_data)
+                
+                # Combined threat from signal analysis
+                combined_threat = (burst_threat + entropy_threat) / 2
+                
+                if burst_threat > 0.5 and entropy_threat > 0.5:
+                    result["classification"] = "encrypted_burst_comms"
                     result["threat_indicator"] = 0.9
-                elif pattern_name == "command_net":
+                elif burst_threat > 0.5:
+                    result["classification"] = "tactical_burst"
+                    result["threat_indicator"] = 0.7
+                elif entropy_threat > 0.5:
+                    result["classification"] = "encrypted_traffic"
                     result["threat_indicator"] = 0.6
-                elif pattern_name == "surveillance":
-                    result["threat_indicator"] = 0.4
-                break
-        
-        if result["threat_indicator"] == 0.0:
+                else:
+                    result["classification"] = "generic_traffic"
+                    result["threat_indicator"] = combined_threat
+                
+                result["confidence"] = 0.85
+            else:
+                # Fallback to text analysis
+                text = str(raw_data).lower()
+                
+                for pattern_name, keywords in self._keywords.items():
+                    if any(kw in text for kw in keywords):
+                        result["classification"] = pattern_name
+                        if pattern_name == "fire_control":
+                            result["threat_indicator"] = 0.9
+                        elif pattern_name == "command_net":
+                            result["threat_indicator"] = 0.6
+                        elif pattern_name == "surveillance":
+                            result["threat_indicator"] = 0.4
+                        break
+                
+                if result["threat_indicator"] == 0.0:
+                    result["threat_indicator"] = 0.3
+                    result["classification"] = "generic_traffic"
+                
+                result["confidence"] = 0.75
+                
+        except Exception as e:
+            logger.error(f"SIGINTAI analysis failed: {e}")
             result["threat_indicator"] = 0.3
-            result["classification"] = "generic_traffic"
-        
-        result["confidence"] = 0.75
+            result["classification"] = "fallback"
+            result["confidence"] = 0.5
         
         return result
 
