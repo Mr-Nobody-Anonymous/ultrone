@@ -106,6 +106,9 @@ class Orchestrator:
         
         # Ensure memory directory exists
         MEMORY_DIR.mkdir(parents=True, exist_ok=True)
+        
+        # Post-hoc commander briefing generator
+        self._briefing_generator = None
 
     def _load_elite_genome(self) -> Optional[EvolutionaryGenome]:
         """Load the best genome from persistent memory if it exists."""
@@ -279,6 +282,15 @@ class Orchestrator:
             self.coevolution.initialize_blue(blue_commander)
             self.coevolution.initialize_red(red_genome)
         
+        # Initialize post-hoc commander briefing generator
+        if self._briefing_generator is None:
+            try:
+                from generative.commander_briefing import CommanderBriefingGenerator, log_training_summary
+                self._briefing_generator = CommanderBriefingGenerator()
+                log_training_summary()
+            except Exception as e:
+                logger.debug(f"Briefing generator unavailable: {e}")
+        
         # Track best across all episodes
         overall_best_fitness = self.best_fitness
         overall_best_genome = elite
@@ -418,6 +430,24 @@ class Orchestrator:
             
             # Print dashboard
             self._print_dashboard(episode)
+            
+            # Post-hoc commander briefing every 20 episodes
+            if self._briefing_generator is not None:
+                from generative.commander_briefing import should_brief
+                if should_brief(episode, interval=20):
+                    window_survival = min(10, len(self.red_survival_rates))
+                    recent_survival = self.red_survival_rates[-window_survival:] if window_survival > 0 else []
+                    red_survival_rate = (sum(recent_survival) / len(recent_survival) * 100) if recent_survival else 0.0
+                    
+                    telemetry = {
+                        "success_rate": (sum(self.episode_successes[-10:]) / len(self.episode_successes[-10:])) if len(self.episode_successes) >= 10 else (sum(self.episode_successes) / max(1, len(self.episode_successes))),
+                        "avg_reward": avg_reward,
+                        "mutation_rate": self.current_mutation_rate,
+                        "red_survival_rate": red_survival_rate / 100.0,
+                        "generation": self.generation,
+                        "best_novelty": best_novelty,
+                    }
+                    self._briefing_generator.write_briefing(episode, telemetry)
         
         # Save best genome after all episodes
         if overall_best_genome:
