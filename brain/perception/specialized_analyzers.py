@@ -255,18 +255,58 @@ class SonarAI(SpecializedAnalyzer):
 
 
 class VisualAI(SpecializedAnalyzer):
-    """AI specialized for visual/optical analysis."""
+    """AI specialized for visual/optical analysis using HuggingFace OWL-ViT."""
+    
+    # Military-relevant object labels for detection
+    MILITARY_LABELS = [
+        "tank", "military vehicle", "fighter jet", "missile launcher", 
+        "soldier", "military aircraft", "artillery", "radar system",
+        "truck", "vehicle", "person", "weapon", "truck", "bus"
+    ]
     
     def __init__(self):
         super().__init__()
+        self._model = None
+        self._processor = None
+    
+    def _load_model(self):
+        """Lazy load the OWL-ViT model."""
+        if self._model is None:
+            try:
+                from transformers import OwlViTForObjectDetection, OwlViTProcessor
+                import torch
+                
+                self._model = OwlViTForObjectDetection.from_pretrained(
+                    "google/owlvit-base-patch32"
+                )
+                self._processor = OwlViTProcessor.from_pretrained(
+                    "google/owlvit-base-patch32"
+                )
+                self._device = "cuda" if torch.cuda.is_available() else "cpu"
+                self._model.to(self._device)
+            except Exception as e:
+                logger.warning(f"Could not load OWL-ViT model: {e}")
+                # Graceful fallback
     
     def analyze(self, raw_data: Any, metadata: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze visual data for target classification."""
-        result = {"threat_indicator": 0.4, "classification": "unknown", "confidence": 0.0}
+        """Analyze visual data using OWL-ViT zero-shot object detection.
         
-        if isinstance(raw_data, dict):
-            objects = raw_data.get("detected_objects", [])
-            weapons = raw_data.get("weapons_visible", False)
+        Args:
+            raw_data: base64 encoded image string or file path to image
+            metadata: Additional context (confidence, etc.)
+            
+        Returns:
+            {"threat_indicator": float, "classification": str, "confidence": float}
+        """
+        result = {"threat_indicator": 0.0, "classification": "unknown", "confidence": 0.0}
+        
+        # Try to use real model if available
+        self._load_model()
+        
+        if self._model is None:
+            # Graceful fallback to mock if model unavailable
+            objects = metadata.get("detected_objects", [])
+            weapons = metadata.get("weapons_visible", False)
             
             if weapons:
                 result["threat_indicator"] = 0.8
@@ -277,8 +317,80 @@ class VisualAI(SpecializedAnalyzer):
             elif "personnel" in objects:
                 result["threat_indicator"] = 0.5
                 result["classification"] = "personnel"
+            
+            result["confidence"] = 0.85 if result["classification"] != "unknown" else 0.5
+            return result
         
-        result["confidence"] = 0.85 if result["classification"] != "unknown" else 0.5
+        try:
+            import base64
+            from PIL import Image
+            import io
+            import torch
+            import numpy as np
+            
+            # Load image from base64 or file path
+            if isinstance(raw_data, str):
+                if raw_data.startswith("/"):  # File path
+                    image = Image.open(raw_data).convert("RGB")
+                else:  # base64
+                    image_data = base64.b64decode(raw_data)
+                    image = Image.open(io.BytesIO(image_data)).convert("RGB")
+            else:
+                image = raw_data
+            
+            # Run detection
+            inputs = self._processor(
+                text=self.MILITARY_LABELS,
+                images=image,
+                return_tensors="pt"
+            ).to(self._device)
+            
+            with torch.no_grad():
+                outputs = self._model(**inputs)
+            
+            # Post-process results
+            target_sizes = torch.tensor([image.size[::-1]])
+            results = self._processor.post_process_object_detection(
+                outputs, 
+                threshold=0.1,
+                target_sizes=target_sizes
+            )[0]
+            
+            # Extract threat indicator from highest confidence detection
+            scores = results["scores"].cpu().numpy()
+            labels = results["labels"].cpu().numpy()
+            
+            if len(scores) > 0:
+                max_idx = np.argmax(scores)
+                max_score = float(scores[max_idx])
+                label = self.MILITARY_LABELS[int(labels[max_idx])]
+                
+                # Map military objects to threat levels
+                high_threat = ["tank", "missile launcher", "artillery", "fighter jet"]
+                medium_threat = ["military vehicle", "military aircraft", "radar system"]
+                
+                if any(obj in label.lower() for obj in high_threat):
+                    result["threat_indicator"] = min(1.0, max_score * 1.2)
+                    result["classification"] = label.replace(" ", "_")
+                elif any(obj in label.lower() for obj in medium_threat):
+                    result["threat_indicator"] = min(1.0, max_score)
+                    result["classification"] = label.replace(" ", "_")
+                else:
+                    result["threat_indicator"] = max_score * 0.5
+                    result["classification"] = label.replace(" ", "_")
+                
+                result["confidence"] = max_score
+            else:
+                result["threat_indicator"] = 0.0
+                result["classification"] = "no_objects_detected"
+                result["confidence"] = 0.9
+                
+        except Exception as e:
+            logger.error(f"VisualAI analysis failed: {e}")
+            # Fallback to mock
+            result["threat_indicator"] = 0.3
+            result["classification"] = "fallback"
+            result["confidence"] = 0.5
         
         return result
 
