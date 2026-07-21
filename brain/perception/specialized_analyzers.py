@@ -125,34 +125,75 @@ class GPSAI(SpecializedAnalyzer):
 
 
 class VoiceAI(SpecializedAnalyzer):
-    """AI specialized for voice/intelligence intercept analysis."""
+    """AI specialized for voice/intelligence intercept analysis using Whisper."""
     
     def __init__(self):
         super().__init__()
-        self.threat_keywords = ["attack", "strike", "engage", "destroy", "eliminate", "target"]
-        self.non_threat_keywords = ["retreat", "withdraw", "cease", "hold", "monitor"]
+        self.threat_keywords = ["attack", "strike", "engage", "destroy", "eliminate", "target", 
+                                "hostile", "weapons", "fire", "bomb", "explosion"]
+        self.non_threat_keywords = ["retreat", "withdraw", "cease", "hold", "monitor",
+                                     "peace", "safe", "friendly", "neutral"]
+        self._model = None
+    
+    def _load_model(self):
+        """Lazy load Whisper model."""
+        if self._model is None:
+            try:
+                import whisper
+                self._model = whisper.load_model("tiny")
+            except Exception as e:
+                logger.warning(f"Could not load Whisper model: {e}")
     
     def analyze(self, raw_data: Any, metadata: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze voice/text for threat indicators."""
-        result = {"threat_indicator": 0.0, "classification": "normal", "confidence": 0.0}
+        """Analyze audio file using Whisper transcription + keyword matching.
         
-        text = str(raw_data).lower()
+        Args:
+            raw_data: Path to audio file (WAV/MP3)
+            metadata: Additional context
+            
+        Returns:
+            {"threat_indicator": float, "classification": str, "confidence": float}
+        """
+        result = {"threat_indicator": 0.0, "classification": "unknown", "confidence": 0.0}
+        
+        self._load_model()
+        
+        if self._model is None:
+            # Fallback to text input
+            text = str(raw_data).lower()
+        else:
+            try:
+                # Transcribe audio file
+                if isinstance(raw_data, str):
+                    transcription = self._model.transcribe(raw_data)
+                    text = transcription["text"].lower()
+                else:
+                    text = str(raw_data).lower()
+            except Exception as e:
+                logger.error(f"VoiceAI transcription failed: {e}")
+                text = ""
         
         # Count threat keywords
         threat_count = sum(1 for kw in self.threat_keywords if kw in text)
         non_threat_count = sum(1 for kw in self.non_threat_keywords if kw in text)
         
+        # Calculate threat based on keyword density
+        total_words = len(text.split()) if text else 1
+        threat_density = threat_count / max(1, total_words)
+        
         if threat_count > 0:
-            result["threat_indicator"] = min(1.0, threat_count * 0.25)
+            # Scale threat indicator by how many threat words found
+            result["threat_indicator"] = min(1.0, threat_density * 50)
             result["classification"] = "hostile_intent"
+            result["confidence"] = 0.85
         elif non_threat_count > 0:
             result["threat_indicator"] = 0.1
             result["classification"] = "non_hostile"
+            result["confidence"] = 0.75
         else:
             result["threat_indicator"] = 0.3
             result["classification"] = "neutral"
-        
-        result["confidence"] = 0.8 if threat_count > 0 else 0.6
+            result["confidence"] = 0.7
         
         return result
 
@@ -396,29 +437,111 @@ class VisualAI(SpecializedAnalyzer):
 
 
 class AcousticAI(SpecializedAnalyzer):
-    """AI specialized for acoustic signature analysis."""
+    """AI specialized for acoustic signature analysis using librosa/scipy."""
+    
+    # Frequency thresholds for threat detection (Hz)
+    GUNSHOT_FREQ_MIN = 1500   # Gunshots have high-frequency spikes
+    EXPLOSION_FREQ_MIN = 200   # Explosions have low-mid frequency
+    ENGINE_FREQ_MAX = 500        # Engines are lower frequency
     
     def __init__(self):
         super().__init__()
+        self._librosa_available = True
+    
+    def _check_dependencies(self):
+        """Check if librosa/scipy are available."""
+        try:
+            import librosa
+            import numpy as np
+            from scipy import signal
+            return True
+        except ImportError:
+            self._librosa_available = False
+            return False
     
     def analyze(self, raw_data: Any, metadata: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze acoustic signatures for activity detection."""
-        result = {"threat_indicator": 0.3, "classification": "unknown", "confidence": 0.0}
+        """Analyze audio file using real signal processing.
         
-        # Analyze audio patterns
-        if isinstance(raw_data, dict):
-            activity = raw_data.get("detected_activity", "")
+        Args:
+            raw_data: Path to WAV file or raw audio data
+            metadata: Additional context
             
-            if "engine" in activity:
-                result["threat_indicator"] = 0.5
-                result["classification"] = "mechanical"
-            if "artillery" in activity:
-                result["threat_indicator"] = 0.9
-                result["classification"] = "artillery_firing"
-            if "movement" in activity:
-                result["threat_indicator"] = min(0.8, result["threat_indicator"] + 0.3)
+        Returns:
+            {"threat_indicator": float, "classification": str, "confidence": float}
+        """
+        result = {"threat_indicator": 0.0, "classification": "unknown", "confidence": 0.0}
         
-        result["confidence"] = 0.7
+        if not self._check_dependencies():
+            # Fallback to simple analysis
+            if isinstance(raw_data, dict):
+                activity = raw_data.get("detected_activity", "")
+                if "artillery" in activity:
+                    result["threat_indicator"] = 0.7
+                    result["classification"] = "artillery_firing"
+                elif "engine" in activity:
+                    result["threat_indicator"] = 0.4
+                    result["classification"] = "mechanical"
+                else:
+                    result["threat_indicator"] = 0.3
+                    result["classification"] = "ambient"
+            else:
+                result["threat_indicator"] = 0.3
+                result["classification"] = "ambient"
+            result["confidence"] = 0.5
+            return result
+        
+        try:
+            import librosa
+            import numpy as np
+            from scipy import signal
+            
+            # Load audio file
+            if isinstance(raw_data, str):
+                y, sr = librosa.load(raw_data, sr=None)
+            elif isinstance(raw_data, (list, np.ndarray)):
+                y = np.array(raw_data)
+                sr = metadata.get("sample_rate", 22050)
+            else:
+                result["threat_indicator"] = 0.3
+                result["classification"] = "fallback"
+                result["confidence"] = 0.5
+                return result
+            
+            # Calculate RMS (volume in dB)
+            rms = librosa.feature.rms(y=y)[0]
+            avg_db = librosa.amplitude_to_db(rms).mean()
+            
+            # High volume increases threat
+            volume_threat = min(1.0, max(0, (avg_db + 50) / 50))
+            
+            # Spectral analysis for gunshot/explosion detection
+            spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)[0]
+            avg_centroid = spectral_centroid.mean()
+            
+            # High frequency centroid suggests gunfire
+            freq_threat = 0.0
+            if avg_centroid > self.GUNSHOT_FREQ_MIN:
+                freq_threat = 0.8  # High-frequency = gunshots
+                result["classification"] = "gunfire_detected"
+            elif avg_centroid > self.EXPLOSION_FREQ_MIN:
+                freq_threat = 0.6  # Mid frequency = explosions
+                if result["classification"] == "unknown":
+                    result["classification"] = "explosion_detected"
+            else:
+                # Low frequency could be engines/vehicles
+                freq_threat = 0.3
+                if result["classification"] == "unknown":
+                    result["classification"] = "mechanical_noise"
+            
+            # Combined threat indicator
+            result["threat_indicator"] = min(1.0, (volume_threat + freq_threat) / 2)
+            result["confidence"] = 0.85
+            
+        except Exception as e:
+            logger.error(f"AcousticAI analysis failed: {e}")
+            result["threat_indicator"] = 0.3
+            result["classification"] = "fallback"
+            result["confidence"] = 0.5
         
         return result
 
