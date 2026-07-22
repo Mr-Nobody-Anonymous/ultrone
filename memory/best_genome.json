@@ -1,0 +1,99 @@
+{
+  "genome_id": "GEN-68770",
+  "generation": 0,
+  "action_weights": {
+    "locate": 0.8825345816622888,
+    "track": 0.8982027966669628,
+    "engage": 0.76943095960164,
+    "assess": 0.9510853807558284,
+    "jam": 0.9642896939438059,
+    "strike": 0.5157086022931676,
+    "hack": 0.8090651790463635,
+    "decoy": 0.5924211329273097,
+    "pinpoint": 0.6676606544967931,
+    "suppress": 0.6766750060652977
+  },
+  "synergy_map": {
+    "locate|track": 0.5553086734013841,
+    "locate|engage": 0.5116424711944709,
+    "locate|assess": 0.23445024600242848,
+    "locate|jam": 0.22299140478891288,
+    "locate|strike": 0.8264493425591479,
+    "locate|hack": 0.4105511774208517,
+    "locate|decoy": 0.06350053952169721,
+    "locate|pinpoint": 0.3863696984212255,
+    "locate|suppress": 0.8145255825504054,
+    "track|engage": 0.010003401551647029,
+    "track|assess": 0.307895481427202,
+    "track|jam": 0.29943732804050205,
+    "track|strike": 0.9480042966281146,
+    "track|hack": 0.8733254496493553,
+    "track|decoy": 0.8251662825217254,
+    "track|pinpoint": 0.4519375668974408,
+    "track|suppress": 0.9764715552212044,
+    "engage|assess": 0.4823620302777446,
+    "engage|jam": 0.41926825491432507,
+    "engage|strike": 0.5514130692794013,
+    "engage|hack": 0.6018851405019583,
+    "engage|decoy": 0.9943505223236785,
+    "engage|pinpoint": 0.5594888585249461,
+    "engage|suppress": 0.30270252132356,
+    "assess|jam": 0.09739098448285644,
+    "assess|strike": 0.14258762411204795,
+    "assess|hack": 0.6765559949859089,
+    "assess|decoy": 0.9909471838902281,
+    "assess|pinpoint": 0.433794818691721,
+    "assess|suppress": 0.7244269934242806,
+    "jam|strike": 0.3579919657055749,
+    "jam|hack": 0.7034106440609389,
+    "jam|decoy": 0.724560944300476,
+    "jam|pinpoint": 0.28006919246255146,
+    "jam|suppress": 0.11954913541746592,
+    "strike|hack": 0.014307982559365606,
+    "strike|decoy": 0.3595380887216182,
+    "strike|pinpoint": 0.5990616508564583,
+    "strike|suppress": 0.4636099062411482,
+    "hack|decoy": 0.9620965976849531,
+    "hack|pinpoint": 0.6327420927775286,
+    "hack|suppress": 0.7767298068023845,
+    "decoy|pinpoint": 0.005606229863278078,
+    "decoy|suppress": 0.8476447007695174,
+    "pinpoint|suppress": 0.41418791729356985
+  },
+  "phase_params": {
+    "find": {
+      "speed": 1.0,
+      "confidence_threshold": 0.7,
+      "resource_efficiency": 0.8
+    },
+    "fix": {
+      "speed": 1.0,
+      "confidence_threshold": 0.7,
+      "resource_efficiency": 0.8
+    },
+    "track": {
+      "speed": 1.0,
+      "confidence_threshold": 0.7,
+      "resource_efficiency": 0.8
+    },
+    "target": {
+      "speed": 1.0,
+      "confidence_threshold": 0.7,
+      "resource_efficiency": 0.8
+    },
+    "engage": {
+      "speed": 1.0,
+      "confidence_threshold": 0.7,
+      "resource_efficiency": 0.8
+    },
+    "assess": {
+      "speed": 1.0,
+      "confidence_threshold": 0.7,
+      "resource_efficiency": 0.8
+    }
+  },
+  "resource_conservation": 0.7201009282070068,
+  "time_optimization": 0.9929513905729105,
+  "domain": "all",
+  "fitness_score": 0.33351351351351355
+}
