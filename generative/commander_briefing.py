@@ -142,7 +142,7 @@ class CommanderBriefingGenerator:
         if red_survival >= 0.8:
             red_assessment = "Red has preserved its force through effective ECM and dispersion"
         elif red_survival >= 0.5:
-            Red_assessment = "Red is surviving but taking losses; evasion is partially effective"
+            red_assessment = "Red is surviving but taking losses; evasion is partially effective"
         else:
             red_assessment = "Red is being destroyed before it can mount an effective defense"
         
