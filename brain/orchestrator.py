@@ -26,68 +26,6 @@ if str(PROJECT_ROOT) not in sys.path:
 # Default paths
 MEMORY_DIR = Path(__file__).parent.parent / "memory"
 BEST_GENOME_PATH = MEMORY_DIR / "best_genome.json"
-COMMANDER_LOG_PATH = MEMORY_DIR / "commander_log.txt"
-
-
-class TelemetryAccumulator:
-    """
-    Accumulates step-level telemetry across an episode with time-weighted averaging.
-    
-    Later steps receive higher weight (linear ramp: 1.0 + 0.1*step_idx),
-    so that end-game maneuvers matter more than early positioning.
-    """
-    
-    def __init__(self) -> None:
-        self.hits: int = 0
-        self.attempts: int = 0
-        self.weapons_used: int = 0
-        self.weapons_allocated: int = 0
-        self.actions_used: set = set()
-        self.blue_on_blue: int = 0
-        self.collision_count: int = 0
-        self.ecm_active_count: int = 0
-        self.steps: int = 0
-        # Time-weighted accumulators
-        self._weighted_accuracy: float = 0.0
-        self._weight_sum: float = 0.0
-    
-    def add_step(self, step_telemetry: Dict[str, Any], step_idx: int) -> None:
-        """Accumulate one step of telemetry with linear time-weighting."""
-        weight = 1.0 + 0.1 * step_idx  # later steps matter more
-        self.steps += 1
-        self.hits += step_telemetry.get("hits", 0)
-        self.attempts += step_telemetry.get("attempts", 0)
-        self.weapons_used += step_telemetry.get("weapons_used", 0)
-        self.weapons_allocated += step_telemetry.get("weapons_allocated", 0)
-        for a in step_telemetry.get("actions_used", []):
-            self.actions_used.add(a)
-        self.blue_on_blue += step_telemetry.get("blue_on_blue", 0)
-        self.collision_count += step_telemetry.get("collision_count", 0)
-        if step_telemetry.get("ecm_active", False):
-            self.ecm_active_count += 1
-        # Track time-weighted accuracy
-        step_hit = 1.0 if step_telemetry.get("hits", 0) > 0 else 0.0
-        self._weighted_accuracy += weight * step_hit
-        self._weight_sum += weight
-    
-    def finalize(self, total_steps: int, red_survived: bool) -> Dict[str, Any]:
-        """Produce aggregated telemetry dict at episode end."""
-        self.actions_used.discard(None)
-        return {
-            "hits": self.hits,
-            "attempts": max(1, self.attempts),
-            "weapons_used": max(1, self.weapons_used),
-            "weapons_allocated": max(1, self.weapons_allocated),
-            "actions_used": list(self.actions_used),
-            "blue_on_blue": self.blue_on_blue,
-            "collision_count": self.collision_count,
-            "red_survived": red_survived,
-            "ecm_active": self.ecm_active_count > 0,
-            "total_steps": total_steps,
-            "time_weighted_accuracy": (
-                self._weighted_accuracy / self._weight_sum if self._weight_sum > 0 else 0.0
-            ),
-        }
 
 
 class Orchestrator:
@@ -428,30 +366,11 @@ class Orchestrator:
                 coa_gen.population = [elite]
                 coa_gen._initialized = True
             
-            # Apply directive -> mutation rate mapping before episode
-            # (exploit vs explore envelope from SecretaryCouncil)
-            base_mutation = self.current_mutation_rate
-            if self._current_directive:
-                focus = self._current_directive.focus
-                if focus in ("novelty", "counter_ecm"):
-                    # High agility / high risk → inflate mutation toward 0.30
-                    self.current_mutation_rate = min(0.30, max(0.15, base_mutation * 1.5))
-                elif focus in ("efficiency",):
-                    # Conserve assets → clamp mutation low for exploitation
-                    self.current_mutation_rate = max(0.01, min(0.08, base_mutation * 0.5))
-                elif focus in ("counter_evade",):
-                    # Balanced pressure → moderate mutation
-                    self.current_mutation_rate = max(0.08, min(0.20, base_mutation * 1.1))
-                # else "balanced" — leave base_mutation unchanged
-            
             total_reward = 0.0
             success = False
             red_survived = True
             done = False
             step = 0
-            
-            # Initialize step-level telemetry accumulator
-            telemetry_accum = TelemetryAccumulator()
             
             # Episode loop
             while not done and step < self.max_steps_per_episode:
@@ -517,11 +436,11 @@ class Orchestrator:
                     logger.error(f"Error during environment step: {e}")
                     break
                 
-                # Accumulate step telemetry
-                step_telemetry = {
-                    "hits": 1 if (done and reward > 0) else 0,
-                    "attempts": 1,
-                    "weapons_used": 1 if (blue_action and blue_action.get("action") == "strike") else 0,
+                # Evaluate fitness
+                telemetry = {
+                    "hits": 1 if success else 0,
+                    "attempts": step,
+                    "weapons_used": 1,
                     "weapons_allocated": 3,
                     "actions_used": coa.phases if coa else [],
                     "blue_on_blue": 1 if info.get("swarm_collisions", 0) > 0 else 0,
@@ -529,18 +448,11 @@ class Orchestrator:
                     "red_survived": red_survived,
                     "ecm_active": info.get("ecm_active", False),
                 }
-                telemetry_accum.add_step(step_telemetry, step - 1)
-                
-                # Evaluate fitness on every step (coevolution accumulates per-step)
                 directive_weights = self._current_directive.weights if self._current_directive else None
                 if blue_commander and self.use_coevolution:
-                    self.coevolution.evaluate_blue_fitness(
-                        blue_commander, [red_genome],
-                        {red_genome.genome_id: step_telemetry},
-                        directive=directive_weights,
-                    )
+                    self.coevolution.evaluate_blue_fitness(blue_commander, [red_genome], {red_genome.genome_id: telemetry}, directive=directive_weights)
                 else:
-                    fitness = coa_gen.evaluate_fitness(coa_gen.active_genome, step_telemetry)
+                    fitness = coa_gen.evaluate_fitness(coa_gen.active_genome, telemetry)
                 
                 # Track best genome
                 current_fitness = blue_commander.fitness_score if blue_commander else fitness
@@ -612,34 +524,10 @@ class Orchestrator:
                 if self._secretary_council is not None:
                     try:
                         red_behavior = self._analyze_red_behavior(red_genome, self.red_survival_rates)
-                        # Capture live blue_assets state at the end of the episode (Step 5)
-                        blue_attrition = self._analyze_blue_attrition(env.blue_assets if hasattr(env, 'blue_assets') else obs.get("blue_assets", {}))
+                        blue_attrition = self._analyze_blue_attrition(obs.get("blue_assets", {}))
                         directive = self._secretary_council.deliberate(telemetry, red_behavior, blue_attrition)
                         self._current_directive = directive
                         logger.info(f"Strategic directive: {directive.focus} - {directive.notes}")
-                        
-                        # Persist directive metadata as structured JSON log (Step 4)
-                        try:
-                            directive_log = {
-                                "event": "strategic_directive",
-                                "episode": episode,
-                                "generation": self.generation,
-                                "focus": directive.focus,
-                                "weights": directive.weights,
-                                "notes": directive.notes,
-                                "red_ecm_usage": red_behavior.get("ecm_usage", 0),
-                                "red_evasion_usage": red_behavior.get("evasion_usage", 0),
-                                "blue_ammo_remaining": blue_attrition.get("ammo_remaining", 100),
-                                "blue_health_remaining": blue_attrition.get("health_remaining", 100),
-                                "success_rate": telemetry.get("success_rate", 0),
-                                "red_survival_rate": telemetry.get("red_survival_rate", 0),
-                                "mutation_rate_after": self.current_mutation_rate,
-                            }
-                            COMMANDER_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-                            with open(COMMANDER_LOG_PATH, "a", encoding="utf-8") as f:
-                                f.write(json.dumps(directive_log) + "\n")
-                        except Exception as log_e:
-                            logger.debug(f"Directive log write failed: {log_e}")
                     except Exception as e:
                         logger.debug(f"Secretary council failed: {e}")
             

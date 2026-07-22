@@ -49,8 +49,7 @@ class LLMCommander:
         Args:
             ascii_map: ASCII map string from BattlefieldEnv.render_ascii_map()
             telemetry: Recent training telemetry
-
-
+            
         Returns:
             Tactical briefing string
         """
@@ -130,3 +129,15 @@ class LLMCommander:
             logger.info("Tactical briefing written to %s", self.log_path)
         except Exception as e:
             logger.error("Failed to write briefing: %s", e)
+
+</parameter>
+<task_progress>
+- [x] Check for existing LLM commander
+- [x] Create secretary_council.py
+- [x] Add render_ascii_map() to BattlefieldEnv
+- [x] Create llm_commander.py as post-hoc observer
+- [x] Fix corrupted files
+- [ ] Update orchestrator for hybrid loop
+- [ ] Run tests and push to GitHub
+</task_progress>
+</write_to_file>
