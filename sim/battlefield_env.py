@@ -1,451 +1,564 @@
 # Copyright (c) Ultrone Contributors. All rights reserved.
-"""Lightweight 2D battlefield simulation environment."""
+"""
+Battlefield Environment with Operational Readiness Ontology
+Phase 6: Supply nodes, fuel, effectiveness, resupply mechanics
+
+Designed for multi-agent simulation with full operational readiness modeling.
+"""
 
 from __future__ import annotations
 
 import logging
-import sys
-from typing import Dict, Tuple, Optional, Any
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple, Any
 import numpy as np
 import random
-
-# Add parent directory for direct execution
-if __name__ == "__main__" and __package__ is None:
-    from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).parent.parent))
+import math
 
 logger = logging.getLogger("Ultrone.Sim.BattlefieldEnv")
 
 
-class BattlefieldEnv:
-    """Lightweight 2D grid-based battlefield simulation.
+@dataclass
+class SupplyNode:
+    """Logistics hub that sustains linked assets"""
+    node_id: str
+    position: Tuple[int, int]
+    health: float = 100.0
+    assets_linked: List[str] = field(default_factory=list)
+    team: str = "unknown"
     
-    OpenAI Gym-style interface for testing evolutionary COAs.
+    @property
+    def is_destroyed(self) -> bool:
+        return self.health <= 0
+    
+    def is_operational(self) -> bool:
+        return self.health > 0
+    
+    def take_damage(self, damage: float) -> float:
+        """Apply damage and return actual damage dealt."""
+        dealt = min(self.health, damage)
+        self.health -= dealt
+        return dealt
+
+
+@dataclass
+class AssetState:
+    """Full operational state for a military asset"""
+    asset_id: str
+    asset_type: str  # "fighter", "sam", "jammer", "uav", etc.
+    position: Tuple[int, int]
+    health: float = 100.0
+    ammo: float = 100.0
+    fuel: float = 100.0
+    supply_node_id: Optional[str] = None
+    effectiveness: float = 1.0  # 0.0 to 1.0
+    range: int = 5
+    speed: int = 2
+    fuel_max: float = 100.0
+    ammo_max: float = 100.0
+    
+    def can_move(self) -> bool:
+        return self.fuel > 0 and self.health > 0
+    
+    def can_attack(self) -> bool:
+        return self.ammo > 0 and self.health > 0 and self.effectiveness > 0.1
+    
+    def is_combat_capable(self) -> bool:
+        return self.health > 0 and self.effectiveness > 0.1
+
+
+def create_asset(asset_type: str, asset_id: str, position: Tuple[int, int],
+                 supply_node_id: str, **kwargs) -> Dict:
+    """Backward-compatible factory for legacy dict-based asset creation."""
+    return {
+        "asset_id": asset_id,
+        "type": asset_type,
+        "position": position,
+        "health": 100.0,
+        "ammo": 100.0,
+        "fuel": 100.0,
+        "fuel_max": 100.0,
+        "ammo_max": 100.0,
+        "supply_node_id": supply_node_id,
+        "effectiveness": 1.0,
+        "range": 5,
+        "speed": 2,
+        **kwargs
+    }
+
+
+class BattlefieldEnv:
+    """
+    2D grid battlefield with red/blue forces, supply logistics,
+    and operational readiness modeling.
     """
     
-    GRID_SIZE = 100  # 100x100 grid
+    GRID_SIZE = 100
     MAX_STEPS = 200
+    RESUPPLY_STEPS = 3
     
-    def __init__(self):
-        self.grid = np.zeros((self.GRID_SIZE, self.GRID_SIZE), dtype=np.float32)
-        self.red_force = None
-        self.blue_assets = {"drones": [], "jammers": [], "missiles": []}
+    def __init__(self, width: int = 100, height: int = 100):
+        self.width = width
+        self.height = height
         self.step_count = 0
-        self.done = False
+        self.max_steps = 200
+        
+        self.grid = np.zeros((width, height), dtype=np.float32)
+        
+        self.blue_supply_nodes: Dict[str, SupplyNode] = {}
+        self.red_supply_nodes: Dict[str, SupplyNode] = {}
+        
+        self.blue_assets: Dict[str, List[Dict]] = {}
+        self.red_assets: Dict[str, List[Dict]] = {}
+        
+        self.red_force: Dict[str, Any] = {}
+        
+        self._ecm_active = False
+        self._ecm_noise = 0.0
         self._perception_done = False
+        
+        self.action_types = ["move", "strike", "jam", "evade", "resupply", "hold"]
+        
+        # Resupply tracking: asset_id -> steps completed
+        self._resupply_progress: Dict[str, int] = {}
     
-    def reset(self, red_position: Optional[Tuple[int, int]] = None) -> Dict[str, Any]:
-        """Reset environment and spawn forces.
+    @property
+    def supply_nodes(self) -> Dict[str, SupplyNode]:
+        """Combined supply nodes for backward compatibility."""
+        combined = {}
+        combined.update(self.blue_supply_nodes)
+        combined.update(self.red_supply_nodes)
+        return combined
+    
+    def _create_default_assets(self) -> None:
+        """Create default blue/red assets for simulation."""
+        # Blue supply nodes
+        self.blue_supply_nodes = {
+            "BLUE-SUPPLY-A": SupplyNode(
+                node_id="BLUE-SUPPLY-A",
+                position=(10, 10),
+                health=100.0,
+                assets_linked=["drone-0", "drone-1", "jammer-0", "missile-0", "missile-1"],
+                team="blue",
+            ),
+            "BLUE-SUPPLY-B": SupplyNode(
+                node_id="BLUE-SUPPLY-B",
+                position=(15, 85),
+                health=100.0,
+                assets_linked=["drone-0", "drone-1", "jammer-0", "missile-0", "missile-1"],
+                team="blue",
+            ),
+        }
         
-        Args:
-            red_position: Optional fixed position for Red Force (for testing)
-        """
-        self.grid.fill(0)
+        # Blue assets
+        self.blue_assets = {
+            "drones": [
+                create_asset("drone", "drone-0", (30, 40), "BLUE-SUPPLY-A", speed=3, range=8),
+                create_asset("drone", "drone-1", (35, 45), "BLUE-SUPPLY-A", speed=3, range=8),
+            ],
+            "jammers": [
+                create_asset("jammer", "jammer-0", (25, 35), "BLUE-SUPPLY-B", speed=1, range=12),
+            ],
+            "missiles": [
+                create_asset("missile", "missile-0", (20, 50), "BLUE-SUPPLY-B", speed=5, range=15),
+                create_asset("missile", "missile-1", (22, 52), "BLUE-SUPPLY-B", speed=5, range=15),
+            ],
+        }
+        
+        # Red supply nodes
+        self.red_supply_nodes = {
+            "RED-SUPPLY-A": SupplyNode(
+                node_id="RED-SUPPLY-A",
+                position=(80, 20),
+                health=100.0,
+                assets_linked=[],
+                team="red",
+            ),
+            "RED-SUPPLY-B": SupplyNode(
+                node_id="RED-SUPPLY-B",
+                position=(85, 80),
+                health=100.0,
+                assets_linked=[],
+                team="red",
+            ),
+        }
+    
+    def reset(self, red_position: Optional[Tuple[int, int]] = None,
+              seed: Optional[int] = None) -> Dict:
+        """Reset the environment for a new episode."""
         self.step_count = 0
-        self.done = False
-        self._perception_done = False
         
-        # Spawn Red Force - optionally at specified position for testing
-        if red_position:
-            red_pos = red_position
-        else:
-            red_pos = (random.randint(10, 90), random.randint(10, 90))
+        if seed is not None:
+            random.seed(seed)
+            np.random.seed(seed)
         
+        # Create fresh assets
+        self._create_default_assets()
+        
+        # Red force as a single entity (dict-based for backward compat)
+        red_pos = red_position or (65, 50)
         self.red_force = {
             "position": red_pos,
-            "speed": random.randint(1, 5),
-            "type": random.choice(["armor", "artillery", "air_defense"]),
-            "health": 100,
-            "heading": random.uniform(0, 360),
+            "fuel": 100.0,
+            "fuel_max": 100.0,
+            "ammo": 100.0,
+            "ammo_max": 100.0,
+            "supply_node_id": "RED-SUPPLY-A",
+            "effectiveness": 1.0,
+            "health": 100.0,
+            "type": "armored",
         }
         
-        # Spawn Blue Force assets (start closer to center)
-        self.blue_assets = {
-            "drones": [{"position": (50, 50), "ammo": 5, "range": 30}],
-            "jammers": [{"position": (55, 50), "ammo": 3, "range": 20}],
-            "missiles": [{"position": (60, 50), "ammo": 3, "range": 50}],
-        }
-        
-        # ECM state tracking
         self._ecm_active = False
         self._ecm_noise = 0.0
         
-        return self._get_observation()
+        return self._get_obs()
     
-    def _get_observation(self) -> Dict[str, Any]:
-        """Get current state with real AI perception applied."""
-        # Late import to avoid circular dependency
-        from brain.perception.specialized_analyzers import RadarAI, VisualAI
+    def _get_obs(self) -> Dict:
+        """Get current observation."""
+        # Convert blue assets to dict format for observation
+        blue_assets_obs: Dict[str, List[Dict]] = {}
+        for atype, assets in self.blue_assets.items():
+            blue_assets_obs[atype] = [
+                {
+                    "asset_id": a["asset_id"],
+                    "type": a["type"],
+                    "position": a["position"],
+                    "health": a["health"],
+                    "ammo": a["ammo"],
+                    "fuel": a["fuel"],
+                    "fuel_max": a["fuel_max"],
+                    "ammo_max": a["ammo_max"],
+                    "supply_node_id": a["supply_node_id"],
+                    "effectiveness": a["effectiveness"],
+                    "range": a.get("range", 5),
+                    "speed": a.get("speed", 2),
+                }
+                for a in assets
+            ]
         
-        observation = {
-            "grid": self.grid.copy(),
+        # Supply nodes snapshot
+        supply_nodes_snapshot: Dict[str, Dict] = {}
+        for node_id, node in self.supply_nodes.items():
+            supply_nodes_snapshot[node_id] = {
+                "position": node.position,
+                "health": node.health,
+                "is_destroyed": node.is_destroyed,
+                "team": "blue" if node_id.startswith("BLUE") else "red",
+                "assets_linked": list(node.assets_linked),
+            }
+        
+        return {
+            "blue_assets": blue_assets_obs,
             "red_force": dict(self.red_force),
-            "blue_assets": {k: list(v) for k, v in self.blue_assets.items()},
-            "radar_data": None,
-            "visual_data": None,
+            "supply_nodes": supply_nodes_snapshot,
+            "ecm_active": self._ecm_active,
+            "ecm_noise": self._ecm_noise,
+            "step": self.step_count,
         }
-        
-        # Simulate radar return and apply RadarAI
-        if not self._perception_done:
-            try:
-                radar_ai = RadarAI()
-                # Simulate radar signal based on red force speed
-                radar_signal = np.random.randn(100) * self.red_force["speed"]
-                radar_result = radar_ai.analyze(radar_signal, {"speed": self.red_force["speed"]})
-                observation["radar_data"] = radar_result
-            except Exception as e:
-                logger.warning(f"RadarAI failed: {e}")
-                observation["radar_data"] = {"threat_indicator": 0.5, "classification": "contact"}
-            
-            # Simulate visual detection
-            try:
-                visual_ai = VisualAI()
-                # Simulate image data (no real file, use mock)
-                visual_result = visual_ai.analyze(None, {"detected_objects": [self.red_force["type"]]})
-                observation["visual_data"] = visual_result
-            except Exception as e:
-                logger.warning(f"VisualAI failed: {e}")
-                observation["visual_data"] = {"threat_indicator": 0.5, "classification": "contact"}
-            
-            self._perception_done = True
-        
-        # Apply ECM noise if active
-        if getattr(self, "_ecm_active", False) and getattr(self, "_ecm_noise", 0.0) > 0:
-            noise = self._ecm_noise
-            if observation["radar_data"] is not None:
-                if random.random() < noise:
-                    observation["radar_data"] = None
-                else:
-                    # Degrade radar confidence proportional to noise strength
-                    if isinstance(observation["radar_data"], dict):
-                        observation["radar_data"]["threat_indicator"] = max(0.0, observation["radar_data"].get("threat_indicator", 0.5) - noise)
-            if observation["visual_data"] is not None:
-                if random.random() < noise:
-                    observation["visual_data"] = None
-        
-        return observation
     
-    def _distance(self, pos1: Tuple[int, int], pos2: Tuple[int, int]) -> float:
-        """Calculate Euclidean distance between positions."""
-        return np.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
-    
-    def step(self, coa_action: Optional[Dict] = None, red_action: Optional[Dict] = None) -> Tuple[Dict, float, bool, Dict]:
-        """Apply COA and advance simulation.
+    def step(self, blue_action: Optional[Dict] = None,
+             red_action: Optional[Dict] = None) -> Tuple[Dict, float, bool, Dict]:
+        """
+        Execute one simulation step.
         
         Args:
-            coa_action: Legacy single action or swarm hierarchical COA:
-                Legacy: {"action": "strike"|"jam"|"move", "asset_type": "drone", "target": (x,y)}
-                Swarm: {
-                    "type": "swarm",
-                    "swarm_fleet": [
-                        {"asset_type": "drone", "action": "move", "target": (x,y)},
-                        ...
-                    ],
-                    "commander_genome": {...}
-                }
-            red_action: Red Force action from RedForceGenome:
-                {
-                    "evade": bool,
-                    "ecm": bool,
-                    "target": (x,y) or None
-                }
-                
+            blue_action: Dict with action type and params
+            red_action: Dict with evade/ECM params
+            
         Returns:
-            observation, reward, done, info
+            (obs, reward, done, info) tuple
         """
         self.step_count += 1
-        reward = 0.0
-        info = {"roe_violation": False, "action_applied": False, "swarm_collisions": 0, "ecm_active": False}
+        info = {
+            "fuel_consumed": 0.0,
+            "supply_node_destroyed": False,
+            "swarm_collisions": 0,
+            "ecm_active": False,
+        }
         
-        # Swarm hierarchical COA resolution
-        if coa_action and coa_action.get("type") == "swarm":
-            fleet = coa_action.get("swarm_fleet", [])
-            applied_actions = 0
-            collision_count = 0
-            occupied_cells = {}
-            
-            # First pass: resolve all fleet actions and detect collisions
-            for asset_action in fleet:
-                asset_type = asset_action.get("asset_type", "drone")
-                action = asset_action.get("action", "observe")
-                target = asset_action.get("target")
-                
-                if asset_type not in self.blue_assets or not self.blue_assets[asset_type]:
-                    continue
-                
-                assets = self.blue_assets[asset_type]
-                if not assets:
-                    continue
-                
-                asset = assets[0]
-                
-                if action == "move" and target is not None:
-                    if isinstance(target, (list, tuple)) and len(target) == 2:
-                        new_pos = (
-                            int(max(0, min(self.GRID_SIZE - 1, target[0]))),
-                            int(max(0, min(self.GRID_SIZE - 1, target[1])))
-                        )
-                        asset["position"] = new_pos
-                        applied_actions += 1
-                        
-                        # Track occupied cells for collision detection
-                        cell = new_pos
-                        occupied_cells[cell] = occupied_cells.get(cell, 0) + 1
-                
-                elif action == "strike" and asset_type in self.blue_assets:
-                    if asset.get("ammo", 0) > 0:
-                        asset_pos = asset["position"]
-                        target_pos = self.red_force["position"]
-                        distance = self._distance(asset_pos, target_pos)
-                        
-                        if distance <= asset.get("range", 9999):
-                            self.red_force["health"] -= 50
-                            asset["ammo"] -= 1
-                            reward += 25
-                            applied_actions += 1
-                            
-                            if self.red_force["health"] <= 0:
-                                reward += 100
-                                self.done = True
-                        else:
-                            reward -= 500
-                            info["roe_violation"] = True
-                            asset["ammo"] -= 1
-                
-                elif action == "jam" and asset_type in self.blue_assets:
-                    if asset.get("ammo", 0) > 0:
-                        asset["ammo"] -= 1
-                        applied_actions += 1
-            
-            # Count collisions (multiple assets in same cell)
-            for cell, count in occupied_cells.items():
-                if count > 1:
-                    collision_count += (count - 1)
-            
-            info["action_applied"] = applied_actions > 0
-            info["swarm_collisions"] = collision_count
-            
-            # Swarm collision penalty: discourage stacking
-            if collision_count > 0:
-                reward -= 50 * collision_count
-        
-        # Legacy single-action mode
-        elif coa_action:
-            action = coa_action.get("action", "observe")
-            asset_type = coa_action.get("asset_type", "drone")
-            
-            if action == "strike" and asset_type in self.blue_assets:
-                assets = self.blue_assets[asset_type]
-                if assets and assets[0]["ammo"] > 0:
-                    asset_pos = assets[0]["position"]
-                    target_pos = self.red_force["position"]
-                    distance = self._distance(asset_pos, target_pos)
-                    
-                    if distance <= assets[0]["range"]:
-                        self.red_force["health"] -= 50
-                        assets[0]["ammo"] -= 1
-                        reward += 25
-                        info["action_applied"] = True
-                        
-                        if self.red_force["health"] <= 0:
-                            reward += 100
-                            self.done = True
-                    else:
-                        reward -= 500
-                        info["roe_violation"] = True
-                        info["action_applied"] = False
-                        assets[0]["ammo"] -= 1
-            
-            elif action == "jam" and asset_type in self.blue_assets:
-                assets = self.blue_assets[asset_type]
-                if assets and assets[0]["ammo"] > 0:
-                    assets[0]["ammo"] -= 1
-                    info["action_applied"] = True
-            
-            elif action == "move" and asset_type in self.blue_assets:
-                assets = self.blue_assets[asset_type]
-                if assets:
-                    new_pos = coa_action.get("target", (50, 50))
-                    if isinstance(new_pos, (list, tuple)) and len(new_pos) == 2:
-                        assets[0]["position"] = (
-                            int(max(0, min(self.GRID_SIZE - 1, new_pos[0]))),
-                            int(max(0, min(self.GRID_SIZE - 1, new_pos[1])))
-                        )
-                        info["action_applied"] = True
-        
-        # Resolve Red Force action if provided
+        # Process Red actions
         if red_action:
-            ecm_active = bool(red_action.get("ecm", False))
-            self._ecm_active = ecm_active
-            self._ecm_noise = red_action.get("ecm_noise", 0.3) if ecm_active else 0.0
-            info["ecm_active"] = self._ecm_active
-            
-            if self.red_force and self.red_force["health"] > 0:
-                if red_action.get("evade", False):
-                    self.red_force["heading"] = (self.red_force["heading"] + random.uniform(-45, 45)) % 360
-                    burst = random.randint(0, 2)
-                    new_x = max(0, min(self.GRID_SIZE - 1, int(self.red_force["position"][0] + random.uniform(-1, 1) * (self.red_force["speed"] + burst))))
-                    new_y = max(0, min(self.GRID_SIZE - 1, int(self.red_force["position"][1] + random.uniform(-1, 1) * (self.red_force["speed"] + burst))))
-                    self.red_force["position"] = (new_x, new_y)
-                if red_action.get("target") is not None:
-                    tgt = red_action.get("target")
-                    if isinstance(tgt, (list, tuple)) and len(tgt) == 2:
-                        self.red_force["position"] = (
-                            int(max(0, min(self.GRID_SIZE - 1, tgt[0]))),
-                            int(max(0, min(self.GRID_SIZE - 1, tgt[1])))
-                        )
-        else:
-            self._ecm_active = False
-            self._ecm_noise = 0.0
-            
-            # Default random walk if no red action
-            if self.red_force and self.red_force["health"] > 0:
-                dx = random.randint(-self.red_force["speed"], self.red_force["speed"])
-                dy = random.randint(-self.red_force["speed"], self.red_force["speed"])
-                new_x = max(0, min(self.GRID_SIZE - 1, self.red_force["position"][0] + dx))
-                new_y = max(0, min(self.GRID_SIZE - 1, self.red_force["position"][1] + dy))
-                self.red_force["position"] = (new_x, new_y)
+            self._ecm_active = red_action.get("ecm", False)
+            self._ecm_noise = red_action.get("ecm_noise", 0.0)
+            if self._ecm_active:
+                info["ecm_active"] = True
+            self._process_red_evasion(red_action)
         
-        # Time penalty
-        reward -= 1.0
+        # Process Blue actions
+        reward = 0.0
+        if blue_action:
+            action_type = blue_action.get("action", "hold")
+            try:
+                if action_type == "move":
+                    reward = self._process_blue_move(blue_action, info)
+                elif action_type == "strike":
+                    reward = self._process_blue_strike(blue_action, info)
+                elif action_type == "jam":
+                    reward = self._process_blue_jam(blue_action)
+                elif action_type == "resupply":
+                    reward = self._process_resupply(blue_action, info)
+                elif action_type == "swarm":
+                    reward = self._process_swarm(blue_action, info)
+            except Exception as e:
+                logger.warning(f"Step action failed: {e}")
         
-        # Check for destruction
-        if self.red_force["health"] <= 0:
-            reward += 100
-            self.done = True
-        
-        # Max steps reached
+        # Check done conditions
+        done = False
         if self.step_count >= self.MAX_STEPS:
-            self.done = True
+            done = True
+        elif self.red_force.get("health", 100) <= 0:
+            done = True
+            reward = 50.0  # Success reward
         
-        return self._get_observation(), reward, self.done, info
+        # Supply node resupply logic
+        self._resolve_resupply()
+        
+        obs = self._get_obs()
+        return obs, reward, done, info
     
-    def render(self) -> str:
-        """Return ASCII representation of battlefield."""
-        grid_str = [["." for _ in range(10)] for _ in range(10)]
+    def _process_red_evasion(self, red_action: Dict) -> None:
+        """Process Red evasion maneuver."""
+        if red_action.get("evade", False):
+            pos = self.red_force.get("position", (50, 50))
+            heading_offset = red_action.get("heading_offset", 0)
+            angle = math.radians(heading_offset + random.uniform(-30, 30))
+            dx = int(math.cos(angle) * 3)
+            dy = int(math.sin(angle) * 3)
+            new_pos = (
+                max(0, min(self.width - 1, pos[0] + dx)),
+                max(0, min(self.height - 1, pos[1] + dy)),
+            )
+            self.red_force["position"] = new_pos
+            # Fuel cost for evasion
+            self.red_force["fuel"] = max(0, self.red_force.get("fuel", 100) - 1)
+    
+    def _process_blue_move(self, blue_action: Dict, info: Dict) -> float:
+        """Process Blue movement actions."""
+        target = blue_action.get("target")
+        asset_type = blue_action.get("asset_type", "missiles")
         
-        # Scale positions to 10x10 view
-        fx, fy = self.red_force["position"]
-        grid_str[fy // 10][fx // 10] = "R"
+        if asset_type not in self.blue_assets or not self.blue_assets[asset_type]:
+            return 0.0
         
-        for drone in self.blue_assets["drones"]:
-            x, y = drone["position"]
-            grid_str[y // 10][x // 10] = "D"
+        total_fuel = 0.0
+        for asset in self.blue_assets[asset_type]:
+            if not asset.get("can_move", True):
+                continue
+            if target:
+                cur = asset["position"]
+                dx = target[0] - cur[0]
+                dy = target[1] - cur[1]
+                dist = math.sqrt(dx*dx + dy*dy)
+                speed = asset.get("speed", 2)
+                step_dist = min(dist, speed)
+                if dist > 0:
+                    ratio = step_dist / dist
+                    asset["position"] = (
+                        int(cur[0] + dx * ratio),
+                        int(cur[1] + dy * ratio),
+                    )
+                fuel_cost = step_dist * 0.5
+                asset["fuel"] = max(0, asset["fuel"] - fuel_cost)
+                total_fuel += fuel_cost
         
-        return "\n" + "\n".join("".join(row) for row in grid_str)
+        info["fuel_consumed"] = total_fuel
+        return -total_fuel * 0.1  # Small penalty for movement
+    
+    def _process_blue_strike(self, blue_action: Dict, info: Dict) -> float:
+        """Process Blue strike actions."""
+        asset_type = blue_action.get("asset_type", "missiles")
+        accuracy_mod = blue_action.get("_accuracy_mod", 1.0)
+        
+        if asset_type not in self.blue_assets or not self.blue_assets[asset_type]:
+            return 0.0
+        
+        red_pos = self.red_force.get("position", (50, 50))
+        total_damage = 0.0
+        
+        for asset in self.blue_assets[asset_type]:
+            if not asset.get("can_attack", True):
+                continue
+            # Check range
+            asset_pos = asset["position"]
+            dist = math.sqrt((asset_pos[0] - red_pos[0])**2 + (asset_pos[1] - red_pos[1])**2)
+            max_range = asset.get("range", 5)
+            if dist > max_range * 5:  # generous range check
+                continue
+            
+            # Apply ECM degradation
+            ecm_factor = 1.0 - (self._ecm_noise if self._ecm_active else 0.0)
+            
+            # Base damage
+            damage = random.uniform(5, 15) * accuracy_mod * ecm_factor
+            red_health = self.red_force.get("health", 100)
+            self.red_force["health"] = max(0, red_health - damage)
+            total_damage += damage
+            
+            # Ammo consumption
+            asset["ammo"] = max(0, asset["ammo"] - 10)
+            
+            # Apply effectiveness loss
+            asset["effectiveness"] = max(0.1, asset.get("effectiveness", 1.0) - 0.05)
+        
+        # Reward proportional to damage inflicted
+        reward = total_damage * 0.5 - 2.0  # minus ammo cost
+        return reward
+    
+    def _process_blue_jam(self, blue_action: Dict) -> float:
+        """Process Blue jamming actions."""
+        asset_type = blue_action.get("asset_type", "jammers")
+        
+        if asset_type not in self.blue_assets or not self.blue_assets[asset_type]:
+            return 0.0
+        
+        for asset in self.blue_assets[asset_type]:
+            asset["effectiveness"] = max(0.1, asset.get("effectiveness", 1.0) - 0.02)
+        
+        # Suppress Red ECM
+        self._ecm_active = False
+        self._ecm_noise = max(0, self._ecm_noise - 0.2)
+        
+        return 2.0  # Reward for jamming
+    
+    def _process_swarm(self, blue_action: Dict, info: Dict) -> float:
+        """Process swarm actions (multi-asset coordinated)."""
+        fleet = blue_action.get("swarm_fleet", [])
+        total_reward = 0.0
+        
+        for asset_action in fleet:
+            sub_action = {
+                "action": asset_action.get("action", "move"),
+                "asset_type": asset_action.get("asset_type", "drones"),
+                "target": asset_action.get("target"),
+                "_accuracy_mod": asset_action.get("_accuracy_mod", 1.0),
+            }
+            
+            if sub_action["action"] == "strike":
+                total_reward += self._process_blue_strike(sub_action, info)
+            elif sub_action["action"] == "move":
+                total_reward += self._process_blue_move(sub_action, info)
+            elif sub_action["action"] == "jam":
+                total_reward += self._process_blue_jam(sub_action)
+        
+        # Track swarm collisions (same-grid stacking)
+        positions = []
+        for atype, assets in self.blue_assets.items():
+            for a in assets:
+                positions.append(a["position"])
+        collision_count = len(positions) - len(set(positions))
+        info["swarm_collisions"] = max(0, collision_count)
+        
+        return total_reward
+    
+    def _process_resupply(self, blue_action: Dict, info: Dict) -> float:
+        """Process resupply action for a specific asset type.
+        
+        Full resupply is achieved after RESUPPLY_STEPS consecutive resupply
+        steps. Each step increments a progress counter; on completion the
+        asset's fuel, ammo, and effectiveness are fully restored.
+        """
+        asset_type = blue_action.get("asset_type", "missiles")
+        
+        if asset_type not in self.blue_assets:
+            return 0.0
+        
+        resupplied = 0
+        for asset in self.blue_assets[asset_type]:
+            supply_id = asset.get("supply_node_id")
+            if supply_id and supply_id in self.supply_nodes:
+                node = self.supply_nodes[supply_id]
+                if node.is_operational():
+                    asset_pos = asset["position"]
+                    node_pos = node.position
+                    dist = math.sqrt((asset_pos[0] - node_pos[0])**2 +
+                                     (asset_pos[1] - node_pos[1])**2)
+                    if dist < 10:  # within resupply range
+                        aid = asset["asset_id"]
+                        self._resupply_progress[aid] = self._resupply_progress.get(aid, 0) + 1
+                        if self._resupply_progress[aid] >= self.RESUPPLY_STEPS:
+                            # Full resupply!
+                            asset["fuel"] = float(asset["fuel_max"])
+                            asset["ammo"] = float(asset["ammo_max"])
+                            asset["effectiveness"] = 1.0
+                            self._resupply_progress[aid] = 0  # reset for next cycle
+                            resupplied += 1
+        
+        return resupplied * 3.0  # Reward per fully resupplied asset
+    
+    def _resolve_resupply(self) -> None:
+        """Auto-resupply for assets near their supply nodes."""
+        for atype, assets in self.blue_assets.items():
+            for asset in assets:
+                supply_id = asset.get("supply_node_id")
+                if supply_id and supply_id in self.supply_nodes:
+                    node = self.supply_nodes[supply_id]
+                    if node.is_operational():
+                        asset_pos = asset["position"]
+                        node_pos = node.position
+                        dist = math.sqrt((asset_pos[0] - node_pos[0])**2 +
+                                         (asset_pos[1] - node_pos[1])**2)
+                        if dist < 8:
+                            # Gradual resupply
+                            asset["fuel"] = min(asset["fuel_max"], asset["fuel"] + 0.5)
+                            asset["ammo"] = min(asset["ammo_max"], asset["ammo"] + 0.5)
+    
+    def get_total_fuel_consumed(self) -> float:
+        """Get total fuel consumed across all blue assets."""
+        total = 0.0
+        for atype, assets in self.blue_assets.items():
+            for asset in assets:
+                total += asset.get("fuel_max", 100) - asset.get("fuel", 100)
+        return total
     
     def render_ascii_map(self) -> str:
-        """
-        Generate top-down text grid for LLM/VLM commanders.
+        """Render the battlefield as an ASCII map for LLM consumption."""
+        grid = [["." for _ in range(self.width)] for _ in range(self.height)]
         
-        Shows terrain, Red Force (R), Blue Drones (D), Blue Missiles (M), ECM zones (E).
-        Uses 20x20 scaled view from 100x100 grid.
-        """
-        width, height = 20, 20
-        grid_str = [["." for _ in range(width)] for _ in range(height)]
+        # Place supply nodes
+        for nid, node in self.blue_supply_nodes.items():
+            x, y = node.position
+            if 0 <= x < self.width and 0 <= y < self.height:
+                grid[y][x] = "S"
         
-        # Red Force
-        if self.red_force:
-            rx, ry = self.red_force["position"]
-            grid_str[min(height - 1, ry // 5)][min(width - 1, rx // 5)] = "R"
+        for nid, node in self.red_supply_nodes.items():
+            x, y = node.position
+            if 0 <= x < self.width and 0 <= y < self.height:
+                if not node.is_destroyed:
+                    grid[y][x] = "s"
         
-        # Blue assets
-        for drone in self.blue_assets.get("drones", []):
-            x, y = drone["position"]
-            grid_str[min(height - 1, y // 5)][min(width - 1, x // 5)] = "D"
+        # Place red force
+        rx, ry = self.red_force.get("position", (50, 50))
+        if 0 <= rx < self.width and 0 <= ry < self.height:
+            grid[ry][rx] = "R"
         
-        for missile in self.blue_assets.get("missiles", []):
-            x, y = missile["position"]
-            grid_str[min(height - 1, y // 5)][min(width - 1, x // 5)] = "M"
+        # Place blue assets
+        for atype, assets in self.blue_assets.items():
+            for asset in assets:
+                x, y = asset["position"]
+                if 0 <= x < self.width and 0 <= y < self.height:
+                    code = "D" if atype == "drones" else ("M" if atype == "missiles" else "J")
+                    grid[y][x] = code
         
-        for jammer in self.blue_assets.get("jammers", []):
-            x, y = jammer["position"]
-            grid_str[min(height - 1, y // 5)][min(width - 1, x // 5)] = "J"
+        # ECM zones
+        if self._ecm_active:
+            for _ in range(3):
+                ex = random.randint(0, self.width - 1)
+                ey = random.randint(0, self.height - 1)
+                grid[ey][ex] = "E"
         
-        # ECM zones (if active, mark area around Red)
-        if getattr(self, "_ecm_active", False):
-            if self.red_force:
-                rx, ry = self.red_force["position"]
-                cx = min(width - 1, rx // 5)
-                cy = min(height - 1, ry // 5)
-                for dy in (-1, 0, 1):
-                    for dx in (-1, 0, 1):
-                        nx, ny = cx + dx, cy + dy
-                        if 0 <= nx < width and 0 <= ny < height:
-                            if grid_str[ny][nx] == ".":
-                                grid_str[ny][nx] = "E"
+        # Render as compact grid (show only populated region)
+        lines = []
+        for row in grid:
+            line = "".join(row)
+            if any(c != "." for c in line):
+                lines.append(line)
         
-        return "\n" + "\n".join("".join(row) for row in grid_str)
-
-
-def test_battlefield_env():
-    """Quick test of the battlefield environment."""
-    env = BattlefieldEnv()
-    # Spawn Red Force close to Blue assets for testing
-    obs = env.reset(red_position=(65, 50))
-    print(f"Initial Red Force: {obs['red_force']}")
-    print(f"Blue Assets: {obs['blue_assets']}")
-    print(f"Radar Detection: {obs.get('radar_data')}")
-    print(f"Visual Detection: {obs.get('visual_data')}")
+        return "\n".join(lines[:20]) if lines else "Empty battlefield"
     
-    # Simulate a strike
-    for _ in range(5):
-        obs, reward, done, info = env.step({"action": "strike", "asset_type": "missiles"})
-        print(f"Step: reward={reward:.1f}, done={done}, red_health={obs['red_force']['health']}, roe={info['roe_violation']}")
-        if done:
-            break
-    
-    print(env.render())
-    print(f"Final observation keys: {list(obs.keys())}")
-    print("Battlefield environment test complete!")
+    def render(self, mode: str = "ascii") -> str:
+        """Legacy render support."""
+        if mode == "ascii":
+            return self.render_ascii_map()
+        return ""
 
-
-def test_with_evolutionary_coagen():
-    """Test environment with evolutionary COA generation."""
-    from brain.reasoning.evolutionary_coagen import EvolutionaryCOAGenerator
-    from brain.reasoning.course_of_action import Action
-    
-    env = BattlefieldEnv()
-    
-    # Run a few episodes
-    total_reward = 0
-    for episode in range(3):
-        obs = env.reset(red_position=(65, 50))
-        
-        # Generate COA using evolutionary algorithm
-        generator = EvolutionaryCOAGenerator()
-        coa = generator.generate_evolved_coa(obs, {})
-        
-        print(f"Episode {episode}: Generated COA: {coa.name if coa else 'None'}")
-        print(f"  COA phases: {coa.phases if coa else 'None'}")
-        print(f"  COA novelty: {coa.novelty_score if coa else 0}")
-        
-        # Apply the COA - map phases to action strings
-        if coa and coa.phases:
-            # Find first actionable phase
-            first_action = None
-            for phase in coa.phases:
-                if phase in ["strike", "jam"]:
-                    first_action = phase
-                    break
-            
-            if first_action == "strike":
-                obs, reward, done, info = env.step({"action": "strike", "asset_type": "missiles"})
-                total_reward += reward
-                print(f"  Applied strike: reward={reward:.1f}, done={done}, roe={info['roe_violation']}")
-            elif first_action == "jam":
-                obs, reward, done, info = env.step({"action": "jam", "asset_type": "jammers"})
-                total_reward += reward
-                print(f"  Applied jam: reward={reward:.1f}")
-        
-        if done:
-            break
-    
-    print(f"\nTotal reward across episodes: {total_reward:.1f}")
-    print("Evolutionary COAGenerator integration test complete!")
-
-
-if __name__ == "__main__":
-    test_battlefield_env()
-    print("\n--- Testing with Evolutionary COAGenerator ---")
-    test_with_evolutionary_coagen()
