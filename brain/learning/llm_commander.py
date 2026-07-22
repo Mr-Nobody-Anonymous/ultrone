@@ -423,6 +423,258 @@ class LLMCommander:
         )
     
     # ------------------------------------------------------------------
+    # Phase 8: Meta-Analysis — Optimize Evolution Hyperparameters
+    # ------------------------------------------------------------------
+    def optimize_evolution_parameters(self, league_stats: Dict[str, Any],
+                                      mc_results: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Analyze evolutionary dynamics and produce structured hyperparameter
+        adjustments for the CoevolutionEngine.
+        
+        The LLM analyzes:
+        1. Evolutionary drift — variance in fitness over recent generations
+        2. Win/loss ratios — from AlphaStar league training (main vs exploiters)
+        3. UCT convergence — fork visit counts and avg rewards
+        
+        Produces a payload dict with:
+          - sbx_eta_c (float): SBX distribution index [5.0, 30.0]
+          - mutation_eta_m (float): Polynomial mutation index [5.0, 30.0]
+          - uct_exploration_c (float): UCT exploration constant [0.5, 3.0]
+          - rationale (str): Reasoning trace
+        
+        Falls back to rule-based analysis if LLM unavailable, returning
+        safe default values. This is a NON-BLOCKING call — any failure
+        returns the safe defaults immediately.
+        """
+        # Safe defaults
+        safe_payload = {
+            "sbx_eta_c": 15.0,
+            "mutation_eta_m": 15.0,
+            "uct_exploration_c": math.sqrt(2.0),
+            "rationale": "Safe defaults (no LLM analysis)",
+        }
+        
+        # Try LLM path first
+        if self._use_llm:
+            try:
+                return self._llm_optimize_parameters(league_stats, mc_results)
+            except Exception as e:
+                logger.debug(f"LLM hyperparameter optimization failed: {e}")
+                # Fall through to rule-based
+        
+        # Rule-based fallback
+        return self._rule_based_optimize_parameters(league_stats, mc_results, safe_payload)
+    
+    def _llm_optimize_parameters(self, league_stats: Dict[str, Any],
+                                  mc_results: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Use Ollama LLM to analyze evolutionary metrics and suggest
+        hyperparameter adjustments.
+        
+        Safely wraps all extraction in try/except to handle malformed
+        JSON responses without disrupting the pipeline.
+        """
+        # Build prompt with league and MC stats
+        prompt = self._build_hyperparam_prompt(league_stats, mc_results)
+        
+        try:
+            import requests
+            response = requests.post(
+                "http://localhost:11434/api/generate",
+                json={
+                    "model": "llama3",
+                    "prompt": prompt,
+                    "stream": False,
+                    "max_tokens": 300,
+                },
+                timeout=30,
+            )
+            data = response.json()
+            text = data.get("response", "")
+            
+            if text.strip():
+                return self._parse_hyperparam_response(text)
+        except Exception as e:
+            logger.debug(f"Ollama hyperparameter request failed: {e}")
+        
+        # Fall through to rule-based if anything fails
+        return self._rule_based_optimize_parameters(
+            league_stats, mc_results,
+            {"sbx_eta_c": 15.0, "mutation_eta_m": 15.0, "uct_exploration_c": math.sqrt(2.0),
+             "rationale": "LLM fallback to rule-based"}
+        )
+    
+    def _build_hyperparam_prompt(self, league_stats: Dict[str, Any],
+                                  mc_results: Dict[str, Any]) -> str:
+        """
+        Build a structured prompt for the LLM to analyze evolutionary
+        dynamics and suggest hyperparameter adjustments.
+        """
+        # Extract league metrics
+        blue_pop = league_stats.get("blue_population_size", 1)
+        red_pop = league_stats.get("red_population_size", 1)
+        blue_fitness = league_stats.get("blue_main_fitness", 0.5)
+        red_fitness = league_stats.get("red_best_fitness", 0.5)
+        blue_best = league_stats.get("blue_best_fitness", 0.5)
+        exploiters = league_stats.get("blue_exploiters", 0)
+        past_selves = league_stats.get("blue_past_selves", 0)
+        red_mut = league_stats.get("red_mutation_rate", 0.15)
+        
+        # Estimate evolutionary drift from fitness delta
+        fitness_delta = league_stats.get("fitness_delta", 0.0)
+        win_loss = league_stats.get("win_loss_ratio", 0.5)
+        bottleneck = league_stats.get("bottleneck_risk", 0.3)
+        
+        # MC metrics
+        mc_visited = mc_results.get("visited_forks", 25)
+        mc_total = mc_results.get("visited_forks", 0) + mc_results.get("unvisited_forks", 50)
+        mc_avg_reward = mc_results.get("avg_reward_across_visited", 0.5)
+        
+        return (
+            "You are a meta-learning optimizer for an AlphaStar-style evolutionary training system.\n\n"
+            "Analyze the following metrics and output a JSON dict with optimized hyperparameters.\n\n"
+            "### LEAGUE STATS ###\n"
+            f"Blue population: {blue_pop} agents (main + {exploiters} exploiters, {past_selves} past selves)\n"
+            f"Red population: {red_pop} agents\n"
+            f"Blue best fitness: {blue_best:.3f}\n"
+            f"Blue main fitness: {blue_fitness:.3f}\n"
+            f"Red best fitness: {red_fitness:.3f}\n"
+            f"Fitness delta (last gen): {fitness_delta:+.4f}\n"
+            f"Win/loss ratio: {win_loss:.2f}\n"
+            f"Bottleneck risk: {bottleneck:.2f}\n"
+            f"Red mutation rate: {red_mut:.3f}\n\n"
+            "### MONTE CARLO UCT STATS ###\n"
+            f"Visited forks: {mc_visited}/{mc_total}\n"
+            f"Avg reward across visited: {mc_avg_reward:.3f}\n\n"
+            "### RULES ###\n"
+            "- If fitness is stagnating (delta near 0, bottleneck high): INCREASE sbx_eta_c for more crossover spread\n"
+            "- If win/loss is high (>0.7): DECREASE mutation_eta_m for finer local search (exploitation)\n"
+            "- If win/loss is low (<0.3): INCREASE mutation_eta_m for broader exploration\n"
+            "- If UCT has high unvisited forks: INCREASE uct_exploration_c for more exploration\n"
+            "- If UCT avg reward is converging (>0.8): DECREASE uct_exploration_c for more exploitation\n\n"
+            "Output ONLY valid JSON with these keys:\n"
+            "  - sbx_eta_c (float, 5.0-30.0): SBX distribution index\n"
+            "  - mutation_eta_m (float, 5.0-30.0): Polynomial mutation index\n"
+            "  - uct_exploration_c (float, 0.5-3.0): UCT exploration constant\n"
+            "  - rationale (string): Brief reasoning for each adjustment\n\n"
+            "JSON:"
+        )
+    
+    def _parse_hyperparam_response(self, text: str) -> Dict[str, Any]:
+        """
+        Parse LLM JSON response for hyperparameter payload.
+        
+        Uses defensive parsing with fallback to rule-based if JSON is
+        malformed. This ensures the LLM never blocks the pipeline.
+        """
+        try:
+            start = text.find("{")
+            end = text.rfind("}") + 1
+            if start >= 0 and end > start:
+                import json
+                data = json.loads(text[start:end])
+                
+                # Validate required keys exist
+                payload = {
+                    "sbx_eta_c": float(data.get("sbx_eta_c", 15.0)),
+                    "mutation_eta_m": float(data.get("mutation_eta_m", 15.0)),
+                    "uct_exploration_c": float(data.get("uct_exploration_c", math.sqrt(2.0))),
+                    "rationale": str(data.get("rationale", "LLM-suggested values")),
+                }
+                logger.info(f"LLM hyperparameter suggestion: {payload}")
+                return payload
+        except Exception as e:
+            logger.debug(f"Failed to parse LLM hyperparameter response: {e}")
+        
+        raise ValueError("Failed to parse LLM hyperparameter response")
+    
+    def _rule_based_optimize_parameters(self, league_stats: Dict[str, Any],
+                                         mc_results: Dict[str, Any],
+                                         safe_payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Rule-based hyperparameter optimization based on evolutionary metrics.
+        
+        Analyzes:
+        - Fitness stagnation/bottleneck risk → adjust SBX eta_c
+        - Win/loss ratio → adjust mutation eta_m
+        - UCT convergence → adjust exploration constant
+        """
+        payload = dict(safe_payload)
+        rationale_parts = []
+        
+        # --- Analyze SBX eta_c from bottleneck risk and fitness delta ---
+        bottleneck = league_stats.get("bottleneck_risk", 0.3)
+        fitness_delta = league_stats.get("fitness_delta", 0.0)
+        win_loss = league_stats.get("win_loss_ratio", 0.5)
+        
+        if bottleneck > 0.6 and abs(fitness_delta) < 0.001:
+            # Stagnation detected — increase SBX spread (lower eta = more exploration)
+            payload["sbx_eta_c"] = 8.0
+            rationale_parts.append(
+                f"High bottleneck risk ({bottleneck:.2f}) with near-zero fitness delta: "
+                f"decreased SBX eta_c to {payload['sbx_eta_c']:.1f} for broader crossover exploration"
+            )
+        elif bottleneck > 0.4:
+            # Moderate risk — slight increase in exploration
+            payload["sbx_eta_c"] = 12.0
+            rationale_parts.append(
+                f"Moderate bottleneck risk ({bottleneck:.2f}): "
+                f"slightly decreased SBX eta_c to {payload['sbx_eta_c']:.1f}"
+            )
+        elif win_loss > 0.7:
+            # High win rate — exploit more (increase eta = tighter crossover)
+            payload["sbx_eta_c"] = 20.0
+            rationale_parts.append(
+                f"High win/loss ratio ({win_loss:.2f}): "
+                f"increased SBX eta_c to {payload['sbx_eta_c']:.1f} for exploitation"
+            )
+        else:
+            rationale_parts.append(f"SBX eta_c at default {payload['sbx_eta_c']:.1f}")
+        
+        # --- Analyze mutation_eta_m from win/loss ratio ---
+        if win_loss > 0.7:
+            payload["mutation_eta_m"] = 22.0
+            rationale_parts.append(
+                f"High win/loss ratio ({win_loss:.2f}): "
+                f"increased mutation eta_m to {payload['mutation_eta_m']:.1f} for finer local search"
+            )
+        elif win_loss < 0.3:
+            payload["mutation_eta_m"] = 8.0
+            rationale_parts.append(
+                f"Low win/loss ratio ({win_loss:.2f}): "
+                f"decreased mutation eta_m to {payload['mutation_eta_m']:.1f} for broader exploration"
+            )
+        else:
+            rationale_parts.append(f"Mutation eta_m at default {payload['mutation_eta_m']:.1f}")
+        
+        # --- Analyze UCT exploration constant from MC stats ---
+        mc_visited = mc_results.get("visited_forks", 0)
+        mc_total = mc_results.get("visited_forks", 0) + mc_results.get("unvisited_forks", 50)
+        mc_avg_reward = mc_results.get("avg_reward_across_visited", 0.5)
+        
+        unvisited_fraction = 1.0 - (mc_visited / max(1, mc_total))
+        if unvisited_fraction > 0.3:
+            # Many unvisited forks — increase exploration
+            payload["uct_exploration_c"] = 2.5
+            rationale_parts.append(
+                f"High unvisited forks ({unvisited_fraction:.0%}): "
+                f"increased UCT C to {payload['uct_exploration_c']:.1f} for broader Monte Carlo exploration"
+            )
+        elif mc_avg_reward > 0.8:
+            # Converging — decrease exploration
+            payload["uct_exploration_c"] = 1.0
+            rationale_parts.append(
+                f"High average MC reward ({mc_avg_reward:.2f}): "
+                f"decreased UCT C to {payload['uct_exploration_c']:.1f} for exploitation"
+            )
+        else:
+            rationale_parts.append(f"UCT C at default {payload['uct_exploration_c']:.2f}")
+        
+        payload["rationale"] = " | ".join(rationale_parts)
+        logger.info(f"Rule-based hyperparameter optimization: {payload}")
+        return payload
+    
+    # ------------------------------------------------------------------
     # ask_reasoning (unchanged — creates XAI from genome)
     # ------------------------------------------------------------------
     def ask_reasoning(self, genome: Any, telemetry: Optional[Dict[str, Any]] = None) -> str:

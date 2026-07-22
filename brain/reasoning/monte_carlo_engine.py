@@ -108,26 +108,69 @@ class MonteCarloForklift:
     ForkConfig objects and uses UCT to bias toward high-uncertainty or
     high-reward configurations.
     
+    Phase 8: UCT exploration constant (c) is dynamically settable with EMA
+    dampening to prevent shock from sudden parameter shifts.
+    
     Uses seed-based reset instead of copy.deepcopy for memory efficiency.
     Injects friction: accuracy variance, sensor failures, unexpected red moves.
     """
     
     def __init__(self, num_forks: int = 50, friction_level: float = 0.15,
-                 uct_exploration_c: float = math.sqrt(2.0)):
+                 uct_exploration_c: float = math.sqrt(2.0),
+                 uct_ema_alpha: float = 0.3):
         """
         Args:
             num_forks: Number of parallel environment forks
             friction_level: Base probability of random friction events (0-1)
             uct_exploration_c: UCT exploration constant (default sqrt(2))
+            uct_ema_alpha: EMA smoothing factor for c transitions (0-1, default 0.3)
         """
         self.num_forks = num_forks
         self.friction_level = friction_level
-        self.uct_exploration_c = uct_exploration_c
+        self._uct_exploration_c = uct_exploration_c       # smoothed (actual) value
+        self._uct_exploration_c_target = uct_exploration_c # requested (target) value
+        self._uct_ema_alpha = uct_ema_alpha               # smoothing factor
         
         # Phase 7: UCT tracking structures
         self._fork_pool: List[ForkConfig] = []
         self._total_uct_visits: int = 0
         self._uct_initialized: bool = False
+    
+    # ------------------------------------------------------------------
+    # Phase 8: Settable UCT exploration constant with EMA dampening
+    # ------------------------------------------------------------------
+    @property
+    def uct_exploration_c(self) -> float:
+        """Current (EMA-smoothed) UCT exploration constant."""
+        return self._uct_exploration_c
+    
+    @uct_exploration_c.setter
+    def uct_exploration_c(self, value: float) -> None:
+        """
+        Set UCT exploration constant with EMA dampening.
+        
+        The raw requested value is stored as the target. The actual value
+        used in UCT calculations is exponentially smoothed toward the target,
+        preventing sudden shocks to the selection tree.
+        
+        Args:
+            value: Desired exploration constant (raw, will be clamped to [0.5, 3.0]
+                   upstream in CoevolutionEngine, but here we ensure it's positive)
+        """
+        # Guard against invalid values at the lowest level
+        if value <= 0.0:
+            value = 0.5
+        self._uct_exploration_c_target = value
+        # Apply EMA blend: new_smoothed = alpha * target + (1-alpha) * old_smoothed
+        self._uct_exploration_c = (
+            self._uct_ema_alpha * self._uct_exploration_c_target
+            + (1.0 - self._uct_ema_alpha) * self._uct_exploration_c
+        )
+    
+    @property
+    def uct_exploration_c_raw(self) -> float:
+        """The raw (un-smoothed) target value requested."""
+        return self._uct_exploration_c_target
     
     def _initialize_uct_pool(self) -> None:
         """

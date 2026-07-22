@@ -305,6 +305,15 @@ class Orchestrator:
         except Exception as e:
             logger.debug(f"Hybrid LLM components unavailable: {e}")
         
+        # Phase 8: Initialize Knowledge Graph for evolutionary telemetry
+        self._knowledge_graph = None
+        try:
+            from brain.perception.knowledge_graph import MultiINTKnowledgeGraph
+            self._knowledge_graph = MultiINTKnowledgeGraph(decay_steps=5)
+            logger.info("Knowledge Graph initialized for evolutionary telemetry")
+        except Exception as e:
+            logger.debug(f"Knowledge Graph unavailable: {e}")
+        
         # Initialize Operational API Server (HITL + XAI)
         self._intervention_manager = InterventionManager()
         self._api_server = None
@@ -530,6 +539,52 @@ class Orchestrator:
                         logger.info(f"Strategic directive: {directive.focus} - {directive.notes}")
                     except Exception as e:
                         logger.debug(f"Secretary council failed: {e}")
+            
+            # ==========================================================
+            # Phase 8: Meta-Learning Orchestration Loop
+            # ==========================================================
+            # 1. Stream evolutionary telemetry to Knowledge Graph
+            if self._knowledge_graph is not None and hasattr(self.coevolution, 'stream_telemetry_to_kg'):
+                try:
+                    self.coevolution.stream_telemetry_to_kg(self._knowledge_graph)
+                except Exception as e:
+                    logger.debug(f"KG telemetry streaming failed: {e}")
+            
+            # 2. LLM hyperparameter optimization (every 20 episodes)
+            if episode % 20 == 0 and self._llm_commander is not None:
+                try:
+                    # Get league stats from coevolution engine
+                    league_stats = self.coevolution.get_stats()
+                    
+                    # Enrich league stats with telemetry from collect_telemetry_snapshot
+                    if hasattr(self.coevolution, 'collect_telemetry_snapshot'):
+                        telemetry_snapshot = self.coevolution.collect_telemetry_snapshot()
+                        league_stats.update(telemetry_snapshot)
+                    
+                    # Get MC UCT stats from the forklift
+                    mc_results = {}
+                    mc = self.coevolution._get_monte_carlo()
+                    if mc and hasattr(mc, 'get_uct_stats'):
+                        mc_results = mc.get_uct_stats()
+                    
+                    # LLM analyzes and produces hyperparameter payload
+                    payload = self._llm_commander.optimize_evolution_parameters(
+                        league_stats, mc_results
+                    )
+                    
+                    # Apply with guardrails via CoevolutionEngine
+                    if hasattr(self.coevolution, 'apply_hyperparameter_payload'):
+                        applied = self.coevolution.apply_hyperparameter_payload(payload)
+                        logger.info(
+                            f"Meta-learning: SBX eta_c={applied.get('sbx_eta_c'):.1f}, "
+                            f"Mutation eta_m={applied.get('mutation_eta_m'):.1f}, "
+                            f"UCT C={applied.get('uct_exploration_c'):.2f}"
+                        )
+                        if applied.get("notifications"):
+                            for note in applied["notifications"]:
+                                logger.info(f"  {note}")
+                except Exception as e:
+                    logger.debug(f"Meta-learning hyperparameter optimization failed: {e}")
             
             # Post-hoc commander briefing every 20 episodes
             if self._briefing_generator is not None:

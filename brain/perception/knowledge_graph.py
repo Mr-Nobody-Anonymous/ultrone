@@ -27,6 +27,7 @@ EDGE_COMMS_LINKED = "COMMS_LINKED"
 EDGE_SPATIALLY_COLOCATED = "SPATIALLY_COLOCATED"
 EDGE_THREAT_CORRELATED = "THREAT_CORRELATED"
 EDGE_SUPPLY_LINK = "SUPPLY_LINK"
+EDGE_EVOLUTION_TREND = "EVOLUTION_TREND"
 
 # Proximity threshold for linking nodes (grid units)
 PROXIMITY_THRESHOLD = 15
@@ -40,9 +41,17 @@ class MultiINTKnowledgeGraph:
     where edges encode operational relationships (comms links, spatial
     colocation, threat correlation).
     
+    Phase 8: Supports evolutionary_telemetry nodes for generational
+    fitness deltas, fuel conservation behaviors, and supply node
+    vulnerability profiles. Telemetry is window-capped at MAX_TELEMETRY
+    entries to maintain flat memory profile.
+    
     The graph is rebuilt each step from current sensor assessments;
     old nodes decay out if not re-detected.
     """
+    
+    # Phase 8: Maximum evolutionary telemetry nodes to retain
+    MAX_TELEMETRY = 50
     
     def __init__(self, decay_steps: int = 5):
         self.graph = nx.DiGraph()
@@ -52,6 +61,9 @@ class MultiINTKnowledgeGraph:
         
         # Persistent entity registry: maps canonical names to node ids
         self._entity_registry: Dict[str, str] = {}
+        
+        # Phase 8: Evolutionary telemetry ring buffer (ordered list of node IDs)
+        self._telemetry_node_ids: List[str] = []
     
     def update(self, env: Any, radar_assessments: List[Dict[str, Any]],
                sigint_assessments: List[Dict[str, Any]],
@@ -369,10 +381,122 @@ class MultiINTKnowledgeGraph:
                 })
         return sorted(targets, key=lambda x: x["threat"], reverse=True)
     
+    # ------------------------------------------------------------------
+    # Phase 8: Evolutionary Telemetry Ingestion
+    # ------------------------------------------------------------------
+    def add_evolutionary_telemetry(self, generation: int, avg_fitness: float,
+                                   bottleneck_risk: float,
+                                   fuel_conservation: float = 0.0,
+                                   supply_vulnerability: float = 0.0) -> str:
+        """
+        Add an evolutionary telemetry node to the knowledge graph.
+        
+        Phase 8: Stores generational fitness deltas, fuel conservation
+        behaviors, and supply node vulnerability profiles.
+        
+        Telemetry nodes are window-capped at MAX_TELEMETRY (50) entries.
+        When the cap is exceeded, the oldest telemetry node is evicted
+        to maintain a flat memory profile.
+        
+        Args:
+            generation: The generation number
+            avg_fitness: Average population fitness for this generation
+            bottleneck_risk: Risk score [0,1] for evolutionary bottlenecks
+            fuel_conservation: Average fuel conservation behavior [0,1]
+            supply_vulnerability: Supply node vulnerability profile [0,1]
+            
+        Returns:
+            Node ID of the created telemetry node
+        """
+        node_id = f"EVO-TELE-G{generation}"
+        
+        # Compute fitness delta from previous telemetry if available
+        fitness_delta = 0.0
+        prev_node_id = None
+        if self._telemetry_node_ids:
+            prev_node_id = self._telemetry_node_ids[-1]
+            if prev_node_id in self.graph:
+                prev_fitness = self.graph.nodes[prev_node_id].get("avg_fitness", 0.0)
+                fitness_delta = avg_fitness - prev_fitness
+        
+        # Add or update the telemetry node
+        if node_id in self.graph:
+            # Update existing
+            self.graph.nodes[node_id].update({
+                "avg_fitness": avg_fitness,
+                "bottleneck_risk": bottleneck_risk,
+                "fitness_delta": fitness_delta,
+                "fuel_conservation": fuel_conservation,
+                "supply_vulnerability": supply_vulnerability,
+                "last_seen": self._step_count,
+            })
+            self._node_age[node_id] = 0
+        else:
+            # Create new node
+            self.graph.add_node(
+                node_id,
+                entity_type="evolutionary_telemetry",
+                generation=generation,
+                avg_fitness=avg_fitness,
+                bottleneck_risk=bottleneck_risk,
+                fitness_delta=fitness_delta,
+                fuel_conservation=fuel_conservation,
+                supply_vulnerability=supply_vulnerability,
+                threat=0.0,  # telemetry has no threat value
+                last_seen=self._step_count,
+            )
+            self._node_age[node_id] = 0
+            self._telemetry_node_ids.append(node_id)
+        
+        # ── Window cap: evict oldest telemetry if exceeding MAX_TELEMETRY ──
+        while len(self._telemetry_node_ids) > self.MAX_TELEMETRY:
+            oldest_id = self._telemetry_node_ids.pop(0)
+            if oldest_id in self.graph:
+                self.graph.remove_node(oldest_id)
+                self._node_age.pop(oldest_id, None)
+        
+        # ── Link consecutive telemetry nodes for trend analysis ──
+        if prev_node_id and prev_node_id in self.graph and prev_node_id != node_id:
+            if not self.graph.has_edge(prev_node_id, node_id):
+                self.graph.add_edge(
+                    prev_node_id, node_id,
+                    label="EVOLUTION_TREND",
+                    weight=max(0.01, abs(fitness_delta)),
+                )
+        
+        return node_id
+    
+    def get_evolutionary_telemetry(self, n_last: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get the last N evolutionary telemetry data points.
+        
+        Args:
+            n_last: Number of recent telemetry entries to retrieve (default 10)
+            
+        Returns:
+            List of telemetry dicts sorted by generation ascending
+        """
+        recent_ids = self._telemetry_node_ids[-n_last:]
+        results = []
+        for nid in recent_ids:
+            if nid in self.graph:
+                data = self.graph.nodes[nid]
+                results.append({
+                    "node_id": nid,
+                    "generation": data.get("generation", 0),
+                    "avg_fitness": data.get("avg_fitness", 0.0),
+                    "bottleneck_risk": data.get("bottleneck_risk", 0.0),
+                    "fitness_delta": data.get("fitness_delta", 0.0),
+                    "fuel_conservation": data.get("fuel_conservation", 0.0),
+                    "supply_vulnerability": data.get("supply_vulnerability", 0.0),
+                })
+        return results
+    
     def clear(self) -> None:
         """Reset the knowledge graph."""
         self.graph.clear()
         self._node_age.clear()
         self._entity_registry.clear()
+        self._telemetry_node_ids.clear()
         self._step_count = 0
 

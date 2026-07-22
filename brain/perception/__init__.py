@@ -5,7 +5,8 @@ from __future__ import annotations
 
 # Keep these as lazy imports to avoid circular dependency issues
 __all__ = ["SensorFusion", "ThreatClassifier", "SituationalAwareness",
-           "MultiSourceAnalyzer", "DataSourceType", "SensorDataPacket", "IntelligenceAssessment"]
+           "MultiSourceAnalyzer", "DataSourceType", "SensorDataPacket",
+           "IntelligenceAssessment", "MultiINTKnowledgeGraph"]
 
 def __getattr__(name: str):
     """Lazy import to avoid circular dependencies."""
@@ -30,4 +31,8 @@ def __getattr__(name: str):
     if name == "IntelligenceAssessment":
         from .multi_source_analyzer import IntelligenceAssessment
         return IntelligenceAssessment
+    if name == "MultiINTKnowledgeGraph":
+        from .knowledge_graph import MultiINTKnowledgeGraph
+        return MultiINTKnowledgeGraph
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+

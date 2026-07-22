@@ -46,6 +46,28 @@ MUTATION_MIN = 0.01
 MUTATION_MAX = 0.30
 
 # =====================================================================
+# Phase 8: Meta-Learning Hyperparameter Bounds & EMA Dampening
+# =====================================================================
+# SBX distribution index (eta_c) bounds
+SBX_ETA_C_MIN = 5.0
+SBX_ETA_C_MAX = 30.0
+SBX_ETA_C_DEFAULT = 15.0
+
+# Polynomial mutation index (eta_m) bounds
+MUTATION_ETA_M_MIN = 5.0
+MUTATION_ETA_M_MAX = 30.0
+MUTATION_ETA_M_DEFAULT = 15.0
+
+# UCT exploration constant bounds (mirrored in monte_carlo_engine.py)
+UCT_EXPLORATION_C_MIN = 0.5
+UCT_EXPLORATION_C_MAX = 3.0
+UCT_EXPLORATION_C_DEFAULT = math.sqrt(2.0)
+
+# EMA dampening factor for hyperparameter transitions (0-1)
+# Lower = smoother transitions, higher = faster response
+HYPERPARAM_EMA_ALPHA = 0.3
+
+# =====================================================================
 # Phase 7: SBX (Simulated Binary Crossover) — vectorized
 # =====================================================================
 
@@ -255,6 +277,61 @@ class CoevolutionEngine:
         
         # Phase 6: Monte Carlo Forklift (lazy import)
         self._monte_carlo = None
+        
+        # ------------------------------------------------------------------
+        # Phase 8: Meta-Learning Hyperparameter State (with EMA dampening)
+        # ------------------------------------------------------------------
+        self._sbx_eta_c = SBX_ETA_C_DEFAULT           # current (smoothed) value
+        self._sbx_eta_c_target = SBX_ETA_C_DEFAULT      # requested (target) value
+        self._mutation_eta_m = MUTATION_ETA_M_DEFAULT   # current (smoothed) value
+        self._mutation_eta_m_target = MUTATION_ETA_M_DEFAULT  # requested (target) value
+        self._hyperparam_ema_alpha = HYPERPARAM_EMA_ALPHA
+    
+    # ------------------------------------------------------------------
+    # Phase 8: SBX distribution index (eta_c) with EMA dampening
+    # ------------------------------------------------------------------
+    @property
+    def sbx_eta_c(self) -> float:
+        """Current (EMA-smoothed) SBX distribution index."""
+        return self._sbx_eta_c
+    
+    @sbx_eta_c.setter
+    def sbx_eta_c(self, value: float) -> None:
+        """Set SBX eta_c with EMA dampening and [5.0, 30.0] clamping."""
+        value = max(SBX_ETA_C_MIN, min(SBX_ETA_C_MAX, value))
+        self._sbx_eta_c_target = value
+        self._sbx_eta_c = (
+            self._hyperparam_ema_alpha * self._sbx_eta_c_target
+            + (1.0 - self._hyperparam_ema_alpha) * self._sbx_eta_c
+        )
+    
+    @property
+    def sbx_eta_c_raw(self) -> float:
+        """The raw (un-smoothed) target SBX eta_c requested."""
+        return self._sbx_eta_c_target
+    
+    # ------------------------------------------------------------------
+    # Phase 8: Polynomial mutation index (eta_m) with EMA dampening
+    # ------------------------------------------------------------------
+    @property
+    def mutation_eta_m(self) -> float:
+        """Current (EMA-smoothed) polynomial mutation index."""
+        return self._mutation_eta_m
+    
+    @mutation_eta_m.setter
+    def mutation_eta_m(self, value: float) -> None:
+        """Set mutation eta_m with EMA dampening and [5.0, 30.0] clamping."""
+        value = max(MUTATION_ETA_M_MIN, min(MUTATION_ETA_M_MAX, value))
+        self._mutation_eta_m_target = value
+        self._mutation_eta_m = (
+            self._hyperparam_ema_alpha * self._mutation_eta_m_target
+            + (1.0 - self._hyperparam_ema_alpha) * self._mutation_eta_m
+        )
+    
+    @property
+    def mutation_eta_m_raw(self) -> float:
+        """The raw (un-smoothed) target mutation eta_m requested."""
+        return self._mutation_eta_m_target
     
     def _get_monte_carlo(self):
         """Lazy import Monte Carlo Forklift."""
@@ -732,6 +809,230 @@ class CoevolutionEngine:
         self.red_population = survivors + offspring
         self.red_active = self.red_population[0]
         return self.red_active
+    
+    # ------------------------------------------------------------------
+    # Phase 8: Collect Telemetry Snapshot
+    # ------------------------------------------------------------------
+    def collect_telemetry_snapshot(self) -> Dict[str, Any]:
+        """
+        Collect a snapshot of generational telemetry for streaming to KG.
+        
+        Returns:
+            Dict with fields:
+            - generation: Current generation number
+            - avg_fitness: Average fitness across all Blue agents
+            - bottleneck_risk: Risk score [0,1] estimating evolutionary stagnation
+            - fuel_conservation: Average fuel conservation across Blue
+            - supply_vulnerability: Fraction of supply nodes at risk
+            - blue_population_size: Total Blue agents
+            - red_population_size: Total Red agents
+            - fitness_delta: Change in best fitness from last generation
+            - win_loss_ratio: Ratio of recent successes to attempts
+        """
+        all_blue = self.blue_league.get_all_blue()
+        
+        # Average fitness
+        avg_fitness = 0.0
+        if all_blue:
+            avg_fitness = sum(g.fitness_score for g in all_blue) / len(all_blue)
+        
+        # Best fitness
+        best_fitness = max((g.fitness_score for g in all_blue), default=0.0)
+        
+        # Bottleneck risk: estimate from fitness variance (high variance = exploration,
+        # low variance near 0 = stagnation)
+        fitness_variance = 0.0
+        if all_blue and len(all_blue) > 1:
+            mean_f = avg_fitness
+            variance = sum((g.fitness_score - mean_f) ** 2 for g in all_blue) / len(all_blue)
+            fitness_variance = variance
+        
+        # Bottleneck: low variance + low best fitness = stagnation
+        if best_fitness < 0.2 and fitness_variance < 0.01:
+            bottleneck_risk = min(1.0, 0.5 + (0.2 - best_fitness))
+        elif fitness_variance < 0.005:
+            bottleneck_risk = 0.4  # moderate risk — converging but possibly premature
+        else:
+            bottleneck_risk = max(0.0, min(0.5, fitness_variance * 5.0))
+        
+        # Fuel conservation: average resource_conservation across Blue
+        fuel_conservation = 0.0
+        if all_blue:
+            fuel_conservation = sum(
+                getattr(g, 'resource_conservation', 0.7) for g in all_blue
+            ) / len(all_blue)
+        
+        # Supply vulnerability: fraction of past_selves with supply losses
+        supply_vulnerability = 0.0
+        for genome in all_blue:
+            fitness_hist = getattr(genome, 'fitness_history', [])
+            if fitness_hist and len(fitness_hist) >= 3:
+                # Check if fitness trend is declining (possible supply vulnerability)
+                if fitness_hist[-1] < fitness_hist[0]:
+                    supply_vulnerability += 1.0
+        if all_blue:
+            supply_vulnerability /= len(all_blue)
+        
+        # Win/loss ratio from fitness history deltas
+        win_loss_ratio = 0.0
+        if all_blue:
+            main = self.blue_league.main_agent
+            if main and hasattr(main, 'fitness_history') and len(main.fitness_history) >= 2:
+                wins = sum(1 for i in range(1, len(main.fitness_history))
+                          if main.fitness_history[i] > main.fitness_history[i-1])
+                losses = len(main.fitness_history) - 1 - wins
+                win_loss_ratio = wins / max(1, wins + losses)
+        
+        # Fitness delta
+        fitness_delta = 0.0
+        if all_blue and len(all_blue) > 0:
+            main = self.blue_league.main_agent
+            if main and hasattr(main, 'fitness_history') and len(main.fitness_history) >= 2:
+                fitness_delta = main.fitness_history[-1] - main.fitness_history[-2]
+        
+        return {
+            "generation": self.blue_league.main_agent.generation if self.blue_league.main_agent else 0,
+            "avg_fitness": round(avg_fitness, 4),
+            "best_fitness": round(best_fitness, 4),
+            "bottleneck_risk": round(bottleneck_risk, 4),
+            "fuel_conservation": round(fuel_conservation, 4),
+            "supply_vulnerability": round(supply_vulnerability, 4),
+            "blue_population_size": len(all_blue),
+            "red_population_size": len(self.red_population),
+            "fitness_delta": round(fitness_delta, 6),
+            "win_loss_ratio": round(win_loss_ratio, 4),
+        }
+    
+    # ------------------------------------------------------------------
+    # Phase 8: Stream Telemetry to Knowledge Graph
+    # ------------------------------------------------------------------
+    def stream_telemetry_to_kg(self, kg: Any) -> None:
+        """
+        Stream generational telemetry snapshot into the Knowledge Graph.
+        
+        Calls kg.add_evolutionary_telemetry() with collected telemetry data.
+        This method is non-blocking — if KG is unavailable, it logs a
+        warning and continues.
+        
+        Args:
+            kg: MultiINTKnowledgeGraph instance (or any object with
+                add_evolutionary_telemetry method)
+        """
+        try:
+            snapshot = self.collect_telemetry_snapshot()
+            if kg is not None and hasattr(kg, 'add_evolutionary_telemetry'):
+                kg.add_evolutionary_telemetry(
+                    generation=snapshot["generation"],
+                    avg_fitness=snapshot["avg_fitness"],
+                    bottleneck_risk=snapshot["bottleneck_risk"],
+                    fuel_conservation=snapshot["fuel_conservation"],
+                    supply_vulnerability=snapshot["supply_vulnerability"],
+                )
+                logger.debug(
+                    f"Streamed telemetry G{snapshot['generation']}: "
+                    f"fitness={snapshot['avg_fitness']:.3f}, "
+                    f"bottleneck={snapshot['bottleneck_risk']:.2f}"
+                )
+        except Exception as e:
+            logger.warning(f"Failed to stream telemetry to KG: {e}")
+    
+    # ------------------------------------------------------------------
+    # Phase 8: Apply Hyperparameter Payload with Guardrails
+    # ------------------------------------------------------------------
+    def apply_hyperparameter_payload(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Apply an LLM-suggested hyperparameter adjustment payload.
+        
+        All parameters are clamped to verified safe bounds:
+        - sbx_eta_c: [5.0, 30.0] — lower = more exploration
+        - mutation_eta_m: [5.0, 30.0] — lower = more perturbation
+        - uct_exploration_c: [0.5, 3.0] — lower = more exploitation
+        - Mutation rates are already capped at [0.01, 0.30] by self-adaptive mechanism
+        
+        Parameters are applied with EMA dampening to prevent shock from
+        sudden changes.
+        
+        Args:
+            payload: Dict with optional keys:
+                - sbx_eta_c (float): Suggested SBX distribution index
+                - mutation_eta_m (float): Suggested polynomial mutation index
+                - uct_exploration_c (float): Suggested UCT exploration constant
+                - rationale (str): LLM reasoning trace (logged, not applied)
+                
+        Returns:
+            Dict of actually applied values after clamping, with
+            clamping notifications where applicable.
+        """
+        applied = {}
+        notifications = []
+        
+        # --- sbx_eta_c ---
+        if "sbx_eta_c" in payload:
+            raw_value = payload["sbx_eta_c"]
+            clamped = max(SBX_ETA_C_MIN, min(SBX_ETA_C_MAX, raw_value))
+            self.sbx_eta_c = raw_value  # property handles EMA + clamping
+            applied["sbx_eta_c"] = self.sbx_eta_c
+            if abs(clamped - raw_value) > 1e-9:
+                notifications.append(
+                    f"sbx_eta_c clamped from {raw_value:.1f} to [{SBX_ETA_C_MIN}, {SBX_ETA_C_MAX}]"
+                )
+        else:
+            applied["sbx_eta_c"] = self.sbx_eta_c
+        
+        # --- mutation_eta_m ---
+        if "mutation_eta_m" in payload:
+            raw_value = payload["mutation_eta_m"]
+            clamped = max(MUTATION_ETA_M_MIN, min(MUTATION_ETA_M_MAX, raw_value))
+            self.mutation_eta_m = raw_value  # property handles EMA + clamping
+            applied["mutation_eta_m"] = self.mutation_eta_m
+            if abs(clamped - raw_value) > 1e-9:
+                notifications.append(
+                    f"mutation_eta_m clamped from {raw_value:.1f} to [{MUTATION_ETA_M_MIN}, {MUTATION_ETA_M_MAX}]"
+                )
+        else:
+            applied["mutation_eta_m"] = self.mutation_eta_m
+        
+        # --- uct_exploration_c (propagated to Monte Carlo) ---
+        if "uct_exploration_c" in payload:
+            raw_value = payload["uct_exploration_c"]
+            clamped = max(UCT_EXPLORATION_C_MIN, min(UCT_EXPLORATION_C_MAX, raw_value))
+            
+            # Propagate to Monte Carlo forklift if available
+            mc = self._get_monte_carlo()
+            if mc and hasattr(mc, 'uct_exploration_c'):
+                mc.uct_exploration_c = clamped  # MC has its own EMA
+                applied["uct_exploration_c"] = mc.uct_exploration_c
+            else:
+                applied["uct_exploration_c"] = clamped
+            
+            if abs(clamped - raw_value) > 1e-9:
+                notifications.append(
+                    f"uct_exploration_c clamped from {raw_value:.1f} to [{UCT_EXPLORATION_C_MIN}, {UCT_EXPLORATION_C_MAX}]"
+                )
+        else:
+            mc = self._get_monte_carlo()
+            if mc and hasattr(mc, 'uct_exploration_c'):
+                applied["uct_exploration_c"] = mc.uct_exploration_c
+            else:
+                applied["uct_exploration_c"] = UCT_EXPLORATION_C_DEFAULT
+        
+        # Log LLM rationale if provided
+        rationale = payload.get("rationale", "")
+        if rationale:
+            logger.info(f"LLM hyperparameter rationale: {rationale[:200]}...")
+        
+        # Log applied values
+        logger.info(
+            f"Applied hyperparameters: SBX eta_c={applied.get('sbx_eta_c'):.2f}, "
+            f"Mutation eta_m={applied.get('mutation_eta_m'):.2f}, "
+            f"UCT C={applied.get('uct_exploration_c'):.2f}"
+        )
+        if notifications:
+            for note in notifications:
+                logger.info(f"  Guardrail: {note}")
+        
+        applied["notifications"] = notifications
+        return applied
     
     # ------------------------------------------------------------------
     # Sampling methods (Phase 7: league-aware)
