@@ -11,6 +11,16 @@ from .course_of_action import CourseOfAction, COAGenerator, COAScorer, Action
 from .resource_allocator import ResourceAllocator, Allocation
 from .evolutionary_coagen import EvolutionaryGenome, EvolutionaryCOAGenerator
 
+# Lazy-import search planners to keep startup fast
+_SEARCH_IMPORTED = False
+
+def _import_search():
+    global _SEARCH_IMPORTED
+    if not _SEARCH_IMPORTED:
+        from . import search as _search_mod
+        _SEARCH_IMPORTED = True
+    return _search_mod
+
 __all__ = [
     "TacticalEngine",
     "KillChain", "KillChainPhase", "KillChainStateMachine",
@@ -19,4 +29,37 @@ __all__ = [
     "CourseOfAction", "COAGenerator", "COAScorer", "Action",
     "ResourceAllocator", "Allocation",
     "EvolutionaryGenome", "EvolutionaryCOAGenerator",
+    # Search planners
+    "Planner", "PlanningAction", "PlanningDomain", "PlanningGoal", "PlanningResult",
+    "MCTS", "MCTSConfig",
+    "HTNPlanner", "HTNConfig",
+    "AStar", "DLite", "LPAStar", "AStarConfig",
+    "MAPFPlanner", "MAPFConfig", "ConflictBasedSearch",
+    "BeamSearch", "BeamSearchConfig",
+    "BidirectionalSearch", "BidirectionalConfig",
+    "PDDLPlanner", "PDDLDomain", "PDDLProblem", "PDDLConfig",
+    "AnytimePlanner", "AnytimeConfig",
+    "RecedingHorizonPlanner", "RecedingHorizonConfig",
+    "DPPlanner", "DPConfig",
 ]
+
+
+def __getattr__(name: str):
+    """Lazy-load search planners when accessed."""
+    search_names = {
+        "Planner", "PlanningAction", "PlanningDomain", "PlanningGoal", "PlanningResult",
+        "MCTS", "MCTSConfig",
+        "HTNPlanner", "HTNConfig", "Task", "Method", "PrimitiveTask", "CompoundTask",
+        "AStar", "DLite", "LPAStar", "AStarConfig",
+        "MAPFPlanner", "MAPFConfig", "ConflictBasedSearch",
+        "BeamSearch", "BeamSearchConfig",
+        "BidirectionalSearch", "BidirectionalConfig",
+        "PDDLPlanner", "PDDLDomain", "PDDLProblem", "PDDLConfig",
+        "AnytimePlanner", "AnytimeConfig",
+        "RecedingHorizonPlanner", "RecedingHorizonConfig",
+        "DPPlanner", "DPConfig",
+    }
+    if name in search_names:
+        mod = _import_search()
+        return getattr(mod, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

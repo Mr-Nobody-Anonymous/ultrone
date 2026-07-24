@@ -63,6 +63,11 @@ class TacticalEngine:
         self.kill_chain: KillChain = KillChain()
         self.doctrine = doctrine
         self.assessments: List[TacticalAssessment] = []
+        
+        # Search & Planning integration (Phase 1)
+        # Pluggable planner; if None, falls back to COAGenerator.
+        # Set via set_planner() to use MCTS, AStar, HTN, etc.
+        self._planner: Optional[Any] = None
 
     def assess(self, units: Any, feeds: Any, min_threat: float = 0.5) -> Any:
         """Assess current situation and return threatening contacts."""
@@ -154,9 +159,24 @@ class TacticalEngine:
 
         return results
 
+    def set_planner(self, planner: Any) -> None:
+        """Inject a search planner (MCTS, AStar, HTN, etc.)
+
+        The planner must implement the ``Planner`` interface from
+        ``brain.reasoning.search.base``.
+
+        When a planner is set, the engine will use it to generate
+        COAs instead of the default COAGenerator.
+        """
+        self._planner = planner
+        logger.info("TacticalEngine planner set to %s", type(planner).__name__)
+
     def get_stats(self) -> dict:
-        return {
+        stats = {
             "active_assessments": len(self.assessments),
             "cop_stats": self.situational_awareness.get_stats(),
             "kill_chains": self.kill_chain.get_stats(),
         }
+        if self._planner:
+            stats["planner_stats"] = self._planner.get_stats()
+        return stats

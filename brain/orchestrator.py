@@ -25,8 +25,6 @@ from ..generative import (
 
 logger = logging.getLogger("Ultrone.Brain.Orchestrator")
 
-<<<<<<< Updated upstream
-=======
 # Ensure project root is on sys.path for top-level imports
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -118,7 +116,6 @@ class TelemetryAccumulator:
             "avg_fuel": self.avg_fuel,
         }
 
->>>>>>> Stashed changes
 
 class Orchestrator:
     """
@@ -223,8 +220,6 @@ class Orchestrator:
                 response_time_ms=100.0,
                 context={"assessment": assessment.to_dict()},
             )
-<<<<<<< Updated upstream
-=======
             logger.info(f"Elite genome loaded from {BEST_GENOME_PATH}")
             return genome
         except Exception as e:
@@ -723,7 +718,6 @@ class Orchestrator:
         total_successes = sum(self.episode_successes)
         success_rate = total_successes / total_episodes if total_episodes > 0 else 0.0
         avg_reward = sum(self.episode_rewards) / total_episodes
->>>>>>> Stashed changes
         
         return {
             "tick": tick,
