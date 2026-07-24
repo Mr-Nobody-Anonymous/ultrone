@@ -6,8 +6,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from ..data.entities import Unit, Contact, Formation, DomainType
-from ..data.terrain import Terrain
+from data.entities import Unit, Contact, Formation, DomainType
+from data.terrain import Terrain
 
 logger = logging.getLogger("Ultrone.Sim.WorldState")
 

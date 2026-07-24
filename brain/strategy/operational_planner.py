@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass
 import uuid
 
-from ...data.entities import Unit, DomainType
+from data.entities import Unit, DomainType
 
 logger = logging.getLogger("Ultrone.Brain.Strategy.OperationalPlanner")
 

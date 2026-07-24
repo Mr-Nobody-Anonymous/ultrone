@@ -10,8 +10,8 @@ from typing import Dict, List, Optional, Any, Callable
 from enum import Enum
 from dataclasses import dataclass
 
-from ...data.entities import Unit, AgentState, DomainType, Contact
-from ...comms.protocol import Message, MessageType, Priority
+from data.entities import Unit, AgentState, DomainType, Contact
+from comms.protocol import Message, MessageType, Priority
 
 logger = logging.getLogger("Ultrone.Agents.Base")
 

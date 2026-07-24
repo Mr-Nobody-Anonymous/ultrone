@@ -1,4 +1,5 @@
 import math
+from typing import Any
 
 def haversine_distance(pos1: tuple, pos2: tuple) -> float:
     """Calculate distance in meters between two lat/lon positions."""

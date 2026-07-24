@@ -8,7 +8,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, Optional
 
-from ..data.terrain import Terrain, TerrainType
+from data.terrain import Terrain, TerrainType
 
 logger = logging.getLogger("Ultrone.Sim.Environment")
 

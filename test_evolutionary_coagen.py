@@ -5,7 +5,8 @@ Tests prove the evolutionary logic actually works without hallucinating math.
 """
 
 import sys
-sys.path.insert(0, r"C:\Users\hp\Desktop\ultrone")
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import unittest
 import random
