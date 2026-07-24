@@ -1,5 +1,5 @@
 import math
-from typing import Tuple
+from typing import Any, Tuple
 
 def format_position(pos: Tuple[float, float, float]) -> str:
     """Format position as X,Y,Z string."""

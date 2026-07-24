@@ -1,23 +1,32 @@
 # Copyright (c) Ultrone Contributors. All rights reserved.
-"""
-Master Training Orchestrator - Multi-episode evolutionary training loop.
+"""Brain orchestrator - central military C2 system with OODA loop."""
 
-Ties the BattlefieldEnv and EvolutionaryCOAGenerator together for
-autonomous, self-evolving AI across multiple sessions.
-"""
-
-from __future__ import annotations
-
-import json
 import logging
-import os
 import random
-import sys
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Any
+
+from .learning import EvolutionLab, EvolutionConfig, AgentEvolver, PatternRecognizer
+from .perception import SituationalAwareness
+from .learning import ThreatPattern
+from .reasoning import (
+    TacticalEngine, KillChain, CompositeKillChain,
+    DomainEngagement, CompositePhase,
+    KillChainCapsule, ActiveEvolutionManager,
+)
+from .strategy import Doctrine, OperationalPlanner, StrategicPlanner
+from ..config import MilitaryConfig
+from ..config.doctrine_presets import DoctrineType, get_doctrine_preset
+from ..sim import WorldState
+from ..comms import MessageBus
+from ..generative import (
+    TacticalSynthesizer, ScenarioGenerator,
+    AdversarialEmulator, ReportGenerator,
+)
 
 logger = logging.getLogger("Ultrone.Brain.Orchestrator")
 
+<<<<<<< Updated upstream
+=======
 # Ensure project root is on sys.path for top-level imports
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -35,6 +44,12 @@ class TelemetryAccumulator:
     
     Later steps receive higher weight (linear ramp: 1.0 + 0.1*step_idx),
     so that end-game maneuvers matter more than early positioning.
+    
+    Phase 6 additions:
+    - fuel_consumed: total fuel burned in episode
+    - supply_nodes_alive & total_supply_nodes: supply node state tracking
+    - supply_penalty_active: whether supply penalty was triggered
+    - avg_fuel: average fuel across blue assets at end
     """
     
     def __init__(self) -> None:
@@ -47,6 +62,12 @@ class TelemetryAccumulator:
         self.collision_count: int = 0
         self.ecm_active_count: int = 0
         self.steps: int = 0
+        # Phase 6: fuel & supply tracking
+        self.fuel_consumed: float = 0.0
+        self.supply_nodes_alive: int = 2
+        self.total_supply_nodes: int = 2
+        self.supply_penalty_active: bool = False
+        self.avg_fuel: float = 1.0
         # Time-weighted accumulators
         self._weighted_accuracy: float = 0.0
         self._weight_sum: float = 0.0
@@ -65,6 +86,8 @@ class TelemetryAccumulator:
         self.collision_count += step_telemetry.get("collision_count", 0)
         if step_telemetry.get("ecm_active", False):
             self.ecm_active_count += 1
+        # Phase 6: accumulate fuel
+        self.fuel_consumed += step_telemetry.get("fuel_consumed", 0.0)
         # Track time-weighted accuracy
         step_hit = 1.0 if step_telemetry.get("hits", 0) > 0 else 0.0
         self._weighted_accuracy += weight * step_hit
@@ -87,120 +110,121 @@ class TelemetryAccumulator:
             "time_weighted_accuracy": (
                 self._weighted_accuracy / self._weight_sum if self._weight_sum > 0 else 0.0
             ),
+            # Phase 6 fields
+            "fuel_consumed": self.fuel_consumed,
+            "supply_nodes_alive": self.supply_nodes_alive,
+            "total_supply_nodes": self.total_supply_nodes,
+            "supply_penalty_active": self.supply_penalty_active,
+            "avg_fuel": self.avg_fuel,
         }
 
+>>>>>>> Stashed changes
 
 class Orchestrator:
     """
-    Master training orchestrator for ULTRONE.
+    Central brain / Command and Control with OODA loop.
     
-    Runs N episodes, evolves genomes via EvolutionaryCOAGenerator,
-    persists the best genome, and adapts mutation rates dynamically.
+    Active Evolution:
+    - Observe: Perceive threats via sensor fusion
+    - Orient: Check for recognized enemy patterns, IMMEDIATELY mutate KillChainCapsule
+    - Decide: Generate COAs using evolved parameters
+    - Act: Execute updated tactics immediately
+    
+    The brain physically changes its parameters mid-battle!
     """
-
-    def __init__(
-        self,
-        num_episodes: int = 100,
-        max_steps_per_episode: int = 200,
-        initial_mutation_rate: float = 0.15,
-        success_rate_window: int = 10,
-    ) -> None:
-        self.num_episodes = num_episodes
-        self.max_steps_per_episode = max_steps_per_episode
-        self.mutation_rate = initial_mutation_rate
-        self.success_rate_window = success_rate_window
+    
+    def __init__(self, config: Optional[MilitaryConfig] = None):
+        self.config = config or MilitaryConfig()
         
-        # Lazy imports by file path to avoid broken package-level relative imports
-        import importlib.util
+        # Initialize evolution system
+        self.evolution_lab = EvolutionLab()
+        self.evolution_lab.initialize(agent_id="orchestrator")
         
-        def _load_module_by_path(module_name: str, file_path: Path):
-            spec = importlib.util.spec_from_file_location(module_name, file_path)
-            mod = importlib.util.module_from_spec(spec)
-            sys.modules[module_name] = mod
-            spec.loader.exec_module(mod)
-            return mod
+        self.agent_evolver = AgentEvolver(self.evolution_lab)
         
-        base = PROJECT_ROOT
-        env_mod = _load_module_by_path(
-            "sim.battlefield_env",
-            base / "sim" / "battlefield_env.py",
+        # Initialize perception
+        self.situational_awareness = SituationalAwareness()
+        
+        # Initialize reasoning
+        self.tactical_engine = TacticalEngine()
+        self.kill_chain = KillChain()
+        self.composite_chains: Dict[str, CompositeKillChain] = {}
+        
+        # Initialize active evolution manager
+        # This is the key: manages real-time mutation during battle
+        self.active_evolution = ActiveEvolutionManager(
+            self.evolution_lab.genome_engine,
+            self.kill_chain
         )
-        BattlefieldEnv = env_mod.BattlefieldEnv
         
-        coa_mod = _load_module_by_path(
-            "brain.reasoning.evolutionary_coagen",
-            base / "brain" / "reasoning" / "evolutionary_coagen.py",
-        )
-        EvolutionaryCOAGenerator = coa_mod.EvolutionaryCOAGenerator
-        EvolutionaryGenome = coa_mod.EvolutionaryGenome
+        # Initialize pattern recognizer for orient phase
+        self.pattern_recognizer = PatternRecognizer()
         
-        swarm_mod = _load_module_by_path(
-            "brain.reasoning.swarm_genomes",
-            base / "brain" / "reasoning" / "swarm_genomes.py",
-        )
-        CommanderGenome = swarm_mod.CommanderGenome
-        AssetMicroGenome = swarm_mod.AssetMicroGenome
+        # Initialize strategy
+        self.doctrine = Doctrine(get_doctrine_preset(DoctrineType.BALANCED))
+        self.operational_planner = OperationalPlanner()
+        self.strategic_planner = StrategicPlanner()
         
-        coev_mod = _load_module_by_path(
-            "brain.reasoning.coevolution_engine",
-            base / "brain" / "reasoning" / "coevolution_engine.py",
-        )
-        CoevolutionEngine = coev_mod.CoevolutionEngine
-        RedForceGenome = coev_mod.RedForceGenome
+        # Communications
+        self.message_bus = MessageBus()
         
-        self.BattlefieldEnv = BattlefieldEnv
-        self.EvolutionaryCOAGenerator = EvolutionaryCOAGenerator
-        self.EvolutionaryGenome = EvolutionaryGenome
-        self.CommanderGenome = CommanderGenome
-        self.AssetMicroGenome = AssetMicroGenome
-        self.CoevolutionEngine = CoevolutionEngine
-        self.RedForceGenome = RedForceGenome
+        # Generative AI systems
+        self.tactical_synthesizer = TacticalSynthesizer()
+        self.scenario_generator = ScenarioGenerator()
+        self.adversarial_emulator = AdversarialEmulator()
+        self.report_generator = ReportGenerator()
         
-        # Training state
-        self.episode_rewards: List[float] = []
-        self.episode_successes: List[bool] = []
-        self.red_survival_rates: List[float] = []
-        self.best_genome: Optional[EvolutionaryGenome] = None
-        self.best_fitness: float = 0.0
-        self.generation: int = 0
-        self.current_mutation_rate = initial_mutation_rate
-        self.use_coevolution = True
+        # OODA tracking
+        self._ooda_cycle = 0
+        self._generative_tick = 0
+        self._mutations_performed = 0
+        self._active_mutations: Dict[str, int] = {}  # domain -> ticks since last mutation
+    
+    async def initialize(self) -> None:
+        """Initialize all systems."""
+        await self.message_bus.start()
+        # Initialize the kill chain capsule
+        self.active_evolution.initialize_capsule("orchestrator")
+        logger.info("Orchestrator initialized with balanced doctrine and active evolution")
+    
+    async def process_tick(self, world_state: WorldState, tick: int) -> Dict[str, Any]:
+        """
+        Process one simulation tick with OODA loop.
         
-        # Ensure memory directory exists
-        MEMORY_DIR.mkdir(parents=True, exist_ok=True)
+        ACTIVE EVOLUTION HAPPENS HERE:
+        During Orient phase, if pattern_recognizer detects enemy tactic with >80% confidence,
+        immediately trigger directed_mutation() on KillChainCapsule to lower
+        target_confirmation_threshold or increase f2t2ea_phase_speed for that specific threat.
+        """
+        self._ooda_cycle += 1
         
-        # Post-hoc commander briefing generator
-        self._briefing_generator = None
-
-    def _load_elite_genome(self) -> Optional[EvolutionaryGenome]:
-        """Load the best genome from persistent memory if it exists."""
-        if not BEST_GENOME_PATH.exists():
-            return None
+        # O - OBSERVE: Update COP with sensor data
+        units = list(world_state.units.values())
+        self.situational_awareness.update([], units)
         
-        try:
-            with open(BEST_GENOME_PATH, "r") as f:
-                data = json.load(f)
-            
-            # Reconstruct EvolutionaryGenome from dict
-            genome = self.EvolutionaryGenome(
-                genome_id=data["genome_id"],
-                generation=data.get("generation", 0),
-                agent_id=data.get("agent_id", "elite"),
-                action_weights=data.get("action_weights", {}),
-                synergy_map={
-                    tuple(k.split("|")): v 
-                    for k, v in data.get("synergy_map", {}).items()
-                },
-                phase_params={
-                    k: self._dict_to_phase_params(v) 
-                    for k, v in data.get("phase_params", {}).items()
-                },
-                resource_conservation=data.get("resource_conservation", 0.7),
-                time_optimization=data.get("time_optimization", 1.0),
-                domain=data.get("domain", "all"),
-                mutation_rate=data.get("mutation_rate", self.current_mutation_rate),
-                fitness_score=data.get("fitness_score", 0.0),
+        threatening = self.situational_awareness.get_threatening_contacts()
+        
+        # O - ORIENT: Check for recognized patterns AND IMMEDIATELY MUTATE
+        # This is where active evolution happens - mid-battle!
+        detected_patterns = self.orient_phase(threatening, tick)
+        
+        # D - DECIDE: Generate COAs using the now-evolved parameters
+        assessments = self.tactical_engine.decide(threatening, units)
+        
+        # A - ACT: Execute orders with evolved tactics
+        results = self.tactical_engine.execute({u.unit_id: u for u in units})
+        
+        # Log actions for evolution
+        for assessment in assessments:
+            self.evolution_lab.log_action(
+                action="tactical_assessment",
+                domain="all",
+                success=random.random() > 0.2,
+                response_time_ms=100.0,
+                context={"assessment": assessment.to_dict()},
             )
+<<<<<<< Updated upstream
+=======
             logger.info(f"Elite genome loaded from {BEST_GENOME_PATH}")
             return genome
         except Exception as e:
@@ -368,10 +392,11 @@ class Orchestrator:
             logger.debug(f"Hybrid LLM components unavailable: {e}")
         
         # Initialize Operational API Server (HITL + XAI)
-        self._intervention_manager = InterventionManager()
+        self._intervention_manager = None
         self._api_server = None
         try:
-            from comms.api_server import create_api_server
+            from comms.api_server import InterventionManager, create_api_server
+            self._intervention_manager = InterventionManager()
             self._api_server = create_api_server(self, self._intervention_manager)
             if self._api_server:
                 self._api_server.start()
@@ -516,17 +541,35 @@ class Orchestrator:
                 step_telemetry = {
                     "hits": 1 if (done and reward > 0) else 0,
                     "attempts": 1,
-                    "weapons_used": 1 if (blue_action and blue_action.get("action") == "strike") else 0,
+                    "weapons_used": 1 if (blue_action and isinstance(blue_action, dict) and blue_action.get("action") == "strike") else 0,
                     "weapons_allocated": 3,
                     "actions_used": coa.phases if coa else [],
                     "blue_on_blue": 1 if info.get("swarm_collisions", 0) > 0 else 0,
                     "collision_count": info.get("swarm_collisions", 0),
                     "red_survived": red_survived,
                     "ecm_active": info.get("ecm_active", False),
+                    "fuel_consumed": info.get("fuel_consumed", 0.0),
                 }
                 telemetry_accum.add_step(step_telemetry, step - 1)
             
             # Finalize accumulated telemetry and apply fitness at episode end
+            # Phase 6: capture supply node state from final observation
+            supply_nodes_data = obs.get("supply_nodes", {})
+            telemetry_accum.supply_nodes_alive = sum(
+                1 for sn in supply_nodes_data.values() if sn.get("alive", False)
+            )
+            telemetry_accum.total_supply_nodes = len(supply_nodes_data)
+            telemetry_accum.supply_penalty_active = obs.get("supply_penalty_active", False)
+            
+            # Compute average fuel across blue assets at episode end
+            all_blue_assets = []
+            for assets in obs.get("blue_assets", {}).values():
+                all_blue_assets.extend(assets)
+            if all_blue_assets:
+                telemetry_accum.avg_fuel = sum(
+                    a.get("fuel", 0.0) for a in all_blue_assets
+                ) / len(all_blue_assets)
+            
             agg_telemetry = telemetry_accum.finalize(step, red_survived)
             directive_weights = self._current_directive.weights if self._current_directive else None
             if blue_commander and self.use_coevolution:
@@ -616,10 +659,15 @@ class Orchestrator:
                     "best_novelty": best_novelty,
                 }
                 
-                # LLM Commander visual-grounding brief
+                # LLM Commander visual-grounding brief with multi-INT knowledge
                 if self._llm_commander is not None:
                     try:
                         ascii_map = env.render_ascii_map()
+                        # Phase 6: Build knowledge graph from observation for richer briefing
+                        from brain.perception.knowledge_graph import MultiINTKnowledgeGraph
+                        kg = MultiINTKnowledgeGraph()
+                        kg.ingest_from_observation(obs)
+                        knowledge_summary = kg.get_summary()
                         self._llm_commander.write_briefing(ascii_map, telemetry)
                     except Exception as e:
                         logger.debug(f"LLM commander brief failed: {e}")
@@ -675,17 +723,135 @@ class Orchestrator:
         total_successes = sum(self.episode_successes)
         success_rate = total_successes / total_episodes if total_episodes > 0 else 0.0
         avg_reward = sum(self.episode_rewards) / total_episodes
+>>>>>>> Stashed changes
         
         return {
-            "total_episodes": total_episodes,
-            "success_rate": success_rate,
-            "avg_reward": avg_reward,
-            "best_fitness": self.best_fitness,
-            "final_mutation_rate": self.current_mutation_rate,
-            "generation": self.generation,
+            "tick": tick,
+            "threats_detected": len(threatening),
+            "assessments": len(assessments),
+            "orders_executed": results.get("executed", 0),
+            "mutations_this_tick": sum(1 for p in detected_patterns if p.confidence > 0.8),
+            "active_capabilities": self._get_active_capabilities(),
         }
-
-
-if __name__ == "__main__":
-    orchestrator = Orchestrator(num_episodes=100)
-    orchestrator.run()
+    
+    def _get_active_capabilities(self) -> Dict[str, float]:
+        """Get current evolved capabilities from the kill chain capsule."""
+        return {
+            "target_confirmation_threshold": self.active_evolution.get_capability("target_confirmation_threshold"),
+            "f2t2ea_phase_speed": self.active_evolution.get_capability("f2t2ea_phase_speed"),
+        }
+    
+    def orient_phase(self, threatening_contacts, tick: int) -> List[ThreatPattern]:
+        """
+        OODA Orient phase: Check for recognized enemy patterns.
+        
+        ACTIVE EVOLUTION TRIGGER:
+        If pattern_recognizer detects an enemy tactic with >80% confidence,
+        IMMEDIATELY trigger directed_mutation() on KillChainCapsule to:
+        - Lower target_confirmation_threshold for faster lock on this threat type
+        - Increase f2t2ea_phase_speed for quicker phase transitions
+        
+        This is the core of active evolution - changes happen mid-battle!
+        """
+        patterns = []
+        
+        # REAL-TIME pattern detection during Orient phase
+        # This happens MID-BATTLE, not between games!
+        detected_patterns = self.pattern_recognizer.detect_patterns_in_contacts(threatening_contacts)
+        
+        for pattern in detected_patterns:
+            patterns.append(pattern)
+            
+            # ACTIVE EVOLUTION: >80% confidence triggers immediate mutation!
+            if pattern.confidence > 0.8:
+                logger.info(
+                    f"🎯 PATTERN DETECTED ({pattern.confidence:.0%} confidence): "
+                    f"{pattern.description} in {pattern.domain} domain"
+                )
+                
+                # Immediately mutate the kill chain capsule
+                mutation_applied = self.active_evolution.process_pattern(
+                    pattern=pattern,
+                    tick=tick,
+                    threatening_contacts=threatening_contacts,
+                )
+                
+                if mutation_applied:
+                    self._mutations_performed += 1
+                    logger.info(
+                        f"⚡ BRAIN PHYSICALLY MUTATED: "
+                        f"target_confirmation_threshold and f2t2ea_phase_speed "
+                        f"adapted for {pattern.domain} threat"
+                    )
+        
+        return patterns
+    
+    def directed_mutation(self, pattern: ThreatPattern) -> bool:
+        """
+        Directed mutation of KillChainCapsule based on enemy pattern.
+        
+        DEPRECATED: This method is kept for compatibility but the actual
+        mutation logic now lives in ActiveEvolutionManager.process_pattern().
+        
+        If >80% confidence pattern detected:
+        - Lower target_confirmation_threshold for faster lock
+        - Increase f2t2ea_phase_speed for quicker response
+        """
+        # Delegate to the active evolution manager
+        return self.active_evolution.process_pattern(
+            pattern=pattern,
+            tick=self._ooda_cycle,
+            threatening_contacts=[],
+        )
+    
+    def get_full_stats(self) -> Dict[str, Any]:
+        """Get comprehensive system statistics."""
+        return {
+            "config": self.config.to_dict(),
+            "evolution": self.evolution_lab.get_stats(),
+            "perception": self.situational_awareness.get_stats(),
+            "tactical": self.tactical_engine.get_stats(),
+            "strategy": {
+                "doctrine": self.doctrine.get_stats(),
+                "operational": self.operational_planner.get_stats(),
+            },
+            "comms": self.message_bus.get_stats(),
+            "ooda": {
+                "cycles": self._ooda_cycle,
+                "mutations_performed": self._mutations_performed,
+                "active_capabilities": self._get_active_capabilities(),
+            },
+        }
+    
+    def generative_loop(self, tick: int) -> Optional[Dict]:
+        """
+        Generative AI loop - runs every 50 ticks.
+        """
+        self._generative_tick += 1
+        
+        if self._generative_tick % 50 != 0:
+            return None
+        
+        telemetry_stats = self.evolution_lab.telemetry.get_stats()
+        weaknesses = self.adversarial_emulator.analyze_weaknesses(telemetry_stats)
+        
+        if not weaknesses:
+            return None
+        
+        scenario = self.scenario_generator.generate(weaknesses, difficulty=0.7)
+        
+        if self.evolution_lab.genome_engine.active_genome:
+            test_result = self.scenario_generator.fast_forward_test(
+                None, self.evolution_lab.genome_engine.active_genome, ticks=50
+            )
+        
+        tactics = self.tactical_synthesizer.synthesize()
+        
+        return {
+            "weaknesses_found": weaknesses,
+            "ghost_scenario": scenario.name,
+            "tactics_generated": len(tactics),
+        }
+    
+    def get_evolution_summary(self) -> str:
+        return self.evolution_lab.get_evolution_summary()

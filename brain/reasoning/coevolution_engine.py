@@ -7,7 +7,8 @@ import logging
 import random
 from typing import Any, Dict, List, Optional, Tuple
 
-from .evolutionary_coagen import EvolutionaryCOAGenerator, CommanderGenome
+from .evolutionary_coagen import EvolutionaryCOAGenerator
+from .swarm_genomes import CommanderGenome
 from .red_force_genomes import RedForceGenome
 
 logger = logging.getLogger("Ultrone.Brain.Reasoning.Coevolution")
@@ -54,10 +55,14 @@ class CoevolutionEngine:
         """
         Evaluate Blue fitness by testing against a sample of Red genomes.
         
+        Phase 6 enhancements:
+        - Fuel consumption penalty: penalises excessive fuel burn.
+        - Supply node preservation reward: rewards keeping blue supply nodes alive.
+        
         Args:
             commander: Blue commander to evaluate
             red_sample: Sample of Red genomes to test against
-            telemetry_data: Combined telemetry from battles against red_sample
+            telemetry_by_red: Combined telemetry from battles against red_sample
             directive: Optional StrategicDirective weights for effectiveness, efficiency, novelty
             
         Returns:
@@ -80,6 +85,10 @@ class CoevolutionEngine:
             w_efficiency = 0.3
             w_novelty = 0.2
         
+        # Phase 6: Fuel penalty weight and supply bonus weight
+        w_fuel = 0.10  # fuel conservation matters
+        w_supply = 0.05  # supply node survival bonus
+        
         for red_genome in red_sample:
             telemetry = telemetry_by_red.get(red_genome.genome_id, {})
             if not telemetry:
@@ -97,9 +106,34 @@ class CoevolutionEngine:
             actions_used = telemetry.get("actions_used", [])
             novelty = min(1.0, len(set(actions_used)) / 10)
             
-            fitness = w_effectiveness * effectiveness + w_efficiency * efficiency + w_novelty * novelty
+            # Phase 6: Fuel consumption penalty
+            total_fuel_consumed = telemetry.get("fuel_consumed", 0.0)
+            max_possible_fuel = 3.0  # ~3 assets * 1.0 fuel each approximate max
+            fuel_ratio = min(1.0, total_fuel_consumed / max_possible_fuel)
+            fuel_penalty = fuel_ratio  # 0.0 (no fuel used) to 1.0 (max)
             
-            # Penalties
+            # Phase 6: Supply node preservation reward
+            supply_nodes_alive = telemetry.get("supply_nodes_alive", 2)
+            total_supply_nodes = telemetry.get("total_supply_nodes", 2)
+            supply_bonus = supply_nodes_alive / max(1, total_supply_nodes)
+            
+            # Phase 6: Supply penalty active flag reduces fitness
+            supply_penalty_active = telemetry.get("supply_penalty_active", False)
+            supply_penalty_mult = 0.8 if supply_penalty_active else 1.0
+            
+            base_fitness = (
+                w_effectiveness * effectiveness
+                + w_efficiency * efficiency
+                + w_novelty * novelty
+                - w_fuel * fuel_penalty
+                + w_supply * supply_bonus
+            )
+            base_fitness = max(0.0, base_fitness)  # clamp negative
+            
+            # Supply penalty multiplier
+            fitness = base_fitness * supply_penalty_mult
+            
+            # Existing penalties
             if telemetry.get("blue_on_blue", 0) > 0:
                 fitness *= 0.01
             elif telemetry.get("collateral", 0) > 0:

@@ -1,5 +1,5 @@
 import random
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 def bayesian_update(prior: float, likelihood: float, evidence: float) -> float:
     """Bayesian probability update."""

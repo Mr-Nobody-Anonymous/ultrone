@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 import random
 
-from ...data.entities import Contact, ThreatLevel, DomainType
+from data.entities import Contact, ThreatLevel, DomainType
 
 logger = logging.getLogger("Ultrone.Brain.Perception.ThreatClassifier")
 

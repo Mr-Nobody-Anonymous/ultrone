@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional
 from enum import Enum
 
-from ...config.doctrine_presets import DoctrinePreset, DoctrineType
-from ...data.entities import Contact, ThreatLevel
+from config.doctrine_presets import DoctrinePreset, DoctrineType
+from data.entities import Contact, ThreatLevel
 
 
 class ROE(Enum):

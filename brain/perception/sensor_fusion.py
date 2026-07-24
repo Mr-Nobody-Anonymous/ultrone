@@ -2,12 +2,19 @@
 """Multi-sensor fusion for unified contact picture."""
 
 import logging
+import sys
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 import uuid
 
-from ...data.entities import Contact, ThreatLevel, DomainType
-from ...data.feeds import SensorFeed, RadarFeed, VisualFeed, SigintFeed, CyberFeed, SonarFeed
+# Ensure project root is on sys.path for top-level imports
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from data.entities import Contact, ThreatLevel, DomainType
+from data.feeds import SensorFeed, RadarFeed, VisualFeed, SigintFeed, CyberFeed, SonarFeed
 
 logger = logging.getLogger("Ultrone.Brain.Perception.SensorFusion")
 
