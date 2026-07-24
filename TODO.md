@@ -1,29 +1,42 @@
-# Phase 6 Implementation - COMPLETE ✅
+# React Import Fix Plan
 
-## Step 1: Upgrade `brain/perception/knowledge_graph.py`
-- [x] Add `networkx` import and `MultiINTKnowledgeGraph` class
-- [x] Add `get_summary()` method with threat density, high-value comms links, clusters
-- [x] Ensure backward compatibility with existing `KnowledgeGraph` class
+## Goal: Replace default `import React` with named imports (React 18 JSX transform compatibility)
 
-## Step 2: Refine `sim/battlefield_env.py`
-- [x] Add supply node coordinates and tracking
-- [x] Add fuel tracking to blue assets and red force
-- [x] Add fuel consumption per step
-- [x] Add `resupply` action with proximity check
-- [x] Fix supply node penalty (one-time penalty instead of infinite 5% decay)
-- [x] Add dynamic re-linking to surviving supply nodes
+## Progress
 
-## Step 3: Update `brain/learning/llm_commander.py`
-- [x] Extend `analyze()` to accept `knowledge_summary` parameter
-- [x] Inject knowledge graph summary into LLM prompt
-- [x] Incorporate knowledge graph insights into rule-based analysis
+### Contexts (3 files)
+- [x] `frontend/src/contexts/ThemeContext.tsx`
+- [x] `frontend/src/contexts/SimulationContext.tsx`
+- [x] `frontend/src/contexts/DashboardContext.tsx`
 
-## Step 4: Update `brain/reasoning/coevolution_engine.py`
-- [x] Add fuel consumption penalty in `evaluate_blue_fitness()`
-- [x] Add supply node preservation reward
+### Layouts (1 file)
+- [x] `frontend/src/layouts/MainLayout.tsx`
 
-## Step 5: Update `brain/orchestrator.py`
-- [x] Add fuel, supply tracking in TelemetryAccumulator
-- [x] Capture supply node state and avg fuel per episode
-- [x] Knowledge graph ingestion for LLM briefing
+### Pages (5 files)
+- [x] `frontend/src/pages/DashboardPage.tsx`
+- [x] `frontend/src/pages/ExperimentPage.tsx`
+- [x] `frontend/src/pages/AnalyticsPage.tsx`
+- [x] `frontend/src/pages/AgentInspectorPage.tsx`
+- [x] `frontend/src/pages/SettingsPage.tsx`
+
+### Components (9 files)
+- [x] `frontend/src/components/Sidebar.tsx`
+- [x] `frontend/src/components/TopBar.tsx`
+- [x] `frontend/src/components/CommandPalette.tsx`
+- [x] `frontend/src/components/LiveMetrics.tsx`
+- [x] `frontend/src/components/TacticalMapView.tsx`
+- [x] `frontend/src/components/DecisionTimeline.tsx`
+- [x] `frontend/src/components/AgentInspector.tsx`
+- [x] `frontend/src/components/KnowledgeGraph.tsx`
+- [x] `frontend/src/components/EventStream.tsx`
+- [x] `frontend/src/components/AIReasoningPanel.tsx`
+- [x] `frontend/src/components/PerformanceMonitor.tsx`
+- [x] `frontend/src/components/TacticalMap/MapLibreMap.tsx`
+
+### Root (2 files)
+- [x] `frontend/src/main.tsx`
+- [x] `frontend/src/App.tsx`
+
+### Verification
+- [ ] Run TypeScript check to verify no errors
 
