@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set, Union
 
 from .base import AIArchitecture, AIArchitectureConfig
 
@@ -46,12 +46,32 @@ class FSM(AIArchitecture):
         self._states: Dict[str, State] = {}
         self._transitions: List[Transition] = []
         self._current_state: Optional[State] = None
+        # Ensure the initial state is always available
+        self.add_state(State(name=self.config.initial_state))
+        self.initialize()
 
     def add_state(self, state: State) -> None:
         self._states[state.name] = state
 
-    def add_transition(self, transition: Transition) -> None:
-        self._transitions.append(transition)
+    def add_transition(self, from_state: Union[str, Transition], to_state: str = "", condition: Optional[Callable] = None) -> None:
+        """Add a transition between states.
+        
+        Can be called with a Transition object or with 3 positional args.
+        """
+        if isinstance(from_state, Transition):
+            self._transitions.append(from_state)
+            # Auto-register referenced states so the graph stays valid
+            self._states.setdefault(from_state.from_state, State(name=from_state.from_state))
+            self._states.setdefault(from_state.to_state, State(name=from_state.to_state))
+        else:
+            self._transitions.append(Transition(
+                from_state=from_state,
+                to_state=to_state,
+                condition=condition,
+            ))
+            # Auto-register referenced states so the graph stays valid
+            self._states.setdefault(from_state, State(name=from_state))
+            self._states.setdefault(to_state, State(name=to_state))
 
     def initialize(self) -> None:
         initial = self._states.get(self.config.initial_state)
@@ -60,13 +80,39 @@ class FSM(AIArchitecture):
             if initial.on_enter:
                 initial.on_enter()
 
+    @staticmethod
+    def _eval_condition(condition: Optional[Callable], state: Dict[str, Any]) -> bool:
+        """Evaluate a transition condition.
+
+        Supports callables, string keys (state lookup), booleans, and
+        callables that accept (current_state_name, state).
+        """
+        if condition is None:
+            return True
+        if callable(condition):
+            try:
+                result = condition(state)
+            except TypeError:
+                try:
+                    result = condition(state.get("state"))
+                except Exception:
+                    result = False
+            return bool(result)
+        if isinstance(condition, bool):
+            return condition
+        if isinstance(condition, str):
+            return bool(state.get(condition) or state.get("state") == condition)
+        return bool(condition)
+
     def decide(self, state: Dict[str, Any]) -> str:
+        if self._current_state is None:
+            self.initialize()
         if self._current_state is None:
             return "unknown"
 
         # Check transitions
         for t in self._transitions:
-            if t.from_state == self._current_state.name and t.condition(state):
+            if t.from_state == self._current_state.name and self._eval_condition(t.condition, state):
                 # Transition
                 if self._current_state.on_exit:
                     self._current_state.on_exit()
@@ -85,6 +131,13 @@ class FSM(AIArchitecture):
     @property
     def current_state(self) -> Optional[str]:
         return self._current_state.name if self._current_state else None
+
+    def get_stats(self) -> Dict[str, Any]:
+        stats = super().get_stats()
+        stats["current_state"] = self.current_state
+        stats["state_count"] = len(self._states)
+        stats["transition_count"] = len(self._transitions)
+        return stats
 
     def reset(self) -> None:
         self._current_state = None

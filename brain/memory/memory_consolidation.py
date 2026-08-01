@@ -23,10 +23,16 @@ class MemoryConsolidation:
     """Memory consolidation process that transfers important episodic
     memories to semantic memory for long-term retention."""
 
-    def __init__(self, config: Optional[ConsolidationConfig] = None):
+    def __init__(
+        self,
+        config: Optional[ConsolidationConfig] = None,
+        source: Optional[BaseMemory] = None,
+        target: Optional[BaseMemory] = None,
+    ):
         self.config = config or ConsolidationConfig()
-        self._episodic: Optional[BaseMemory] = None
-        self._semantic: Optional[BaseMemory] = None
+        self._episodic: Optional[BaseMemory] = source
+        self._semantic: Optional[BaseMemory] = target
+        self._num_consolidations: int = 0
 
     def set_memories(self, episodic: BaseMemory, semantic: BaseMemory) -> None:
         self._episodic = episodic
@@ -41,7 +47,11 @@ class MemoryConsolidation:
             if item.importance >= self.config.importance_threshold:
                 self._semantic.store(f"consolidated_{key}", item.content, item.importance)
                 transferred += 1
+        self._num_consolidations += transferred
         return transferred
 
     def get_stats(self) -> Dict[str, Any]:
-        return {"type": "MemoryConsolidation"}
+        return {
+            "type": "MemoryConsolidation",
+            "num_consolidations": self._num_consolidations,
+        }

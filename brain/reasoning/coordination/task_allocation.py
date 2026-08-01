@@ -29,6 +29,25 @@ class TaskAllocation(BaseCoordinator):
 
     def __init__(self, config: Optional[TaskAllocationConfig] = None):
         super().__init__(config or TaskAllocationConfig())
+        self._config: TaskAllocationConfig = self.config  # type: ignore
+
+    def allocate(self, tasks: Dict[str, float]) -> Dict[str, Any]:
+        """Allocate tasks to agents.
+
+        Args:
+            tasks: Mapping of task_id -> weight/priority.
+
+        Returns:
+            Dict with allocations and method.
+        """
+        if not self._agents:
+            # Use default agents when none registered
+            self._agents = {f"agent_{i}": None for i in range(max(2, self._config.num_agents))}
+        task_list = [{"id": tid, "weight": w} for tid, w in tasks.items()]
+        return self.coordinate({
+            "tasks": task_list,
+            "agents": list(self._agents.keys()),
+        })
 
     def coordinate(self, context: Dict[str, Any]) -> Dict[str, Any]:
         tasks = context.get("tasks", [])

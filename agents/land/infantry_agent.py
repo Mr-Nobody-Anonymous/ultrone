@@ -1,8 +1,8 @@
 # Copyright (c) Ultrone Contributors. All rights reserved.
 """Infantry agent - land domain."""
 
-from ..base_agent import BaseAgent, AgentCapability
-from ...data.entities import DomainType
+from agents.base_agent import BaseAgent, AgentCapability
+from data.entities import DomainType
 
 class InfantryAgent(BaseAgent):
     """Squad: MOVING/COVER/ASSAULT/DEFEND/CALLING_FIRE states."""

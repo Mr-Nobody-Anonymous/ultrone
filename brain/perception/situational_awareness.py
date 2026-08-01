@@ -11,9 +11,9 @@ import random
 logger = logging.getLogger("Ultrone.Brain.Perception.SituationalAwareness")
 
 if TYPE_CHECKING:
-    from ...data.entities import Contact, ThreatLevel, DomainType, Unit
-    from .sensor_fusion import SensorFusion, FusedContact
-    from .threat_classifier import ThreatClassifier, ThreatScore
+    from data.entities import Contact, ThreatLevel, DomainType, Unit
+    from brain.perception.sensor_fusion import SensorFusion, FusedContact
+    from brain.perception.threat_classifier import ThreatClassifier, ThreatScore
 
 
 @dataclass
@@ -47,9 +47,9 @@ class SituationalAwareness:
 
     def __init__(self):
         # Late imports to avoid circular dependencies
-        from ...data.entities import Contact, ThreatLevel, DomainType, Unit
-        from .sensor_fusion import SensorFusion
-        from .threat_classifier import ThreatClassifier
+        from data.entities import Contact, ThreatLevel, DomainType, Unit
+        from brain.perception.sensor_fusion import SensorFusion
+        from brain.perception.threat_classifier import ThreatClassifier
         
         self.contacts: Dict[str, COPContact] = {}
         self.units: Dict[str, Unit] = {}
@@ -70,7 +70,7 @@ class SituationalAwareness:
         fused = self._sensor_fusion.fuse_feeds(feeds)
 
         # Classify threats
-        from ...data.entities import ThreatLevel
+        from data.entities import ThreatLevel
         blue_positions = [u.position for u in units if u.team == "blue"]
 
         for fused_contact in fused:
@@ -97,7 +97,7 @@ class SituationalAwareness:
 
     def get_threatening_contacts(self, min_level: Optional[Any] = None) -> List[COPContact]:
         """Get all contacts at or above a threat level."""
-        from ...data.entities import ThreatLevel
+        from data.entities import ThreatLevel
         min_level = min_level or ThreatLevel.MEDIUM
         threat_order = [ThreatLevel.UNKNOWN, ThreatLevel.LOW, ThreatLevel.MEDIUM,
                        ThreatLevel.HIGH, ThreatLevel.CRITICAL, ThreatLevel.IMMINENT]
@@ -124,7 +124,7 @@ class SituationalAwareness:
 
     def get_cop_summary(self) -> str:
         """Get a human-readable COP summary."""
-        from ...data.entities import DomainType, ThreatLevel
+        from data.entities import DomainType, ThreatLevel
         lines = ["=" * 50, "🗺️ COMMON OPERATING PICTURE", "=" * 50]
 
         # Count by domain
@@ -145,7 +145,7 @@ class SituationalAwareness:
         return "\n".join(lines)
 
     def get_stats(self) -> dict:
-        from ...data.entities import DomainType, ThreatLevel
+        from data.entities import DomainType, ThreatLevel
         return {
             "total_contacts": len(self.contacts),
             "units_tracked": len(self.units),

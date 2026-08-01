@@ -72,6 +72,19 @@ class BeamSearch(Planner):
         self._transition_fn = domain.action_cost_fn
         self._terminal_fn = domain.is_terminal_fn
 
+    def _transition(self, state: Any, action: PlanningAction) -> Any:
+        """Apply an action to a state and return the next state.
+        
+        For grid-based domains, uses action parameters to compute next state.
+        """
+        if isinstance(state, tuple) and len(state) == 2:
+            x, y = state
+            params = action.parameters
+            dx = params.get("dx", 0)
+            dy = params.get("dy", 0)
+            return (x + dx, y + dy)
+        return state
+
     def plan(self, state: Any, goal: PlanningGoal) -> PlanningResult:
         domain = self._domain
         if domain is None:
@@ -87,14 +100,17 @@ class BeamSearch(Planner):
 
         nodes_expanded = 0
 
+        goal_check = goal.is_terminal_fn or self._terminal_fn
+
         for depth in range(self.config.max_depth):
             candidates: List[_BeamCandidate] = []
 
             for candidate in beam:
                 # Goal check
-                if candidate.state == target or (
-                    self._terminal_fn and self._terminal_fn(candidate.state)
-                ):
+                is_goal = (candidate.state == target)
+                if not is_goal and goal_check:
+                    is_goal = goal_check(candidate.state)
+                if is_goal:
                     result = PlanningResult(
                         success=True,
                         actions=candidate.actions,
@@ -108,7 +124,7 @@ class BeamSearch(Planner):
                 # Expand
                 for action in domain.discrete_actions:
                     nodes_expanded += 1
-                    next_state = self._transition(state, action) if self._transition_fn else state
+                    next_state = self._transition(candidate.state, action)
                     new_cost = candidate.cost + action.cost
                     new_score = new_cost + h_fn(next_state, target) * self.config.heuristic_weight
 
@@ -136,4 +152,3 @@ class BeamSearch(Planner):
         )
         logger.info("Beam plan FAILED (expanded %d nodes)", nodes_expanded)
         return self._record_result(result)
-

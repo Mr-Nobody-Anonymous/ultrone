@@ -8,10 +8,12 @@ from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 from dataclasses import dataclass
 import random
 
+from data.entities import DomainType
+
 logger = logging.getLogger("Ultrone.Brain.Reasoning.ResourceAllocator")
 
 if TYPE_CHECKING:
-    from ...data.entities import Unit, Contact, DomainType
+    from data.entities import Unit, Contact
 
 
 @dataclass

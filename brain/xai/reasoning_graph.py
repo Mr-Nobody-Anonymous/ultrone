@@ -229,6 +229,40 @@ class ReasoningGraph:
         }
         return colors.get(node_type, "lightgrey")
 
+    def build(self, decision_data: Dict[str, Any]) -> str:
+        """Build a reasoning graph from a decision dictionary.
+
+        Args:
+            decision_data: Dict with keys such as ``action``, ``reason``,
+                ``step_id``, ``alternatives``, ``confidence``.
+
+        Returns:
+            Root node ID of the built graph.
+        """
+        self.clear()
+        root_id = self.add_node(
+            label="Decision: " + str(decision_data.get('action', 'unknown')),
+            node_type="decision",
+            confidence=decision_data.get("confidence", 1.0),
+            metadata={"reason": decision_data.get("reason", "")},
+        )
+        step_id = decision_data.get("step_id", 0)
+        perception_id = self.add_node(
+            label="Observation " + str(step_id),
+            node_type="observation",
+            confidence=decision_data.get("confidence", 0.8),
+        )
+        self.add_edge(perception_id, root_id, label="informs")
+
+        for alt in decision_data.get("alternatives", []):
+            alt_id = self.add_node(
+                label="Alternative: " + str(alt),
+                node_type="decision",
+                confidence=0.0,
+            )
+            self.add_edge(root_id, alt_id, label="alternative_to", weight=0.3)
+        return root_id
+
     def clear(self) -> None:
         """Reset the graph."""
         self._nodes.clear()

@@ -12,12 +12,12 @@ from dataclasses import dataclass
 logger = logging.getLogger("Ultrone.Brain.Reasoning.TacticalEngine")
 
 if TYPE_CHECKING:
-    from ..perception.situational_awareness import SituationalAwareness, COPContact
-    from ..reasoning.course_of_action import COAGenerator, CourseOfAction
-    from ..reasoning.kill_chain import KillChain, KillChainPhase
-    from ..reasoning.resource_allocator import ResourceAllocator, Allocation
-    from ...config.doctrine_presets import DoctrinePreset
-    from ...data.entities import Unit, Contact, DomainType
+    from brain.perception.situational_awareness import SituationalAwareness, COPContact
+    from brain.reasoning.course_of_action import COAGenerator, CourseOfAction
+    from brain.reasoning.kill_chain import KillChain, KillChainPhase
+    from brain.reasoning.resource_allocator import ResourceAllocator, Allocation
+    from config.doctrine_presets import DoctrinePreset
+    from data.entities import Unit, Contact, DomainType
 
 
 @dataclass
@@ -52,10 +52,10 @@ class TacticalEngine:
 
     def __init__(self, doctrine: Optional[Any] = None) -> None:
         # Late imports to avoid circular dependencies
-        from ..perception.situational_awareness import SituationalAwareness
-        from ..reasoning.course_of_action import COAGenerator
-        from ..reasoning.resource_allocator import ResourceAllocator
-        from ..reasoning.kill_chain import KillChain
+        from brain.perception.situational_awareness import SituationalAwareness
+        from brain.reasoning.course_of_action import COAGenerator
+        from brain.reasoning.resource_allocator import ResourceAllocator
+        from brain.reasoning.kill_chain import KillChain
         
         self.situational_awareness: SituationalAwareness = SituationalAwareness()
         self.coa_generator: COAGenerator = COAGenerator()
@@ -75,7 +75,7 @@ class TacticalEngine:
         self.situational_awareness.update(feeds, units)
 
         # Get threatening contacts
-        from ...data.entities import ThreatLevel
+        from data.entities import ThreatLevel
         threatening = self.situational_awareness.get_threatening_contacts(
             ThreatLevel.HIGH
         )

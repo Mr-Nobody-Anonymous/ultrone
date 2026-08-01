@@ -35,6 +35,10 @@ class BlackboardSystem(AIArchitecture):
         self._knowledge_sources: Dict[str, Callable] = {}
         self._scheduler: Optional[Callable] = None
 
+    def share(self, key: str, value: Any) -> None:
+        """Share information on the blackboard (convenience for write)."""
+        self.write(key, value, source="share")
+
     def write(self, key: str, value: Any, source: str = "", confidence: float = 1.0) -> None:
         self._blackboard[key] = BlackboardEntry(key=key, value=value, source=source, confidence=confidence)
 

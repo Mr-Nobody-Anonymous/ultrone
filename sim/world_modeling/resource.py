@@ -1,4 +1,4 @@
-"""Resource model for simulation."""
+"""Resource model for battlefield simulation."""
 
 from __future__ import annotations
 
@@ -15,51 +15,50 @@ logger = logging.getLogger("Ultrone.Sim.WorldModeling.Resource")
 @dataclass
 class ResourceConfig(WorldModelConfig):
     """Configuration for resource model."""
-    num_resource_nodes: int = 20
-    resource_types: List[str] = field(default_factory=lambda: ["fuel", "ammo", "food", "parts"])
-    regeneration_rate: float = 0.01
+    initial_fuel: float = 1000.0
+    initial_ammo: float = 500.0
+    fuel_consumption_rate: float = 0.1
+    ammo_consumption_rate: float = 0.05
 
 
 class ResourceModel(WorldModel):
-    """Resource distribution and depletion model.
+    """Resource model tracking fuel, ammo, and supplies.
 
-    Manages resource nodes on the battlefield that agents
-    can interact with for resupply and replenishment.
+    Simulates consumption and resupply of battlefield resources.
     """
 
     def __init__(self, config: Optional[ResourceConfig] = None):
         super().__init__(config or ResourceConfig())
-        self._nodes: Dict[str, Dict[str, Any]] = {}
-
-    def initialize(self, width: int = 100, height: int = 100) -> None:
-        rng = np.random.RandomState(self.config.seed)
-        for i in range(self.config.num_resource_nodes):
-            node_id = f"resource_{i}"
-            rtype = rng.choice(self.config.resource_types)
-            self._nodes[node_id] = {
-                "position": (rng.randint(0, width), rng.randint(0, height)),
-                "type": rtype,
-                "capacity": rng.uniform(50, 200),
-                "current": rng.uniform(50, 200),
-                "alive": True,
-            }
-        logger.info("Resource model initialized: %d nodes", len(self._nodes))
+        self._fuel: float = self.config.initial_fuel
+        self._ammo: float = self.config.initial_ammo
 
     def update(self, dt: float) -> None:
+        """Consume resources over time."""
         self._tick += 1
-        for node in self._nodes.values():
-            if node["alive"] and node["current"] < node["capacity"]:
-                node["current"] = min(node["capacity"], node["current"] + self.config.regeneration_rate * node["capacity"])
+        self._fuel = max(0.0, self._fuel - self.config.fuel_consumption_rate)
+        self._ammo = max(0.0, self._ammo - self.config.ammo_consumption_rate)
 
-    def extract(self, node_id: str, amount: float) -> float:
-        """Extract resources from a node. Returns actual amount extracted."""
-        node = self._nodes.get(node_id)
-        if not node or not node["alive"]:
-            return 0.0
-        extracted = min(amount, node["current"])
-        node["current"] -= extracted
-        return extracted
+    def consume_fuel(self, amount: float) -> float:
+        """Consume fuel and return actual amount consumed."""
+        consumed = min(amount, self._fuel)
+        self._fuel -= consumed
+        return consumed
+
+    def consume_ammo(self, amount: float) -> float:
+        """Consume ammo and return actual amount consumed."""
+        consumed = min(amount, self._ammo)
+        self._ammo -= consumed
+        return consumed
+
+    def resupply(self, fuel: float = 0.0, ammo: float = 0.0) -> None:
+        """Resupply resources."""
+        self._fuel = min(self.config.initial_fuel, self._fuel + fuel)
+        self._ammo = min(self.config.initial_ammo, self._ammo + ammo)
 
     def get_state(self) -> Dict[str, Any]:
-        return {"nodes": {k: dict(v) for k, v in self._nodes.items()}}
-
+        return {
+            "fuel": self._fuel,
+            "ammo": self._ammo,
+            "fuel_pct": 100.0 * self._fuel / max(1.0, self.config.initial_fuel),
+            "ammo_pct": 100.0 * self._ammo / max(1.0, self.config.initial_ammo),
+        }

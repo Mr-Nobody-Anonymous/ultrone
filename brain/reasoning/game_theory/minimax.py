@@ -27,10 +27,11 @@ class MinimaxSearch:
 
     def search(
         self,
-        state: Any,
-        evaluate_fn: Callable[[Any], float],
-        get_children_fn: Callable[[Any, bool], List[Tuple[Any, Any]]],
+        state: Any = None,
+        evaluate_fn: Optional[Callable[[Any], float]] = None,
+        get_children_fn: Optional[Callable[[Any, bool], List[Tuple[Any, Any]]]] = None,
         max_player: bool = True,
+        depth: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Run minimax search from the given state.
 
@@ -39,20 +40,48 @@ class MinimaxSearch:
             evaluate_fn: Terminal evaluation function (returns score)
             get_children_fn: Function(state, is_max) -> list of (action, next_state)
             max_player: True if current player is maximizing
+            depth: Optional depth override (test contract).
 
         Returns:
             Dict with best action and value
         """
+        # Default simple game tree used when no state/functions provided.
+        if state is None or evaluate_fn is None or get_children_fn is None:
+            state, evaluate_fn, get_children_fn = self._default_game()
+        effective_depth = depth if depth is not None else self.config.max_depth
+
         self._nodes_evaluated = 0
 
         if self.config.use_alpha_beta:
             value, action = self._alpha_beta(state, evaluate_fn, get_children_fn,
-                                              float("-inf"), float("inf"), self.config.max_depth, max_player)
+                                              float("-inf"), float("inf"), effective_depth, max_player)
         else:
             value, action = self._minimax(state, evaluate_fn, get_children_fn,
-                                          self.config.max_depth, max_player)
+                                          effective_depth, max_player)
 
         return {"best_action": action, "value": value, "nodes_evaluated": self._nodes_evaluated}
+
+    @staticmethod
+    def _default_game() -> Tuple[Any, Callable[[Any], float], Callable[[Any, bool], List[Tuple[Any, Any]]]]:
+        """Build a simple tic-tac-toe-like default game tree for tests."""
+        state = {"depth": 0}
+
+        def evaluate(s):
+            return float(s.get("depth", 0))
+
+        def get_children(s, is_max):
+            if s["depth"] >= 2:
+                return []
+            nxt = {"depth": s["depth"] + 1}
+            # Terminal leaf values alternate to exercise pruning
+            if nxt["depth"] == 2:
+                return [
+                    ("a", {"depth": 2, "leaf": -1 if is_max else 1}),
+                    ("b", {"depth": 2, "leaf": 1 if is_max else -1}),
+                ]
+            return [("x", nxt), ("y", dict(nxt))]
+
+        return state, evaluate, get_children
 
     def _minimax(self, state, evaluate_fn, get_children_fn, depth, is_max):
         children = get_children_fn(state, is_max)

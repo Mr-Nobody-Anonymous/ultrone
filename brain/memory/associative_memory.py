@@ -37,5 +37,14 @@ class AssociativeMemory(BaseMemory):
     def recall_by_pattern(self, pattern: str) -> List[Any]:
         return [item.content for item in self._items.values() if pattern.lower() in str(item.content).lower()]
 
+    def associate(self, trigger: str, response: Any) -> None:
+        """Associate a trigger pattern with a response.
+
+        Args:
+            trigger: The key/pattern that triggers recall.
+            response: The response content to recall.
+        """
+        self.store(trigger, response)
+
     def forget(self, key: str) -> None:
         self._items.pop(key, None)

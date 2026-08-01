@@ -17,6 +17,7 @@ logger = logging.getLogger("Ultrone.Brain.Learning.Optimization.BayesOpt")
 class BayesOptConfig(OptimizerConfig):
     """Configuration for Bayesian Optimization."""
     n_initial_points: int = 10
+    n_iterations: int = 20
     acquisition: str = "ucb"
     kappa: float = 2.5
 
@@ -26,9 +27,11 @@ class BayesianOptimization(BaseOptimizer):
 
     def __init__(self, config: Optional[BayesOptConfig] = None):
         super().__init__(config or BayesOptConfig())
+        self._config: BayesOptConfig = self.config  # type: ignore
 
-    def optimize(self, objective_fn, bounds):
+    def optimize(self, objective_fn, bounds, max_iter: Optional[int] = None):
         dim = len(bounds)
+        total_iterations = int(round(max_iter if max_iter is not None else self._config.max_iterations))
         X = np.random.uniform([b[0] for b in bounds], [b[1] for b in bounds],
                               (self._config.n_initial_points, dim))
         y = np.array([objective_fn(x) for x in X])
@@ -36,7 +39,7 @@ class BayesianOptimization(BaseOptimizer):
         best_idx = np.argmin(y)
         self._history.append(y[best_idx])
 
-        for iteration in range(self._config.max_iterations - self._config.n_initial_points):
+        for iteration in range(total_iterations - self._config.n_initial_points):
             # Simple random candidate search as placeholder for GP-based acquisition
             candidates = np.random.uniform([b[0] for b in bounds], [b[1] for b in bounds], (100, dim))
             # UCB-like: pick candidate farthest from observed points
@@ -51,7 +54,7 @@ class BayesianOptimization(BaseOptimizer):
 
         return OptimizationResult(
             best_params=X[best_idx], best_value=y[best_idx],
-            n_iterations=self._config.max_iterations,
+            n_iterations=total_iterations,
             n_evaluations=self._n_evaluations,
             convergence_history=self._history,
         )

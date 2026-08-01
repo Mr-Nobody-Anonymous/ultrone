@@ -206,6 +206,34 @@ class CooperativeGame:
             "feasible_solutions": len(utility_set),
         }
 
+    def compute_shapley(self, values: Dict[str, float]) -> Dict[str, Any]:
+        """Compute Shapley values from a simple value dictionary.
+
+        Treats each key as a player and the value as that player's
+        standalone contribution.  Used by the test contract.
+
+        Args:
+            values: Mapping of player_name -> contribution value.
+
+        Returns:
+            Dict with Shapley values per player.
+        """
+        players = list(values.keys())
+        n = len(players)
+        # For a simple additive value function, the Shapley value of each
+        # player equals their standalone value exactly once per ordering —
+        # average over all permutations reduces to the standalone value.
+        total = sum(values.values())
+        result: Dict[str, Any] = {}
+        for p in players:
+            # Marginal contribution of p when added after any subset S:
+            # v(S ∪ {p}) - v(S) = values[p]. Averaging over all orderings
+            # gives exactly values[p].
+            result[p] = float(values[p])
+        result["total_value"] = float(total)
+        result["value_function_type"] = "additive"
+        return result
+
     def solve(self, payoff_matrix: np.ndarray) -> Dict[str, Any]:
         """Convenience wrapper: solve a cooperative game from a payoff matrix.
 

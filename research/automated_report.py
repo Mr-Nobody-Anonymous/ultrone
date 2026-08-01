@@ -29,14 +29,30 @@ class AutomatedReport:
     def __init__(self, config: Optional[ReportConfig] = None):
         self.config = config or ReportConfig()
         self._sections: List[Dict[str, Any]] = []
+        self._num_reports: int = 0
 
     def add_section(self, title: str, content: Any, section_type: str = "text") -> None:
         """Add a section to the report."""
         self._sections.append({"title": title, "content": content, "type": section_type})
 
-    def generate(self, title: str = "Experiment Report") -> str:
-        """Generate the report in the configured format."""
+    def generate(self, data: Optional[Dict[str, Any]] = None, title: str = "Experiment Report") -> str:
+        """Generate the report in the configured format.
+        
+        Args:
+            data: Optional data dict to include in the report.
+            title: Report title.
+            
+        Returns:
+            Formatted report string.
+        """
+        self._num_reports += 1
         lines = [f"# {title}", ""]
+        if data:
+            lines.append("## Data")
+            lines.append("```json")
+            lines.append(json.dumps(data, indent=2))
+            lines.append("```")
+            lines.append("")
         for section in self._sections:
             lines.append(f"## {section['title']}")
             if isinstance(section["content"], str):
@@ -49,4 +65,8 @@ class AutomatedReport:
         return "\n".join(lines)
 
     def get_stats(self) -> Dict[str, Any]:
-        return {"type": "AutomatedReport", "sections": len(self._sections)}
+        return {
+            "type": "AutomatedReport",
+            "num_reports": self._num_reports,
+            "sections": len(self._sections),
+        }

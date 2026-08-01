@@ -100,14 +100,21 @@ ultrone/
 │   │   ├── monte_carlo_engine.py    # Monte Carlo simulation planning
 │   │   ├── resource_allocator.py    # Optimal asset allocation
 │   │   ├── red_force_genomes.py     # Red Force genome definitions
-│   │   └── swarm_genomes.py         # Swarm genome architectures
+│   │   ├── swarm_genomes.py         # Swarm genome architectures
+│   │   ├── search/                  # ✅ 12 search/planning algorithms (MCTS, HTN, A*, MAPF, etc.)
+│   │   ├── game_theory/             # ✅ Nash, Stackelberg, CFR, Minimax, Auctions, Zero-Sum, Cooperative
+│   │   ├── coordination/            # ✅ 12 coordination protocols (Consensus, Contract Net, Swarm, etc.)
+│   │   └── decision_intelligence/   # ✅ Causal BN, Counterfactual, Influence Diagrams, SCM
 │   ├── perception/                 # 👁️ Multi-sensor fusion
 │   │   ├── specialized_analyzers.py # 11 AI experts per sensor type
 │   │   ├── multi_source_analyzer.py # Fusion layer
 │   │   ├── sensor_fusion.py         # Combined sensor confidence
 │   │   ├── situational_awareness.py # Battlefield state awareness
 │   │   ├── knowledge_graph.py       # Entity relationship graph
-│   │   └── threat_classifier.py     # Threat level classification
+│   │   ├── threat_classifier.py     # Threat level classification
+│   │   ├── probabilistic/           # ✅ Bayesian Networks, HMM, Kalman (KF/EKF/UKF), Particle Filter
+│   │   ├── graph_intelligence/      # ✅ GNN, GAT, Knowledge Embeddings, Community Detection
+│   │   └── knowledge/               # ✅ RAG Memory, Semantic Search, Vector DB, Graph Embeddings
 │   ├── learning/                   # 📚 Experience & adaptation
 │   │   ├── evolution_lab.py         # Genome mutation engine
 │   │   ├── genome.py                # Gene/Capsule data structures
@@ -115,7 +122,31 @@ ultrone/
 │   │   ├── experience_memory.py     # Cross-session memory persistence
 │   │   ├── pattern_recognizer.py    # Tactical pattern detection
 │   │   ├── llm_commander.py         # Hybrid LLM-guided command
-│   │   └── performance_telemetry.py # Fitness & performance tracking
+│   │   ├── performance_telemetry.py # Fitness & performance tracking
+│   │   ├── rl/                      # ✅ 14 RL algorithms (PPO, SAC, TD3, DQN, Rainbow, MARL, QMIX, VDN...)
+│   │   ├── optimization/            # ✅ 10 optimizers (GA, CMA-ES, PSO, Bayesian, Ant Colony, NSGA-II...)
+│   │   ├── evolutionary/            # ✅ 9 advanced evolutionary (NEAT, Novelty Search, MAP-Elites, NSGA-III...)
+│   │   ├── meta_learning/           # ✅ MAML, Reptile, Transfer, Online, Continual Learning
+│   │   ├── ml/                      # ✅ Framework adapters (PyTorch, SB3, ONNX, Ray, XGBoost, PyG)
+│   │   └── prediction/              # ✅ LSTM, GRU, Transformer, Temporal Fusion, Trajectory
+│   ├── generative/                 # ✅ Deep generative models
+│   │   ├── diffusion_planner.py     # Diffusion-based plan generation
+│   │   ├── normalizing_flows.py     # Normalizing Flows
+│   │   ├── tactic_transformer.py    # Transformer-based generative models
+│   │   └── tactic_vae.py            # VAE for tactics
+│   ├── memory/                     # ✅ Multi-tier memory systems
+│   │   ├── episodic_memory.py       # Episodic memory
+│   │   ├── semantic_memory.py       # Semantic memory
+│   │   ├── working_memory.py        # Working memory with decay
+│   │   ├── associative_memory.py    # Associative pattern recall
+│   │   └── memory_consolidation.py  # Memory consolidation
+│   ├── xai/                        # ✅ Explainable AI
+│   │   ├── decision_trace.py        # Decision trace generation
+│   │   ├── shap_explainer.py        # SHAP explanations
+│   │   ├── lime_explainer.py        # LIME explanations
+│   │   ├── counterfactual.py        # Counterfactual explanations
+│   │   ├── confidence_calibration.py # Confidence calibration
+│   │   └── reasoning_graph.py       # Reasoning graph visualization
 │   └── strategy/                   # 🏛️ High-level planning
 │       ├── doctrine.py              # Military doctrine presets (4 types)
 │       ├── operational_planner.py   # Mission decomposition
@@ -129,17 +160,66 @@ ultrone/
 │   │   ├── tank_agent.py
 │   │   ├── infantry_agent.py
 │   │   └── mobile_missile_agent.py
-│   ├── sea/                         # Vessels, submarines
-│   │   └── vessel_agent.py
-│   ├── space/                       # Satellite agents
-│   │   └── space_agent.py
+│   ├── sea/                         # Vessels, submarines, naval air
+│   │   ├── vessel_agent.py
+│   │   ├── submarine_agent.py
+│   │   └── naval_air_agent.py
+│   ├── space/                       # Satellite, orbital, space weapons
+│   │   ├── satellite_agent.py
+│   │   ├── orbital_agent.py
+│   │   └── space_weapon_agent.py
 │   ├── cyber/                       # Cyber warfare agents
+│   │   ├── recon_agent.py
+│   │   ├── exploit_agent.py
+│   │   └── defend_agent.py
 │   └── base_agent.py                # Abstract base agent
+├── ai_architectures/               # ✅ AI Architecture Patterns
+│   ├── behavior_tree.py             # Behavior Trees
+│   ├── goap.py                      # Goal-Oriented Action Planning
+│   ├── utility_ai.py                # Utility AI
+│   ├── bdi_agent.py                 # Belief-Desire-Intention
+│   ├── fsm.py                       # Finite State Machines
+│   ├── hierarchical_fsm.py          # Hierarchical FSM
+│   ├── blackboard_system.py         # Blackboard Systems
+│   └── reactive_planning.py         # Reactive Planning
 ├── sim/                            # 🎮 Simulation environment
 │   ├── battlefield_env.py           # 100x100 grid battlefield Gym env
 │   ├── world_state.py               # Global battlefield state
 │   ├── environment.py               # Environmental effects
-│   └── clock.py                     # Simulation clock
+│   ├── clock.py                     # Simulation clock
+│   ├── world_modeling/              # ✅ Terrain, Weather, Resources, Logistics, Events
+│   └── performance/                 # ✅ Parallel, Distributed, Ray, GPU, Profiler
+├── research/                       # ✅ Research Tooling
+│   ├── experiment_manager.py        # Experiment management
+│   ├── hyperparameter_optimizer.py  # Hyperparameter optimization
+│   ├── scenario_benchmark.py        # Scenario benchmarking
+│   ├── reproducibility.py           # Reproducibility tools
+│   ├── statistical_evaluation.py    # Statistical evaluation
+│   ├── ablation_framework.py        # Ablation framework
+│   └── automated_report.py          # Automated reports
+├── backend/                        # ✅ Backend Services
+│   ├── api/                         # API v1 endpoints
+│   ├── analytics/                   # Analytics
+│   ├── auth/                        # Authentication
+│   ├── cache/                       # Caching
+│   ├── database/                    # Database
+│   ├── events/                      # Event handling
+│   ├── metrics/                     # Metrics
+│   ├── security/                    # Security
+│   ├── vision/                      # Object detection, satellite, terrain, thermal
+│   └── workers/                     # Background workers
+├── frontend/                       # ✅ React/Vite Dashboard
+│   └── src/
+│       ├── components/              # TacticalMap, AgentInspector, AIReasoning, etc.
+│       ├── pages/                   # Dashboard, Analytics, Experiment, Settings
+│       ├── contexts/                # Dashboard, Simulation, Theme contexts
+│       └── layouts/                 # Main layout
+├── infra/                          # ✅ Infrastructure
+│   ├── docker/                      # Docker Compose
+│   ├── helm/                        # Helm Charts
+│   ├── kubernetes/                  # Kubernetes Manifests
+│   ├── monitoring/                  # Monitoring
+│   └── nginx/                       # Nginx config
 ├── comms/                          # 📡 Communications
 │   ├── message_bus.py               # Async pub/sub with priority queue
 │   ├── api_server.py                # FastAPI HITL + XAI server
@@ -162,6 +242,20 @@ ultrone/
 │   ├── entities.py                  # Entity definitions
 │   ├── feeds.py                     # Data feed definitions
 │   └── terrain.py                   # Terrain data
+├── tests/                          # ✅ 13 test suites
+│   ├── test_search_planning.py
+│   ├── test_reinforcement_learning.py
+│   ├── test_coordination.py
+│   ├── test_optimization.py
+│   ├── test_probabilistic.py
+│   ├── test_game_theory.py
+│   ├── test_graph_intelligence.py
+│   ├── test_prediction.py
+│   ├── test_xai.py
+│   ├── test_memory.py
+│   ├── test_world_modeling.py
+│   ├── test_ai_architectures.py
+│   └── test_research_tooling.py
 └── utils/                          # 🛠️ Utilities
     ├── geo.py                       # Geospatial calculations
     ├── helpers.py                   # General helpers
@@ -251,10 +345,36 @@ print(sat.analyze({'formation': 'tanks'}, {}))
 - [x] ✅ Specialized AI perceptors (11 sensor types)
 - [x] ✅ Evolutionary COA generation
 - [x] ✅ Combinatorial tactic creation (JAM+STRIKE → Cyber-Kinetic Sync)
-- [ ] 🔄 Multi-agent swarm coordination
+- [x] ✅ Multi-agent swarm coordination (12 protocols: Consensus, Contract Net, Coalition, etc.)
+- [x] ✅ Search & Planning (12 algorithms: MCTS, HTN, A*, MAPF, PDDL, etc.)
+- [x] ✅ Reinforcement Learning (14 algorithms: PPO, SAC, TD3, DQN, Rainbow, MARL, QMIX, VDN...)
+- [x] ✅ Optimization engines (10: GA, CMA-ES, PSO, Bayesian, Ant Colony, NSGA-II...)
+- [x] ✅ Advanced Evolutionary Algorithms (9: NEAT, Novelty Search, MAP-Elites, NSGA-III...)
+- [x] ✅ Meta & Continual Learning (MAML, Reptile, Transfer, Online, Continual)
+- [x] ✅ Probabilistic Reasoning (Bayesian Networks, HMM, Kalman KF/EKF/UKF, Particle Filter)
+- [x] ✅ Game Theory (Nash, Stackelberg, CFR, Minimax, Auctions, Zero-Sum, Cooperative)
+- [x] ✅ Graph Intelligence (GNN, GAT, Knowledge Embeddings, Community Detection)
+- [x] ✅ Prediction models (LSTM, GRU, Transformer, Temporal Fusion, Trajectory)
+- [x] ✅ Explainable AI (Decision Trace, SHAP, LIME, Counterfactual, Confidence Calibration)
+- [x] ✅ Memory Systems (Episodic, Semantic, Working, Associative, Consolidation)
+- [x] ✅ World Modeling (Terrain, Weather, Resources, Logistics, Events)
+- [x] ✅ AI Architecture Patterns (Behavior Trees, GOAP, Utility AI, BDI, FSM, Blackboard)
+- [x] ✅ Performance & Scaling (Parallel, Distributed, Ray, GPU, Profiler)
+- [x] ✅ Research Tooling (Experiment Manager, Hyperparameter Opt, Benchmarking, Ablation)
+- [x] ✅ Decision Intelligence (Causal BN, Counterfactual, Influence Diagrams, SCM)
+- [x] ✅ Knowledge & RAG (Semantic Search, Vector DB, RAG Memory, Graph Embeddings)
+- [x] ✅ ML Framework Adapters (PyTorch, SB3, ONNX, Ray, XGBoost, PyG)
+- [x] ✅ Generative AI (Diffusion Planner, Normalizing Flows, Tactic Transformer, Tactic VAE)
+- [x] ✅ Backend Services (API, Analytics, Auth, Cache, Database, Events, Security, Vision)
+- [x] ✅ Frontend Dashboard (React/Vite: Tactical Map, Agent Inspector, Analytics, Admin)
+- [x] ✅ Infrastructure (Docker, Helm, Kubernetes, Monitoring, Nginx)
+- [x] ✅ Comprehensive Test Suite (13 test files)
 - [ ] 🌐 Distributed evolution across nodes
 - [ ] 📱 Battle-damage assessment
 - [ ] 🎯 Predictive kill-chain optimization
+- [ ] 📓 Tutorial notebooks in `/notebooks/`
+- [ ] 🔌 Plugin marketplace for community algorithms
+- [ ] 🧪 Benchmark suite against standard RL environments
 
 ---
 

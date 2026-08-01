@@ -40,34 +40,32 @@ class CommanderBriefingGenerator:
     
     def _init_llm(self) -> None:
         """Attempt to load a lightweight local LLM. Fall back if unavailable."""
-        try:
-            # Prefer transformers if torch is available
-            import torch  # noqa: F401
-            from transformers import AutoTokenizer, AutoModelForCausalLM
-            import threading
-            
-            model_name = "microsoft/Phi-3-mini-4k-instruct"
-            
-            def _load():
-                try:
-                    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-                    model = AutoModelForCausalLM.from_pretrained(
-                        model_name,
-                        trust_remote_code=True,
-                        torch_dtype="auto",
-                        device_map="cpu",
-                    )
-                    self._model = (tokenizer, model)
-                    self._use_llm = True
-                    logger.info("Commander briefing LLM loaded: %s", model_name)
-                except Exception as e:
-                    logger.warning("LLM load failed: %s", e)
-                    self._use_llm = False
-            
-            threading.Thread(target=_load, daemon=True).start()
-        except Exception:
-            self._use_llm = False
-            logger.info("Commander briefing using rule-based synthesis")
+        import threading
+
+        def _try_load():
+            try:
+                # Heavy imports happen in background thread so they never block
+                # the evolutionary loop.
+                import torch  # noqa: F401
+                from transformers import AutoTokenizer, AutoModelForCausalLM
+
+                model_name = "microsoft/Phi-3-mini-4k-instruct"
+                tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_name,
+                    trust_remote_code=True,
+                    torch_dtype="auto",
+                    device_map="cpu",
+                )
+                self._model = (tokenizer, model)
+                self._use_llm = True
+                logger.info("Commander briefing LLM loaded: %s", model_name)
+            except Exception as e:
+                logger.debug("LLM load failed (using rule-based synthesis): %s", e)
+                self._use_llm = False
+
+        thread = threading.Thread(target=_try_load, daemon=True)
+        thread.start()
     
     def generate_briefing(self, episode: int, telemetry: Dict[str, Any]) -> str:
         """

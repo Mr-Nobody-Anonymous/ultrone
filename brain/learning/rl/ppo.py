@@ -65,6 +65,10 @@ class PPO(BaseRLAlgorithm):
             from .adapter import _HeuristicPolicy
             self._adapter = _HeuristicPolicy(self._config)
 
+    def select_action(self, state: np.ndarray, deterministic: bool = False) -> np.ndarray:
+        """Alias for act()."""
+        return self.act(state, deterministic)
+
     def act(self, state: np.ndarray, deterministic: bool = False) -> np.ndarray:
         """Sample action from policy network via SB3."""
         if self._adapter is not None:

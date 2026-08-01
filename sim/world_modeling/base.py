@@ -1,41 +1,40 @@
-"""Base classes for world modeling components."""
+"""Base class for all world models."""
 
 from __future__ import annotations
 
-import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
-
-logger = logging.getLogger("Ultrone.Sim.WorldModeling.Base")
+from typing import Any, Dict, Optional
 
 
 @dataclass
 class WorldModelConfig:
-    """Base configuration for world models."""
-    enabled: bool = True
-    update_interval: int = 1  # ticks between updates
+    """Base configuration for all world models."""
+    name: str = "world_model"
     seed: int = 42
+    enabled: bool = True
 
 
 class WorldModel(ABC):
-    """Abstract interface for world modeling components."""
+    """Abstract base class for all world models."""
 
     def __init__(self, config: WorldModelConfig):
         self.config = config
-        self._tick = 0
+        self._tick: int = 0
 
     @abstractmethod
     def update(self, dt: float) -> None:
         """Advance the model by one time step."""
         ...
 
-    @abstractmethod
-    def get_state(self) -> Dict[str, Any]:
-        """Return current model state for observation."""
-        ...
-
     def reset(self) -> None:
         """Reset the model to initial state."""
         self._tick = 0
 
+    def get_state(self) -> Dict[str, Any]:
+        """Return current state of the model."""
+        return {"tick": self._tick}
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Return statistics about the model."""
+        return {"type": type(self).__name__, "name": self.config.name}

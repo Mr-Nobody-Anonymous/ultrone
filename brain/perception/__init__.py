@@ -5,7 +5,8 @@ from __future__ import annotations
 
 # Keep these as lazy imports to avoid circular dependency issues
 __all__ = ["SensorFusion", "ThreatClassifier", "SituationalAwareness",
-           "MultiSourceAnalyzer", "DataSourceType", "SensorDataPacket", "IntelligenceAssessment"]
+           "MultiSourceAnalyzer", "DataSourceType", "SensorDataPacket", "IntelligenceAssessment",
+           "TerrainAnalyzer", "BattlefieldAnalyzer", "Battlefield3DExporter"]
 
 def __getattr__(name: str):
     """Lazy import to avoid circular dependencies."""
@@ -18,6 +19,15 @@ def __getattr__(name: str):
     if name == "SituationalAwareness":
         from .situational_awareness import SituationalAwareness
         return SituationalAwareness
+    if name == "TerrainAnalyzer":
+        from .terrain_analyzer import TerrainAnalyzer
+        return TerrainAnalyzer
+    if name == "BattlefieldAnalyzer":
+        from .battlefield_analyzer import BattlefieldAnalyzer
+        return BattlefieldAnalyzer
+    if name == "Battlefield3DExporter":
+        from .battlefield_3d import Battlefield3DExporter
+        return Battlefield3DExporter
     if name == "MultiSourceAnalyzer":
         from .multi_source_analyzer import MultiSourceAnalyzer
         return MultiSourceAnalyzer

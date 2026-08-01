@@ -41,8 +41,12 @@ class StochasticEventGenerator(WorldModel):
         if event_type in self._listeners:
             self._listeners[event_type].append(callback)
 
-    def update(self, dt: float) -> None:
-        self._tick += 1
+    def generate(self) -> Dict[str, Any]:
+        """Generate a random battlefield event.
+        
+        Returns:
+            Dict with event data, or empty dict if no event generated.
+        """
         if np.random.random() < self.config.event_probability:
             event_type = np.random.choice(self.config.events)
             event_data = {
@@ -58,10 +62,15 @@ class StochasticEventGenerator(WorldModel):
                     callback(event_data)
                 except Exception as e:
                     logger.error("Event callback failed: %s", e)
+            return event_data
+        return {}
+
+    def update(self, dt: float) -> None:
+        self._tick += 1
+        self.generate()
 
     def get_state(self) -> Dict[str, Any]:
         return {
             "active_events": len(self._active_events),
             "recent_events": self._active_events[-5:] if self._active_events else [],
         }
-

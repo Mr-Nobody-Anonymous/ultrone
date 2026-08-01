@@ -55,9 +55,41 @@ class BidirectionalSearch(Planner):
     def initialize(self, domain: PlanningDomain) -> None:
         super().initialize(domain)
         self._heuristic_fn = domain.heuristic_fn
-        # Default: symmetric neighbours
         self._neighbour_fn = domain.action_cost_fn
         self._reverse_neighbour_fn = None  # will be symmetric by default
+
+    def _get_neighbours(self, state: Any, forward: bool = True) -> List[Any]:
+        """Return neighbour states. Override for domain-specific dynamics."""
+        if forward and self._neighbour_fn:
+            return self._neighbour_fn(state)
+        if not forward and self._reverse_neighbour_fn:
+            return self._reverse_neighbour_fn(state)
+        return [state]  # identity fallback
+
+    def _compute_cost(self, state_a: Any, state_b: Any) -> float:
+        """Compute cost between two states."""
+        if isinstance(state_a, tuple) and isinstance(state_b, tuple) and len(state_a) == 2:
+            return abs(state_a[0] - state_b[0]) + abs(state_a[1] - state_b[1])
+        return 1.0
+
+    def _get_valid_neighbours(self, state: Any, target: Any, domain: PlanningDomain) -> List[Any]:
+        """Get valid neighbour states based on domain actions."""
+        if isinstance(state, tuple) and len(state) == 2:
+            x, y = state
+            neighbours = []
+            for action in domain.discrete_actions:
+                dx = action.parameters.get("dx", 0)
+                dy = action.parameters.get("dy", 0)
+                nx, ny = x + dx, y + dy
+                # Check bounds if domain has state_shape
+                if domain.state_shape and len(domain.state_shape) == 2:
+                    w, h = domain.state_shape
+                    if 0 <= nx < w and 0 <= ny < h:
+                        neighbours.append((nx, ny))
+                else:
+                    neighbours.append((nx, ny))
+            return neighbours
+        return [state]
 
     def plan(self, state: Any, goal: PlanningGoal) -> PlanningResult:
         domain = self._domain
@@ -116,8 +148,8 @@ class BidirectionalSearch(Planner):
                 break
 
             # Generate forward neighbours
-            for nxt in self._get_neighbours(f_current, forward=True):
-                cost = domain.action_cost_fn(f_current, nxt) if domain.action_cost_fn else 1.0
+            for nxt in self._get_valid_neighbours(f_current, target, domain):
+                cost = self._compute_cost(f_current, nxt)
                 new_g = f_g.get(f_current, 0.0) + cost
                 if new_g < f_g.get(nxt, float("inf")):
                     f_g[nxt] = new_g
@@ -127,8 +159,8 @@ class BidirectionalSearch(Planner):
                     f_action[(f_current, nxt)] = PlanningAction("move", {"to": nxt}, cost)
 
             # Generate backward neighbours
-            for nxt in self._get_neighbours(b_current, forward=False):
-                cost = domain.action_cost_fn(b_current, nxt) if domain.action_cost_fn else 1.0
+            for nxt in self._get_valid_neighbours(b_current, start, domain):
+                cost = self._compute_cost(b_current, nxt)
                 new_g = b_g.get(b_current, 0.0) + cost
                 if new_g < b_g.get(nxt, float("inf")):
                     b_g[nxt] = new_g
@@ -173,12 +205,3 @@ class BidirectionalSearch(Planner):
         )
         logger.info("Bidirectional plan FAILED (expanded %d nodes)", expansions)
         return self._record_result(result)
-
-    def _get_neighbours(self, state: Any, forward: bool = True) -> List[Any]:
-        """Return neighbour states. Override for domain-specific dynamics."""
-        if forward and self._neighbour_fn:
-            return self._neighbour_fn(state)
-        if not forward and self._reverse_neighbour_fn:
-            return self._reverse_neighbour_fn(state)
-        return [state]  # identity fallback
-

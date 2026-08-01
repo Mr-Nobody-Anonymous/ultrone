@@ -1,7 +1,7 @@
 # Copyright (c) Ultrone Contributors. All rights reserved.
 """Mobile SAM agent - land domain."""
-from ..base_agent import BaseAgent, AgentCapability
-from ...data.entities import DomainType
+from agents.base_agent import BaseAgent, AgentCapability
+from data.entities import DomainType
 
 class MobileMissileAgent(BaseAgent):
     """SAM: RECON/LAUNCH/RELOCATE/RELOAD/HIDE states."""

@@ -44,6 +44,52 @@ class AblationFramework:
         """Set the baseline performance metrics."""
         self._baseline = metrics
 
+    def run(
+        self,
+        base_config: Dict[str, Any],
+        components: List[str],
+        objective_fn: Callable[[Dict[str, Any]], float],
+    ) -> Dict[str, Any]:
+        """Run ablation study by removing components one at a time.
+        
+        Args:
+            base_config: The full configuration with all components enabled.
+            components: List of component names to ablate.
+            objective_fn: Function that takes a config and returns a performance score.
+            
+        Returns:
+            Dict mapping component names to their impact scores.
+        """
+        # Compute baseline
+        baseline_score = objective_fn(base_config)
+        self.set_baseline({"score": baseline_score})
+
+        results = {}
+        for component in components:
+            # Remove component from config
+            ablated_config = copy.deepcopy(base_config)
+            if component in ablated_config:
+                del ablated_config[component]
+            
+            # Run ablation
+            score = objective_fn(ablated_config)
+            delta = score - baseline_score
+            
+            result = AblationResult(
+                config_name=f"no_{component}",
+                config=ablated_config,
+                metrics={"score": score},
+                delta_from_baseline={"score_delta": delta},
+            )
+            self._results.append(result)
+            results[component] = {
+                "score": score,
+                "delta": delta,
+                "impact": abs(delta),
+            }
+
+        return results
+
     def run_ablation(
         self,
         config_name: str,
@@ -64,4 +110,8 @@ class AblationFramework:
         return result
 
     def get_stats(self) -> Dict[str, Any]:
-        return {"type": "AblationFramework", "ablation_runs": len(self._results)}
+        return {
+            "type": "AblationFramework",
+            "num_ablations": len(self._results),
+            "ablation_runs": len(self._results),
+        }

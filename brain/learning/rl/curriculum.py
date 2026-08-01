@@ -51,6 +51,7 @@ class CurriculumLearning:
         self._difficulty = self.config.initial_difficulty
         self._recent_successes: List[bool] = []
         self._stagnation_counter = 0
+        self._num_tasks_completed: int = 0
 
     @property
     def difficulty(self) -> float:
@@ -59,6 +60,7 @@ class CurriculumLearning:
     def record_outcome(self, success: bool) -> None:
         """Record whether the agent succeeded at the current difficulty."""
         self._recent_successes.append(success)
+        self._num_tasks_completed += 1
         if len(self._recent_successes) > self.config.window_size:
             self._recent_successes.pop(0)
 
@@ -88,4 +90,5 @@ class CurriculumLearning:
             "current_difficulty": self._difficulty,
             "recent_successes": len(self._recent_successes),
             "stagnation_counter": self._stagnation_counter,
+            "num_tasks_completed": self._num_tasks_completed,
         }

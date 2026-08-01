@@ -37,6 +37,7 @@ class FormationControl(BaseCoordinator):
 
     def __init__(self, config: Optional[FormationConfig] = None):
         super().__init__(config or FormationConfig())
+        self._config: FormationConfig = self.config  # type: ignore
 
     def get_formation_offsets(self, num_agents: int) -> List[Tuple[float, float]]:
         base = self.FORMATIONS.get(self._config.formation_type, self.FORMATIONS["wedge"])

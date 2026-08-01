@@ -5,8 +5,9 @@ from __future__ import annotations
 import logging
 import math
 import statistics
+import numpy as np
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger("Ultrone.Research.StatisticalEvaluation")
 
@@ -32,6 +33,19 @@ class StatisticalEvaluator:
     def __init__(self, config: Optional[EvalConfig] = None):
         self.config = config or EvalConfig()
 
+    def evaluate(self, results: Union[List[float], np.ndarray]) -> Dict[str, float]:
+        """Evaluate a set of results and return descriptive statistics.
+        
+        Args:
+            results: List or array of numeric results.
+            
+        Returns:
+            Dict with descriptive statistics.
+        """
+        if isinstance(results, np.ndarray):
+            results = results.tolist()
+        return self.describe(results)
+
     def describe(self, values: List[float]) -> Dict[str, float]:
         """Compute descriptive statistics."""
         n = len(values)
@@ -47,6 +61,22 @@ class StatisticalEvaluator:
             "max": max(values),
             "median": statistics.median(values),
         }
+
+    def compare_groups(self, group_a: Union[List[float], np.ndarray], group_b: Union[List[float], np.ndarray]) -> Dict[str, float]:
+        """Compare two groups of results.
+        
+        Args:
+            group_a: First group of results.
+            group_b: Second group of results.
+            
+        Returns:
+            Dict with comparison statistics.
+        """
+        if isinstance(group_a, np.ndarray):
+            group_a = group_a.tolist()
+        if isinstance(group_b, np.ndarray):
+            group_b = group_b.tolist()
+        return self.compare(group_a, group_b)
 
     def confidence_interval(self, values: List[float]) -> Tuple[float, float]:
         """Compute confidence interval for the mean."""

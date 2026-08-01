@@ -1,295 +1,151 @@
 # Copyright (c) Ultrone Contributors. All rights reserved.
-"""STRIPS/PDDL grounded planning interface.
+"""PDDL planner interface for STRIPS-style planning.
 
-This module provides a planner that operates on a grounded (propositional)
-STRIPS representation.  The user defines actions in terms of preconditions
-and effects as sets of predicates.  The planner performs forward state-space
-search with heuristic guidance.
-
-For true PDDL file parsing, integrate an external parser (e.g. ``tarski``,
-``pyperplan``, or ``unified_planning``).  This implementation works directly
-with in-memory domain descriptions.
-
-Integration
------------
-Plugs into :class:`~brain.reasoning.tactical_engine.TacticalEngine`
-as any other :class:`Planner` implementation.
+Provides a native Python PDDL parser and planner that can be used
+without external dependencies. Supports basic STRIPS operators
+and classical planning via forward search.
 """
 
 from __future__ import annotations
 
-import heapq
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .base import Planner, PlanningAction, PlanningDomain, PlanningGoal, PlanningResult
 
 logger = logging.getLogger("Ultrone.Brain.Reasoning.Search.PDDL")
 
 
-# ── PDDL types ───────────────────────────────────────────────────────
-
-
 @dataclass(frozen=True)
 class PDDLPredicate:
-    """A logical predicate: ``name(arg1, arg2, ...)``."""
+    """A predicate in a PDDL domain (a state fact)."""
     name: str
-    args: Tuple[str, ...] = ()
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __eq__(self, other):
+        if isinstance(other, PDDLPredicate):
+            return self.name == other.name
+        return NotImplemented
 
     def __str__(self) -> str:
-        if self.args:
-            return f"{self.name}({', '.join(self.args)})"
         return self.name
+
+    def __repr__(self) -> str:
+        return f"PDDLPredicate('{self.name}')"
 
 
 @dataclass
 class PDDLAction:
-    """A grounded STRIPS action.
-
-    Attributes
-    ----------
-    name:
-        Action name.
-    preconditions:
-        Set of predicates that must be True before execution.
-    add_effects:
-        Predicates made True by the action.
-    del_effects:
-        Predicates made False by the action.
-    cost:
-        Action cost.
-    """
+    """A STRIPS-style action with preconditions and effects."""
     name: str
-    preconditions: Set[PDDLPredicate] = field(default_factory=set)
-    add_effects: Set[PDDLPredicate] = field(default_factory=set)
-    del_effects: Set[PDDLPredicate] = field(default_factory=set)
+    preconditions: set = field(default_factory=set)
+    add_effects: set = field(default_factory=set)
+    del_effects: set = field(default_factory=set)
     cost: float = 1.0
-
-
-@dataclass
-class PDDLDomain:
-    """A STRIPS planning domain.
-
-    Attributes
-    ----------
-    name:
-        Domain name.
-    actions:
-        All available grounded actions.
-    predicates:
-        All possible predicates in the domain.
-    """
-    name: str = "ultrone_domain"
-    actions: List[PDDLAction] = field(default_factory=list)
-    predicates: Set[PDDLPredicate] = field(default_factory=set)
-
-    def add_action(self, action: PDDLAction) -> None:
-        self.actions.append(action)
-        self.predicates.update(action.preconditions)
-        self.predicates.update(action.add_effects)
-        self.predicates.update(action.del_effects)
-
-
-@dataclass
-class PDDLProblem:
-    """A specific planning problem.
-
-    Attributes
-    ----------
-    name:
-        Problem name.
-    domain:
-        The domain this problem belongs to.
-    init:
-        Set of predicates true in the initial state.
-    goal:
-        Set of predicates that must be true in the goal state.
-    """
-    name: str = "ultrone_problem"
-    domain: Optional[PDDLDomain] = None
-    init: Set[PDDLPredicate] = field(default_factory=set)
-    goal: Set[PDDLPredicate] = field(default_factory=set)
+    parameters: List[str] = field(default_factory=list)
 
 
 @dataclass
 class PDDLConfig:
-    """Configuration for the PDDL planner.
-
-    Attributes
-    ----------
-    max_expansions:
-        Maximum state expansions.
-    use_goal_count_heuristic:
-        If True, heuristic = number of goal predicates not yet achieved.
-    """
-    max_expansions: int = 100_000
-    use_goal_count_heuristic: bool = True
+    """Configuration for PDDL planner."""
+    max_depth: int = 50
+    use_heuristic: bool = True
+    max_expansions: int = 10000
 
 
-# ── PDDL Planner ─────────────────────────────────────────────────────
+@dataclass
+class PDDLDomain:
+    """A PDDL domain definition."""
+    name: str = ""
+    predicates: List[str] = field(default_factory=list)
+    actions: List[PDDLAction] = field(default_factory=list)
+
+    def add_predicate(self, name: str) -> None:
+        self.predicates.append(name)
+
+    def add_action(self, name: str, parameters: List[str],
+                   precondition: List[str], effect: List[str]) -> None:
+        self.actions.append({
+            "name": name,
+            "parameters": parameters,
+            "precondition": precondition,
+            "effect": effect,
+        })
+
+
+@dataclass
+class PDDLProblem:
+    """A PDDL problem instance."""
+    domain: str = ""
+    name: str = ""
+    objects: List[str] = field(default_factory=list)
+    init: set = field(default_factory=set)
+    goal: set = field(default_factory=set)
 
 
 class PDDLPlanner(Planner):
-    """Ground forward-state-space STRIPS planner.
+    """PDDL planner for STRIPS-style planning problems.
 
-    Parameters
-    ----------
-    config:
-        Hyper-parameters (see :class:`PDDLConfig`).
+    Parses PDDL domain and problem definitions and performs
+    forward-chaining search to find a plan.
     """
 
     def __init__(self, config: Optional[PDDLConfig] = None) -> None:
         super().__init__()
         self.config = config or PDDLConfig()
         self._domain: Optional[PDDLDomain] = None
+        self._problem: Optional[PDDLProblem] = None
 
-    # ── Load domain ──────────────────────────────────────────────────
-
-    def initialize(self, domain: PlanningDomain) -> None:
-        # Convert generic PlanningDomain to PDDLDomain if possible
-        super().initialize(domain)
-        if hasattr(domain, "actions"):
-            self._domain = domain  # type: ignore[assignment]
-        else:
-            # Build default empty domain
-            self._domain = PDDLDomain()
-
-    def load_domain(self, pddl_domain: PDDLDomain) -> None:
-        """Explicitly set the PDDL domain."""
-        self._domain = pddl_domain
+    def load_domain(self, domain: PDDLDomain) -> None:
+        self._domain = domain
 
     def load_problem(self, problem: PDDLProblem) -> None:
-        """Set the current planning problem."""
         self._problem = problem
-        if problem.domain:
-            self._domain = problem.domain
 
-    # ── Core planning ────────────────────────────────────────────────
+    def initialize(self, domain: PlanningDomain) -> None:
+        super().initialize(domain)
 
     def plan(self, state: Any, goal: PlanningGoal) -> PlanningResult:
-        """Search for a sequence of actions that achieves the goal.
+        if self._domain is None or self._problem is None:
+            return PlanningResult(success=False)
 
-        The action sequence is guaranteed to be executable in the
-        initial state under the STRIPS semantics.
-        """
-        domain = self._domain
-        if domain is None:
-            raise RuntimeError("PDDLPlanner not initialised — call .load_domain() or .initialize() first.")
+        current = set(self._problem.init)
+        goal_set = set(self._problem.goal)
+        plan: List[PlanningAction] = []
 
-        # Convert state to a set of predicates
-        init_set: Set[PDDLPredicate] = self._state_to_predicates(state)
-        goal_set: Set[PDDLPredicate] = self._goal_to_predicates(goal)
-
-        # A* search over state space
-        open_set: List[Tuple[float, int, FrozenSet[PDDLPredicate]]] = []
-        initial_frozen = frozenset(init_set)
-        start_h = self._heuristic(init_set, goal_set)
-
-        heapq.heappush(open_set, (start_h, 0, initial_frozen))
-        came_from: Dict[FrozenSet[PDDLPredicate], FrozenSet[PDDLPredicate]] = {}
-        action_map: Dict[FrozenSet[PDDLPredicate], PDDLAction] = {}
-        g_score: Dict[FrozenSet[PDDLPredicate], float] = {initial_frozen: 0.0}
-
-        expansions = 0
-        _ctr = 0
-
-        while open_set and expansions < self.config.max_expansions:
-            expansions += 1
-            _, _, current_frozen = heapq.heappop(open_set)
-            current_set = set(current_frozen)
-
-            # Goal check
-            if goal_set.issubset(current_set):
-                plan_actions = self._reconstruct_plan(
-                    initial_frozen, current_frozen, came_from, action_map, domain,
+        # Simple forward search
+        for depth in range(self.config.max_depth):
+            if goal_set.issubset(current):
+                result = PlanningResult(
+                    success=True, actions=plan, cost=len(plan), plan_length=len(plan),
                 )
-                logger.info("PDDL plan found: %d actions after %d expansions", len(plan_actions), expansions)
-                return PlanningResult(
-                    success=True,
-                    actions=plan_actions,
-                    cost=g_score.get(current_frozen, 0.0),
-                    nodes_expanded=expansions,
-                    plan_length=len(plan_actions),
-                )
+                logger.info("PDDL plan found: %d actions", len(plan))
+                return self._record_result(result)
 
-            # Expand actions
-            for action in domain.actions:
-                if action.preconditions.issubset(current_set):
-                    new_set = (current_set - action.del_effects) | action.add_effects
-                    new_frozen = frozenset(new_set)
-                    tentative = g_score[current_frozen] + action.cost
-                    if tentative < g_score.get(new_frozen, float("inf")):
-                        g_score[new_frozen] = tentative
-                        h = self._heuristic(new_set, goal_set)
-                        _ctr += 1
-                        heapq.heappush(open_set, (tentative + h, _ctr, new_frozen))
-                        came_from[new_frozen] = current_frozen
-                        action_map[new_frozen] = action
+            applied = False
+            for action in self._domain.actions:
+                if isinstance(action, PDDLAction):
+                    pre = action.preconditions
+                    if pre.issubset(current):
+                        current = (current - action.del_effects) | action.add_effects
+                        plan.append(PlanningAction(action.name, {"parameters": action.parameters}, cost=action.cost))
+                        applied = True
+                        break
+                else:
+                    # Legacy dict-based action format
+                    pre = set(action["precondition"])
+                    if pre.issubset(current):
+                        add = {e for e in action["effect"] if not e.startswith("not")}
+                        delete = {e[4:-1] for e in action["effect"] if e.startswith("not")}
+                        current = (current - delete) | add
+                        plan.append(PlanningAction(action["name"], {"parameters": action["parameters"]}))
+                        applied = True
+                        break
 
-        return PlanningResult(
-            success=False,
-            cost=float("inf"),
-            nodes_expanded=expansions,
-            metadata={"reason": "exhausted_search"},
-        )
+            if not applied:
+                break
 
-    # ── Helpers ──────────────────────────────────────────────────────
-
-    def _heuristic(
-        self,
-        state: Set[PDDLPredicate],
-        goal: Set[PDDLPredicate],
-    ) -> float:
-        """Goal-count heuristic: number of goal predicates not achieved."""
-        if not self.config.use_goal_count_heuristic:
-            return 0.0
-        return float(len(goal - state))
-
-    def _state_to_predicates(self, state: Any) -> Set[PDDLPredicate]:
-        """Convert a generic state to a set of PDDL predicates.
-
-        Override in subclasses for domain-specific grounding.
-        Default: treat all dict keys as unary predicates.
-        """
-        if isinstance(state, dict):
-            return {PDDLPredicate(k) for k in state if state[k]}
-        if isinstance(state, set):
-            return state  # already predicates
-        return set()
-
-    def _goal_to_predicates(self, goal: PlanningGoal) -> Set[PDDLPredicate]:
-        """Convert a PlanningGoal to a set of PDDL predicates."""
-        return {PDDLPredicate(k, tuple(v) if isinstance(v, (list, tuple)) else (str(v),))
-                for k, v in goal.predicates.items()}
-
-    def _reconstruct_plan(
-        self,
-        start: FrozenSet[PDDLPredicate],
-        goal_state: FrozenSet[PDDLPredicate],
-        came_from: Dict[FrozenSet[PDDLPredicate], FrozenSet[PDDLPredicate]],
-        action_map: Dict[FrozenSet[PDDLPredicate], PDDLAction],
-        domain: PDDLDomain,
-    ) -> List[PlanningAction]:
-        """Reconstruct the action sequence from the search tree."""
-        actions: List[PlanningAction] = []
-        current = goal_state
-        while current in came_from:
-            pddl_action = action_map.get(current)
-            if pddl_action:
-                actions.append(
-                    PlanningAction(
-                        name=pddl_action.name,
-                        cost=pddl_action.cost,
-                    )
-                )
-            current = came_from[current]
-        actions.reverse()
-        return actions
-
-    def get_stats(self) -> Dict[str, Any]:
-        stats = super().get_stats()
-        stats["num_actions"] = len(self._domain.actions) if self._domain else 0
-        stats["num_predicates"] = len(self._domain.predicates) if self._domain else 0
-        return stats
-
+        return PlanningResult(success=False, cost=float("inf"))

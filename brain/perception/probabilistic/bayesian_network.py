@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 import numpy as np
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger("Ultrone.Brain.Perception.Probabilistic.BN")
 
@@ -30,7 +30,16 @@ class BayesianNetwork:
         self._edges: Dict[str, List[str]] = {}
         self._cpts: Dict[str, np.ndarray] = {}
 
-    def add_node(self, name: str, states: int, parents: Optional[List[str]] = None) -> None:
+    def add_node(self, name: str, states: Union[int, List[str]], parents: Optional[List[str]] = None) -> None:
+        """Add a node to the network.
+        
+        Args:
+            name: Node name
+            states: Number of states or list of state names
+            parents: Optional list of parent node names
+        """
+        if isinstance(states, list):
+            states = len(states)
         self._nodes[name] = states
         self._edges[name] = parents or []
 
@@ -42,4 +51,4 @@ class BayesianNetwork:
         return {name: np.ones(states) / states for name, states in self._nodes.items()}
 
     def get_stats(self) -> Dict[str, Any]:
-        return {"type": "BayesianNetwork", "nodes": len(self._nodes)}
+        return {"type": "BayesianNetwork", "num_nodes": len(self._nodes)}

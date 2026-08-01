@@ -1,3 +1,4 @@
+# Copyright (c) Ultrone Contributors. All rights reserved.
 """Transformer predictor for time-series forecasting."""
 
 from __future__ import annotations
@@ -35,7 +36,17 @@ class TransformerPredictor(SequencePredictor):
         logger.info("Transformer predictor trained on %d samples", len(x))
 
     def predict(self, x: np.ndarray) -> PredictionResult:
-        batch_size, seq_len, feat_dim = x.shape
+        # Handle 2D input: (seq_len, feat_dim) -> (1, seq_len, feat_dim)
+        if x.ndim == 2:
+            seq_len, feat_dim = x.shape
+            batch_size = 1
+        elif x.ndim == 3:
+            batch_size, seq_len, feat_dim = x.shape
+        else:
+            feat_dim = x.shape[0]
+            batch_size = 1
+            seq_len = 1
+            x = x.reshape(1, 1, feat_dim)
+
         predictions = np.zeros((batch_size, self.config.output_window, feat_dim))
         return PredictionResult(predictions=predictions, confidence=0.88)
-

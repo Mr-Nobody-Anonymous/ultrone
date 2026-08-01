@@ -27,18 +27,24 @@ class SimulatedAnnealing(BaseOptimizer):
 
     def __init__(self, config: Optional[SAConfig] = None):
         super().__init__(config or SAConfig())
+        self._config: SAConfig = self.config  # type: ignore
 
-    def optimize(self, objective_fn, bounds):
+    def optimize(self, objective_fn, bounds, max_iter: Optional[int] = None):
         dim = len(bounds)
+        max_steps = max_iter if max_iter is not None else self._config.max_iterations
         current = np.array([np.random.uniform(b[0], b[1]) for b in bounds])
         current_fitness = objective_fn(current)
         self._n_evaluations += 1
         best = current.copy()
         best_fitness = current_fitness
         temp = self._config.initial_temperature
+        steps_taken = 0
 
-        while temp > self._config.min_temperature:
+        while temp > self._config.min_temperature and steps_taken < max_steps:
             for _ in range(self._config.steps_per_temp):
+                if steps_taken >= max_steps:
+                    break
+                steps_taken += 1
                 candidate = current + np.random.normal(0, 0.1, dim)
                 candidate = np.clip(candidate, [b[0] for b in bounds], [b[1] for b in bounds])
                 candidate_fitness = objective_fn(candidate)
@@ -55,7 +61,7 @@ class SimulatedAnnealing(BaseOptimizer):
 
         return OptimizationResult(
             best_params=best, best_value=best_fitness,
-            n_iterations=self._config.max_iterations,
+            n_iterations=steps_taken,
             n_evaluations=self._n_evaluations,
             convergence_history=self._history,
         )

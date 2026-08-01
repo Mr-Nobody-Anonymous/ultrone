@@ -28,6 +28,27 @@ class StackelbergGame:
     def __init__(self, config: Optional[StackelbergConfig] = None):
         self.config = config or StackelbergConfig()
 
+    def solve(self, num_actions: int = 5) -> Dict[str, Any]:
+        """Solve a Stackelberg game with random payoff matrices.
+
+        Compatible convenience wrapper used by tests: ``solve(num_actions=5)``.
+
+        Args:
+            num_actions: Number of actions for both leader and follower.
+
+        Returns:
+            Dict with optimal leader strategy and expected payoff.
+        """
+        rng = np.random.default_rng(42)
+        leader_payoffs = rng.uniform(0, 10, size=(num_actions, num_actions))
+        follower_payoffs = rng.uniform(0, 10, size=(num_actions, num_actions))
+        result = self.solve_leader(leader_payoffs, follower_payoffs)
+        result.update({
+            "leader_strategy": np.eye(num_actions)[result["leader_action"]].tolist(),
+            "num_actions": num_actions,
+        })
+        return result
+
     def solve_leader(self, leader_payoffs: np.ndarray, follower_payoffs: np.ndarray) -> Dict[str, Any]:
         """Solve for the leader's optimal strategy.
 
