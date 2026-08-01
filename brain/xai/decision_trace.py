@@ -54,10 +54,31 @@ class DecisionTrace:
     def get_trace(self) -> List[TraceStep]:
         return self._steps.copy()
 
+    def trace(self, state: Dict[str, Any], action: str,
+              reasoning: str = "", alternatives: Optional[List[str]] = None) -> List[TraceStep]:
+        """Record a decision trace step and return the full trace.
+
+        Args:
+            state: World/input state at decision time.
+            action: The chosen action.
+            reasoning: Explanation of why the action was chosen.
+            alternatives: Alternative actions considered.
+
+        Returns:
+            List of TraceStep objects recorded so far.
+        """
+        self.add_step(
+            action=action,
+            state=state,
+            reasoning=reasoning,
+            alternatives=alternatives,
+        )
+        return self.get_trace()
+
     def get_summary(self) -> str:
         lines = []
         for step in self._steps:
-            lines.append(f"Step {step.step_id}: {step.action} — {step.reasoning}")
+            lines.append("Step {}: {} - {}".format(step.step_id, step.action, step.reasoning))
         return "\n".join(lines)
 
     def clear(self) -> None:
@@ -65,4 +86,9 @@ class DecisionTrace:
         self._current_step = 0
 
     def get_stats(self) -> Dict[str, Any]:
-        return {"type": "DecisionTrace", "steps": len(self._steps)}
+        return {
+            "type": "DecisionTrace",
+            "steps": len(self._steps),
+            "num_traces": len(self._steps),
+        }
+

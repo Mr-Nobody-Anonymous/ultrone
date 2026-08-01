@@ -249,16 +249,30 @@ class SB3Adapter(BaseRLAlgorithm):
 
     # ── Internals ────────────────────────────────────────────────────
 
+    def _create_obs_space(self, state: np.ndarray) -> gym.Space:
+        """Create an observation space matching the given state shape."""
+        obs_dim = state.shape[-1] if state.ndim > 0 else 1
+        return gym.spaces.Box(low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32)
+
+    def _create_action_space(self) -> gym.Space:
+        """Create the action space for this algorithm.
+
+        DQN (and other discrete-action algorithms) override this to
+        return a Discrete space; continuous algorithms use a Box space.
+        """
+        action_dim = self._infer_action_dim()
+        return gym.spaces.Box(low=-1.0, high=1.0, shape=(action_dim,), dtype=np.float32)
+
     def _ensure_env(self, state: np.ndarray) -> None:
         """Create a dummy environment for SB3 from the observation shape."""
         if self._env_wrapper is not None:
             return
         obs_dim = state.shape[-1] if state.ndim > 0 else 1
-        action_dim = self._infer_action_dim()
 
         # Create a minimal environment wrapper
-        obs_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32)
-        action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(action_dim,), dtype=np.float32)
+        obs_space = self._create_obs_space(state)
+        action_space = self._create_action_space()
+        n_actions = self._n_discrete_actions()
 
         class _MinimalEnv(gym.Env):
             def __init__(self):
@@ -275,6 +289,31 @@ class SB3Adapter(BaseRLAlgorithm):
             def render(self): pass
 
         self._env_wrapper = _MinimalEnv()
+
+    def _n_discrete_actions(self) -> int:
+        """Number of discrete actions for discrete-space algorithms."""
+        return 4
+
+    def _policy_kwargs(self) -> Dict[str, Any]:
+        """Return policy kwargs appropriate for this algorithm family.
+
+        Continuous off-policy algorithms (SAC/TD3/DDPG) need a flat
+        ``net_arch`` list, while on-policy algorithms (PPO) accept the
+        ``[dict(pi=..., vf=...)]`` form.
+        """
+        kwargs = dict(self._adapter_config.policy_kwargs)
+        if "net_arch" in kwargs and isinstance(kwargs["net_arch"], list):
+            arch = kwargs["net_arch"]
+            # If the first element is a dict, it is PPO-style — flatten it.
+            if arch and isinstance(arch[0], dict):
+                flat = []
+                for item in arch:
+                    if isinstance(item, dict):
+                        flat.extend(item.get("pi", []))
+                    else:
+                        flat.append(item)
+                kwargs["net_arch"] = flat or [256, 256]
+        return kwargs
 
     def _infer_action_dim(self) -> int:
         """Infer action dimension from config or defaults."""
@@ -328,7 +367,7 @@ class SACAdapter(SB3Adapter):
             ent_coef="auto_0.2",
             verbose=self._adapter_config.verbose,
             tensorboard_log=self._adapter_config.tensorboard_log,
-            policy_kwargs=self._adapter_config.policy_kwargs,
+            policy_kwargs=self._policy_kwargs(),
             seed=self.config.seed,
             device=self.config.device,
         )
@@ -351,7 +390,7 @@ class TD3Adapter(SB3Adapter):
             policy_delay=2,
             verbose=self._adapter_config.verbose,
             tensorboard_log=self._adapter_config.tensorboard_log,
-            policy_kwargs=self._adapter_config.policy_kwargs,
+            policy_kwargs=self._policy_kwargs(),
             seed=self.config.seed,
             device=self.config.device,
         )
@@ -373,7 +412,7 @@ class DDPGAdapter(SB3Adapter):
             tau=self.config.tau,
             verbose=self._adapter_config.verbose,
             tensorboard_log=self._adapter_config.tensorboard_log,
-            policy_kwargs=self._adapter_config.policy_kwargs,
+            policy_kwargs=self._policy_kwargs(),
             seed=self.config.seed,
             device=self.config.device,
         )
@@ -381,6 +420,14 @@ class DDPGAdapter(SB3Adapter):
 
 class DQNAdapter(SB3Adapter):
     """Adapter for Stable-Baselines3 DQN."""
+
+    def _create_action_space(self) -> gym.Space:
+        """DQN requires a Discrete action space."""
+        return gym.spaces.Discrete(self._n_discrete_actions())
+
+    def _n_discrete_actions(self) -> int:
+        """Number of discrete actions for DQN."""
+        return 4
 
     def _create_model(self, env: gym.Env) -> BaseAlgorithm:
         if not SB3_AVAILABLE:
@@ -395,7 +442,7 @@ class DQNAdapter(SB3Adapter):
             tau=self.config.tau,
             verbose=self._adapter_config.verbose,
             tensorboard_log=self._adapter_config.tensorboard_log,
-            policy_kwargs=self._adapter_config.policy_kwargs,
+            policy_kwargs=self._policy_kwargs(),
             seed=self.config.seed,
             device=self.config.device,
         )

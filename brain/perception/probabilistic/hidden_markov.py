@@ -63,4 +63,4 @@ class HiddenMarkovModel:
         return states
 
     def get_stats(self) -> Dict[str, Any]:
-        return {"type": "HMM", "states": self.config.num_states}
+        return {"type": "HMM", "num_states": self.config.num_states}

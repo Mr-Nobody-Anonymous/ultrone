@@ -30,7 +30,7 @@ class EpisodicMemory(BaseMemory):
         item = MemoryItem(key=key, content=content, timestamp=time.time(), importance=importance)
         self._items[key] = item
         self._episodes.append(item)
-        if len(self._episodes) > self._config.max_episodes:
+        if len(self._episodes) > self.config.max_episodes:
             self._episodes.pop(0)
 
     def recall(self, key: str) -> Optional[Any]:
@@ -43,3 +43,8 @@ class EpisodicMemory(BaseMemory):
     def forget(self, key: str) -> None:
         self._items.pop(key, None)
         self._episodes = [e for e in self._episodes if e.key != key]
+
+    def get_stats(self) -> Dict[str, Any]:
+        stats = super().get_stats()
+        stats["num_episodes"] = len(self._episodes)
+        return stats

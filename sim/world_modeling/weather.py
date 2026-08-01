@@ -1,4 +1,4 @@
-"""Weather effects model for simulation realism."""
+"""Weather model for battlefield simulation."""
 
 from __future__ import annotations
 
@@ -15,71 +15,52 @@ logger = logging.getLogger("Ultrone.Sim.WorldModeling.Weather")
 @dataclass
 class WeatherConfig(WorldModelConfig):
     """Configuration for weather model."""
-    change_interval: int = 50  # ticks between weather changes
-    initial_condition: str = "clear"  # clear, cloudy, rain, fog, storm
+    initial_condition: str = "clear"
+    change_probability: float = 0.05
 
 
 class WeatherModel(WorldModel):
-    """Weather effects model.
+    """Weather model for battlefield conditions.
 
-    Affects:
-    - Sensor detection range (fog/rain reduce visibility)
-    - Weapon accuracy (wind, precipitation)
-    - Agent movement speed (terrain becomes muddy)
-    - Communication range (storm interference)
+    Simulates weather conditions that affect visibility, sensor accuracy,
+    and movement. Supports clear, cloudy, rainy, foggy, and stormy conditions.
     """
 
-    CONDITIONS = ["clear", "cloudy", "rain", "fog", "storm"]
+    CONDITIONS = ["clear", "cloudy", "rainy", "foggy", "stormy"]
+    
+    # Transition matrix: probability of transitioning from one condition to another
+    # Rows: current, Columns: next
+    TRANSITION_MATRIX = np.array([
+        [0.85, 0.10, 0.03, 0.02, 0.00],  # clear
+        [0.15, 0.70, 0.10, 0.03, 0.02],  # cloudy
+        [0.05, 0.15, 0.70, 0.05, 0.05],  # rainy
+        [0.10, 0.10, 0.05, 0.70, 0.05],  # foggy
+        [0.00, 0.05, 0.20, 0.05, 0.70],  # stormy
+    ])
 
     def __init__(self, config: Optional[WeatherConfig] = None):
         super().__init__(config or WeatherConfig())
-        self._condition: str = "clear"
-        self._wind_speed: float = 0.0
-        self._precipitation: float = 0.0
-        self._visibility: float = 1.0
-        self._next_change: int = 0
-
-    def initialize(self) -> None:
-        self._condition = self.config.initial_condition
-        self._next_change = self.config.change_interval
-        self._apply_condition_effects()
-        logger.info("Weather initialized: %s", self._condition)
+        self._condition: str = self.config.initial_condition if hasattr(self.config, 'initial_condition') else "clear"
 
     def update(self, dt: float) -> None:
+        """Advance weather by one time step."""
         self._tick += 1
-        if self._tick >= self._next_change:
-            self._condition = np.random.choice(self.CONDITIONS)
-            self._apply_condition_effects()
-            self._next_change = self._tick + self.config.change_interval
-            logger.debug("Weather changed to: %s", self._condition)
-
-    def _apply_condition_effects(self) -> None:
-        effects = {
-            "clear": (0.0, 0.0, 1.0),
-            "cloudy": (2.0, 0.1, 0.9),
-            "rain": (5.0, 0.5, 0.6),
-            "fog": (1.0, 0.3, 0.3),
-            "storm": (15.0, 0.9, 0.2),
-        }
-        self._wind_speed, self._precipitation, self._visibility = effects.get(self._condition, (0, 0, 1))
-
-    @property
-    def condition(self) -> str:
-        return self._condition
-
-    @property
-    def visibility_multiplier(self) -> float:
-        return self._visibility
+        if np.random.random() < self.config.change_probability:
+            idx = self.CONDITIONS.index(self._condition)
+            probs = self.TRANSITION_MATRIX[idx]
+            self._condition = np.random.choice(self.CONDITIONS, p=probs)
 
     def get_state(self) -> Dict[str, Any]:
         return {
             "condition": self._condition,
-            "wind_speed": self._wind_speed,
-            "precipitation": self._precipitation,
-            "visibility": self._visibility,
+            "visibility_modifier": self._get_visibility_modifier(),
+            "sensor_modifier": self._get_sensor_modifier(),
         }
 
-    def reset(self) -> None:
-        super().reset()
-        self.initialize()
+    def _get_visibility_modifier(self) -> float:
+        modifiers = {"clear": 1.0, "cloudy": 0.8, "rainy": 0.5, "foggy": 0.3, "stormy": 0.2}
+        return modifiers.get(self._condition, 1.0)
 
+    def _get_sensor_modifier(self) -> float:
+        modifiers = {"clear": 1.0, "cloudy": 0.9, "rainy": 0.6, "foggy": 0.4, "stormy": 0.3}
+        return modifiers.get(self._condition, 1.0)

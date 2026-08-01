@@ -48,6 +48,21 @@ class BlackboardSystem(BaseCoordinator):
         """Query entries matching a pattern."""
         return {k: v for k, v in self._entries.items() if pattern in k}
 
+    def share(self, key: str, value: Any) -> Dict[str, Any]:
+        """Share information to the blackboard (test contract).
+
+        Args:
+            key: Entry key.
+            value: Value to share.
+
+        Returns:
+            Dict with keys that now match the shared key.
+        """
+        self.post(key, value)
+        # Return matching entries (including the one just posted)
+        matches = {k: v for k, v in self._entries.items() if key == k}
+        return {"key": key, "value": value, "entries_count": len(self._entries)} if matches else {}
+
     def coordinate(self, context: Dict[str, Any]) -> Dict[str, Any]:
         postings = context.get("postings", {})
         for k, v in postings.items():

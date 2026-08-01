@@ -60,40 +60,16 @@
     "decoy|suppress": 0.8476447007695174,
     "pinpoint|suppress": 0.41418791729356985
   },
-  "phase_params": {
-    "find": {
-      "speed": 1.0,
-      "confidence_threshold": 0.7,
-      "resource_efficiency": 0.8
-    },
-    "fix": {
-      "speed": 1.0,
-      "confidence_threshold": 0.7,
-      "resource_efficiency": 0.8
-    },
-    "track": {
-      "speed": 1.0,
-      "confidence_threshold": 0.7,
-      "resource_efficiency": 0.8
-    },
-    "target": {
-      "speed": 1.0,
-      "confidence_threshold": 0.7,
-      "resource_efficiency": 0.8
-    },
-    "engage": {
-      "speed": 1.0,
-      "confidence_threshold": 0.7,
-      "resource_efficiency": 0.8
-    },
-    "assess": {
-      "speed": 1.0,
-      "confidence_threshold": 0.7,
-      "resource_efficiency": 0.8
-    }
-  },
-  "resource_conservation": 0.7201009282070068,
-  "time_optimization": 0.9929513905729105,
+  "phase_params": {},
+  "resource_conservation": 0.7,
+  "time_optimization": 1.0,
   "domain": "all",
-  "fitness_score": 0.33351351351351355
+  "fitness_score": 1.0,
+  "allocation_weights": {
+    "drones": 0.3,
+    "jammers": 0.2,
+    "missiles": 0.3,
+    "fighters": 0.2
+  },
+  "swarm_templates": {}
 }

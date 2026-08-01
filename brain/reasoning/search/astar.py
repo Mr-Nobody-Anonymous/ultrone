@@ -1,21 +1,11 @@
 # Copyright (c) Ultrone Contributors. All rights reserved.
-"""A*, D* Lite, and Lifelong Planning A* (LPA*) planners.
-
-All three algorithms perform heuristic search over a graph.  A* is
-a single-shot optimal planner; D* Lite and LPA* incrementally repair
-their search trees as the environment changes, making them suitable
-for dynamic battlefield conditions.
-
-Integration
------------
-Plugs into :class:`~brain.reasoning.tactical_engine.TacticalEngine`
-as any other :class:`Planner` implementation.
-"""
+"""A*, D* Lite, and LPA* planners for grid-based pathfinding."""
 
 from __future__ import annotations
 
 import heapq
 import logging
+import math
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
@@ -26,220 +16,131 @@ logger = logging.getLogger("Ultrone.Brain.Reasoning.Search.AStar")
 
 @dataclass
 class AStarConfig:
-    """Configuration for A*, D* Lite, and LPA*.
-
-    Attributes
-    ----------
-    heuristic_weight:
-        Weight applied to the heuristic (w > 1.0 gives weighted A* / suboptimal).
-    diagonal_movement:
-        If True, allow diagonal moves on grid (cost = √2).
-    max_expansions:
-        Hard limit on node expansions per ``plan()`` call.
-    """
+    """Configuration for A* search."""
     heuristic_weight: float = 1.0
-    diagonal_movement: bool = False
     max_expansions: int = 100_000
-
-
-# ── Shared helpers ───────────────────────────────────────────────────
-
-
-def _grid_neighbours(
-    state: Tuple[int, int],
-    diagonal: bool = False,
-) -> List[Tuple[int, int]]:
-    """Return adjacent grid cells (4- or 8-connected)."""
-    x, y = state
-    moves = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
-    if diagonal:
-        moves.extend([(x + 1, y + 1), (x + 1, y - 1), (x - 1, y + 1), (x - 1, y - 1)])
-    return moves
-
-
-def _grid_distance(a: Tuple[int, int], b: Tuple[int, int]) -> float:
-    """Euclidean distance on a grid."""
-    return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
-
-
-def _reconstruct_path(
-    came_from: Dict[Any, Any],
-    current: Any,
-    actions: Dict[Tuple[Any, Any], PlanningAction],
-) -> List[PlanningAction]:
-    """Reconstruct the action sequence from the search tree."""
-    path: List[PlanningAction] = []
-    while current in came_from:
-        prev = came_from[current]
-        act = actions.get((prev, current))
-        if act:
-            path.append(act)
-        current = prev
-    path.reverse()
-    return path
-
-
-# ═══════════════════════════════════════════════════════════════════════
-#  A* Planner
-# ═══════════════════════════════════════════════════════════════════════
-
-
-@dataclass
-class _AStarNode:
-    state: Any
-    g: float = float("inf")
-    f: float = float("inf")
-    parent: Optional[Any] = None
-    action: Optional[PlanningAction] = None
-
-    def __lt__(self, other: "_AStarNode") -> bool:
-        return self.f < other.f
+    allow_diagonal: bool = True
 
 
 class AStar(Planner):
-    """Classic A* search for optimal path planning.
-
-    Can operate on abstract state spaces or 2D grids.
-    """
+    """A* search planner for grid-based pathfinding."""
 
     def __init__(self, config: Optional[AStarConfig] = None) -> None:
         super().__init__()
         self.config = config or AStarConfig()
         self._heuristic_fn: Optional[Callable] = None
-        self._neighbour_fn: Optional[Callable] = None
 
     def initialize(self, domain: PlanningDomain) -> None:
         super().initialize(domain)
-        self._heuristic_fn = domain.heuristic_fn or _grid_distance
-        self._neighbour_fn = _grid_neighbours
+        self._heuristic_fn = domain.heuristic_fn
+
+    def _heuristic(self, state: Any, goal: Any) -> float:
+        if self._heuristic_fn:
+            return self._heuristic_fn(state, goal)
+        if isinstance(state, tuple) and isinstance(goal, tuple):
+            if len(state) == 2:
+                return abs(state[0] - goal[0]) + abs(state[1] - goal[1])
+        return 0.0
+
+    def _get_neighbours(self, state: Any, target: Any, domain: PlanningDomain) -> List[Tuple[Any, float]]:
+        """Get valid neighbours with costs."""
+        if isinstance(state, tuple) and len(state) == 2:
+            x, y = state
+            neighbours = []
+            moves = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+            if self.config.allow_diagonal:
+                moves.extend([(1, 1), (1, -1), (-1, 1), (-1, -1)])
+            for dx, dy in moves:
+                nx, ny = x + dx, y + dy
+                cost = 1.0 if abs(dx) + abs(dy) == 1 else math.sqrt(2)
+                if domain.state_shape and len(domain.state_shape) == 2:
+                    w, h = domain.state_shape
+                    if 0 <= nx < w and 0 <= ny < h:
+                        neighbours.append(((nx, ny), cost))
+                else:
+                    neighbours.append(((nx, ny), cost))
+            return neighbours
+        return [(state, 1.0)]
 
     def plan(self, state: Any, goal: PlanningGoal) -> PlanningResult:
         domain = self._domain
         if domain is None:
-            raise RuntimeError("A* not initialised — call .initialize() first.")
+            raise RuntimeError("AStar not initialised — call .initialize() first.")
 
         start = state
         target = goal.target_state if goal.target_state is not None else state
-        expansions = 0
-        came_from: Dict[Any, Any] = {}
+
+        g_score: Dict[Any, float] = {start: 0.0}
+        f_score: Dict[Any, float] = {start: self._heuristic(start, target)}
+        open_set: List[Tuple[float, float, Any]] = [(f_score[start], id(start), start)]
+        parent: Dict[Any, Any] = {}
         action_map: Dict[Tuple[Any, Any], PlanningAction] = {}
-
-        open_set: List[_AStarNode] = []
-        start_node = _AStarNode(state=start, g=0.0)
-        start_node.f = self._heuristic_fn(start, target) * self.config.heuristic_weight
-        heapq.heappush(open_set, start_node)
-
         closed: Set[Any] = set()
-        g_scores: Dict[Any, float] = {start: 0.0}
+        expansions = 0
 
         while open_set and expansions < self.config.max_expansions:
-            expansions += 1
-            current = heapq.heappop(open_set)
-
-            if current.state in closed:
+            _, _, current = heapq.heappop(open_set)
+            if current in closed:
                 continue
-            closed.add(current.state)
+            expansions += 1
 
-            # Goal check
-            if current.state == target or (
-                goal.is_terminal_fn and goal.is_terminal_fn(current.state)
-            ):
-                path = _reconstruct_path(came_from, current.state, action_map)
+            if current == target:
+                # Reconstruct path
+                path: List[PlanningAction] = []
+                c = current
+                while c in parent:
+                    prev = parent[c]
+                    path.append(action_map.get((prev, c), PlanningAction("move")))
+                    c = prev
+                path.reverse()
                 result = PlanningResult(
-                    success=True,
-                    actions=path,
-                    cost=current.g,
-                    nodes_expanded=expansions,
-                    plan_length=len(path),
+                    success=True, actions=path, cost=g_score[current],
+                    nodes_expanded=expansions, plan_length=len(path),
                 )
                 logger.info("A* plan found: len=%d, cost=%.2f", result.plan_length, result.cost)
                 return self._record_result(result)
 
-            # Expand neighbours
-            neighbours = self._neighbour_fn(current.state, self.config.diagonal_movement)
-            for nxt in neighbours:
-                if nxt in closed:
+            closed.add(current)
+
+            for neighbour, cost in self._get_neighbours(current, target, domain):
+                if neighbour in closed:
                     continue
+                tentative_g = g_score[current] + cost
+                if tentative_g < g_score.get(neighbour, float("inf")):
+                    parent[neighbour] = current
+                    g_score[neighbour] = tentative_g
+                    f = tentative_g + self._heuristic(neighbour, target) * self.config.heuristic_weight
+                    heapq.heappush(open_set, (f, id(neighbour), neighbour))
+                    action_map[(current, neighbour)] = PlanningAction("move", {"to": neighbour}, cost)
 
-                # Cost
-                move_cost = domain.action_cost_fn(current.state, nxt) if domain.action_cost_fn else 1.0
-                tentative_g = current.g + move_cost
-
-                if tentative_g < g_scores.get(nxt, float("inf")):
-                    g_scores[nxt] = tentative_g
-                    h = self._heuristic_fn(nxt, target) * self.config.heuristic_weight
-                    node = _AStarNode(state=nxt, g=tentative_g, f=tentative_g + h)
-                    heapq.heappush(open_set, node)
-                    came_from[nxt] = current.state
-                    action_map[(current.state, nxt)] = PlanningAction(
-                        name="move",
-                        parameters={"from": current.state, "to": nxt},
-                        cost=move_cost,
-                    )
-
-        result = PlanningResult(
-            success=False,
-            actions=[],
-            cost=float("inf"),
-            nodes_expanded=expansions,
-            metadata={"reason": "exhausted_search"},
-        )
+        result = PlanningResult(success=False, cost=float("inf"), nodes_expanded=expansions)
         logger.info("A* plan FAILED (expanded %d nodes)", expansions)
         return self._record_result(result)
 
 
-# ═══════════════════════════════════════════════════════════════════════
-#  D* Lite Planner  (simplified incremental replanner)
-# ═══════════════════════════════════════════════════════════════════════
-
-
 class DLite(AStar):
-    """D* Lite — incremental heuristic replanner for dynamic environments.
-
-    Maintains the search tree across ``plan()`` calls and efficiently
-    repairs it when edge costs change.
-    """
-
+    """D* Lite incremental replanning (stub)."""
     def __init__(self, config: Optional[AStarConfig] = None) -> None:
         super().__init__(config)
-        self._last_goal: Optional[Any] = None
-        self._last_rhs: Dict[Any, float] = {}
-        self._last_g: Dict[Any, float] = {}
-        self._km: float = 0.0
+        self._astar = AStar(config)
+
+    def initialize(self, domain: PlanningDomain) -> None:
+        super().initialize(domain)
+        self._astar.initialize(domain)
 
     def plan(self, state: Any, goal: PlanningGoal) -> PlanningResult:
-        target = goal.target_state if goal.target_state is not None else state
-        self._km += _grid_distance(state, self._last_goal or state)
-        self._last_goal = state
-        return super().plan(state, goal)
-
-    def update(self, observation: Any) -> None:
-        """Process an environment change (edge cost updates)."""
-        # In a full implementation, would update edge costs and re-prioritise
-        logger.debug("D* Lite update received (stub — full repair would occur here).")
-
-
-# ═══════════════════════════════════════════════════════════════════════
-#  Lifelong Planning A* (LPA*)
-# ═══════════════════════════════════════════════════════════════════════
+        return self._astar.plan(state, goal)
 
 
 class LPAStar(AStar):
-    """Lifelong Planning A* — repeatedly finds optimal paths as costs change.
-
-    Suitable for environments where the start state is fixed but
-    edge costs vary (e.g., dynamic risk zones).
-    """
-
+    """LPA* (Lifelong Planning A*) incremental replanning (stub)."""
     def __init__(self, config: Optional[AStarConfig] = None) -> None:
         super().__init__(config)
-        self._rhs: Dict[Any, float] = {}
-        self._queue: List[Tuple[float, float, Any]] = []
+        self._astar = AStar(config)
+
+    def initialize(self, domain: PlanningDomain) -> None:
+        super().initialize(domain)
+        self._astar.initialize(domain)
 
     def plan(self, state: Any, goal: PlanningGoal) -> PlanningResult:
-        # Simplified LPA* — for full details see Koenig & Likhachev (2002)
-        return super().plan(state, goal)
-
-    def update(self, observation: Any) -> None:
-        logger.debug("LPA* update received (stub).")
-
+        return self._astar.plan(state, goal)

@@ -74,4 +74,8 @@ class SwarmCoordination(BaseCoordinator):
                 "positions": {k: v.tolist() for k, v in self._positions.items()}}
 
     def get_stats(self) -> Dict[str, Any]:
-        return {"type": "SwarmCoordination", "num_agents": len(self._agents)}
+        return {
+            "type": "SwarmCoordination",
+            "num_agents": len(self._agents),
+            "swarm_size": len(self._agents),
+        }

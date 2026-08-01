@@ -11,7 +11,7 @@ import logging
 import copy
 import numpy as np
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from .base import BaseRLAlgorithm, RLConfig, RLExperience
 
@@ -34,10 +34,16 @@ class SelfPlay(BaseRLAlgorithm):
     an automatic curriculum of increasing difficulty.
     """
 
-    def __init__(self, config: Optional[SelfPlayConfig] = None):
+    def __init__(self, inner_agent: Optional[BaseRLAlgorithm] = None, config: Optional[SelfPlayConfig] = None):
+        """Initialize self-play.
+        
+        Args:
+            inner_agent: The main learning agent to wrap.
+            config: Self-play configuration.
+        """
         super().__init__(config or SelfPlayConfig())
         self._config: SelfPlayConfig = self.config  # type: ignore
-        self._main_agent: Optional[BaseRLAlgorithm] = None
+        self._main_agent: Optional[BaseRLAlgorithm] = inner_agent
         self._opponent_pool: List[BaseRLAlgorithm] = []
         self._episodes_since_update = 0
 
@@ -80,3 +86,8 @@ class SelfPlay(BaseRLAlgorithm):
 
     def load(self, path: str) -> None:
         logger.info("SelfPlay load from %s (stub)", path)
+
+    def get_stats(self) -> Dict[str, Any]:
+        stats = super().get_stats()
+        stats["inner_algorithm"] = type(self._main_agent).__name__ if self._main_agent else "None"
+        return stats

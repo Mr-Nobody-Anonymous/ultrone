@@ -29,16 +29,24 @@ class CFR:
         self._strategy: Dict[str, np.ndarray] = {}
         self._cumulative_strategy: Dict[str, np.ndarray] = {}
 
-    def train(self, num_actions: int, info_sets: List[str]) -> Dict[str, Any]:
+    def train(self, num_actions: Optional[int] = None, info_sets: Optional[List[str]] = None,
+              iterations: Optional[int] = None) -> Dict[str, Any]:
         """Run CFR training.
 
         Args:
             num_actions: Number of actions per information set
             info_sets: List of information set identifiers
+            iterations: Optional iteration count override (test contract).
 
         Returns:
             Dict with average strategy for each info set
         """
+        if num_actions is None:
+            num_actions = 2
+        if info_sets is None:
+            info_sets = ["root"]
+        if iterations is not None:
+            self.config.max_iterations = iterations
         for info_set in info_sets:
             self._regret[info_set] = np.zeros(num_actions)
             self._cumulative_strategy[info_set] = np.zeros(num_actions)

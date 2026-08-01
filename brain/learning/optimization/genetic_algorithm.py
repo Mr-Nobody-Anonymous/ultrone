@@ -35,8 +35,10 @@ class GeneticAlgorithm(BaseOptimizer):
         self,
         objective_fn: Callable[[np.ndarray], float],
         bounds: List[Tuple[float, float]],
+        max_iter: Optional[int] = None,
     ) -> OptimizationResult:
         dim = len(bounds)
+        num_iterations = max_iter if max_iter is not None else self._config.max_iterations
         pop = np.random.uniform(
             [b[0] for b in bounds], [b[1] for b in bounds],
             (self._config.population_size, dim),
@@ -44,7 +46,7 @@ class GeneticAlgorithm(BaseOptimizer):
         best_solution = None
         best_fitness = float("inf")
 
-        for iteration in range(self._config.max_iterations):
+        for iteration in range(num_iterations):
             fitness = np.array([objective_fn(ind) for ind in pop])
             self._n_evaluations += len(pop)
 
@@ -84,7 +86,7 @@ class GeneticAlgorithm(BaseOptimizer):
         return OptimizationResult(
             best_params=best_solution,
             best_value=best_fitness,
-            n_iterations=self._config.max_iterations,
+            n_iterations=num_iterations,
             n_evaluations=self._n_evaluations,
             convergence_history=self._history,
         )

@@ -203,7 +203,7 @@ class TestConvergence(unittest.TestCase):
             f"Late fitness ({late_avg:.3f}) should be >= 80% of early ({early_avg:.3f})")
         
         # Print actual improvement
-        print(f"\n  Evolution Improvement: Early={early_avg:.3f} → Late={late_avg:.3f}")
+        print(f"\n  Evolution Improvement: Early={early_avg:.3f} -> Late={late_avg:.3f}")
         print(f"  Total Improvement: {((late_avg - early_avg) / early_avg * 100):.1f}%")
 
 
@@ -247,9 +247,9 @@ if __name__ == "__main__":
     # Summary
     print("\n" + "=" * 70)
     if result.wasSuccessful():
-        print("✅ ALL TESTS PASSED - Evolutionary logic verified!")
+        print("[PASS] ALL TESTS PASSED - Evolutionary logic verified!")
     else:
-        print("❌ SOME TESTS FAILED - Fix required")
+        print("[FAIL] SOME TESTS FAILED - Fix required")
     print("=" * 70)
     
     sys.exit(0 if result.wasSuccessful() else 1)

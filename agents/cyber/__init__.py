@@ -1,5 +1,5 @@
-from ..base_agent import BaseAgent, AgentCapability
-from ...data.entities import DomainType
+from agents.base_agent import BaseAgent, AgentCapability
+from data.entities import DomainType
 
 class ReconAgent(BaseAgent):
     """Recon: SCAN/ANALYZE/REPORT states."""

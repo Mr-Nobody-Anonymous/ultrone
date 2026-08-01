@@ -31,6 +31,11 @@ class OptimizationResult:
     convergence_history: List[float] = field(default_factory=list)
     success: bool = True
 
+    def __iter__(self):
+        """Allow tuple unpacking as (best_value, best_params) for test compatibility."""
+        yield self.best_value
+        yield self.best_params
+
 
 class BaseOptimizer(ABC):
     """Abstract interface every optimizer must implement."""

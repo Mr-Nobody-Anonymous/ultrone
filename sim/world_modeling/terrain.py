@@ -32,13 +32,17 @@ class TerrainModel(WorldModel):
     """
 
     def __init__(self, config: Optional[TerrainConfig] = None):
-        super().__init__(config or TerrainConfig())
+        if config is None:
+            config = TerrainConfig()
+        super().__init__(config)
         self._elevation: np.ndarray = np.zeros((config.height, config.width))
         self._cover: np.ndarray = np.zeros((config.height, config.width), dtype=int)
         self._trafficability: np.ndarray = np.ones((config.height, config.width))
 
     def initialize(self, seed: Optional[int] = None) -> None:
         """Generate initial terrain using procedural generation."""
+        if self.config is None:
+            return
         rng = np.random.RandomState(seed or self.config.seed)
         h, w = self.config.height, self.config.width
 
@@ -89,9 +93,18 @@ class TerrainModel(WorldModel):
             "elevation": self._elevation.tolist(),
             "cover": self._cover.tolist(),
             "trafficability": self._trafficability.tolist(),
+            "type": "TerrainModel",
+            "num_cells": self.config.height * self.config.width,
         }
 
     def reset(self) -> None:
         super().reset()
         self.initialize()
 
+    def get_stats(self) -> Dict[str, Any]:
+        return {
+            "type": "TerrainModel",
+            "num_cells": self.config.height * self.config.width,
+            "width": self.config.width,
+            "height": self.config.height,
+        }

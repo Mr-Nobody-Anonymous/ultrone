@@ -42,6 +42,26 @@ class WorkingMemory(BaseMemory):
             return self._items[key].content
         return None
 
+    def hold(self, key: str, content: Any, importance: float = 0.5) -> None:
+        """Hold an item in working memory (test contract)."""
+        self.store(key, content, importance)
+
+    def decay(self) -> None:
+        """Apply time-based decay to working memory items."""
+        now = time.time()
+        for key in list(self._items.keys()):
+            last_access = self._access_times.get(key, now)
+            age = now - last_access
+            # Items not touched for a while lose importance and may expire.
+            if age > self.config.retention_period:
+                self._items.pop(key, None)
+                self._access_times.pop(key, None)
+
     def forget(self, key: str) -> None:
         self._items.pop(key, None)
         self._access_times.pop(key, None)
+
+    def get_stats(self) -> Dict[str, Any]:
+        stats = super().get_stats()
+        stats["capacity"] = self.config.capacity
+        return stats

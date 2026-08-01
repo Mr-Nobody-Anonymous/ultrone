@@ -34,7 +34,7 @@ class KalmanFilter:
         self._Q = np.eye(dim) * self.config.process_noise
         self._R = np.eye(self.config.dim_obs) * self.config.observation_noise
 
-    def predict(self, dt: float = 1.0) -> np.ndarray:
+    def predict(self, dt: float = 1.0, step: int = 1) -> np.ndarray:
         """Predict next state."""
         self._x = self._F @ self._x
         self._P = self._F @ self._P @ self._F.T + self._Q
@@ -90,7 +90,7 @@ class ExtendedKalmanFilter(KalmanFilter):
         """Jacobian of the observation function (H by default)."""
         return self._H
 
-    def predict(self, dt: float = 1.0) -> np.ndarray:
+    def predict(self, dt: float = 1.0, step: int = 1) -> np.ndarray:
         """EKF predict step: apply non-linear transition, then linearise."""
         F_jac = self._state_jacobian(self._x, dt)
         self._x = self._state_transition(self._x, dt)
@@ -126,7 +126,7 @@ class UnscentedKalmanFilter(KalmanFilter):
         self._kappa: float = 0.0  # secondary scaling parameter
         self._lambda_: float = 0.0  # computed from alpha, kappa, n
 
-    def _compute_sigma_weights(self, n: int) -> Tuple[float, float, np.ndarray, np.ndarray]:
+    def _compute_sigma_weights(self, n: int) -> Tuple[float, float, float, np.ndarray]:
         """Compute sigma point weights for the Unscented Transform.
 
         Returns
@@ -185,7 +185,7 @@ class UnscentedKalmanFilter(KalmanFilter):
 
         return mean, cov, cross
 
-    def predict(self, dt: float = 1.0) -> np.ndarray:
+    def predict(self, dt: float = 1.0, step: int = 1) -> np.ndarray:
         """UKF predict step using sigma points through state transition."""
         n = len(self._x)
         lam, w_m0, w_c0, w_i = self._compute_sigma_weights(n)

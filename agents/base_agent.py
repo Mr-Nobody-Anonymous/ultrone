@@ -73,7 +73,10 @@ class BaseAgent:
     def state(self, new_state: AgentState) -> None:
         old_state = self.unit.state
         self.unit.state = new_state
-        self.state_history.append(f"{old_state.value}->{new_state.value}")
+        # Normalize for logging: new_state may be a plain string constant
+        old_value = getattr(old_state, "value", old_state)
+        new_value = getattr(new_state, "value", new_state)
+        self.state_history.append(f"{old_value}->{new_value}")
         # Publish state change on message bus
         if self.message_bus:
             self._publish_state_change(old_state, new_state)

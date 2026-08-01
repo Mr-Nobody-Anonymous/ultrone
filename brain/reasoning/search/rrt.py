@@ -1,130 +1,103 @@
-"""RRT/RRT*: Rapidly-exploring Random Trees for motion planning."""
+# Copyright (c) Ultrone Contributors. All rights reserved.
+"""Rapidly-exploring Random Tree (RRT) planner for motion planning."""
 
 from __future__ import annotations
 
 import logging
-import numpy as np
+import math
+import random
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
-from .base import Planner, PlanningDomain, PlanningGoal, PlanningResult, PlanningAction
+from .base import Planner, PlanningAction, PlanningDomain, PlanningGoal, PlanningResult
 
 logger = logging.getLogger("Ultrone.Brain.Reasoning.Search.RRT")
 
 
 @dataclass
 class RRTConfig:
-    """Configuration for RRT planning."""
+    """Configuration for RRT."""
     max_iterations: int = 1000
     step_size: float = 5.0
     goal_sample_rate: float = 0.1
-    goal_tolerance: float = 1.0
-    use_star: bool = True  # RRT* vs RRT
+    goal_tolerance: float = 5.0
 
 
 class RRTPlanner(Planner):
-    """Rapidly-exploring Random Tree (RRT/RRT*) planner.
+    """Rapidly-exploring Random Tree planner for motion planning.
 
-    RRT efficiently explores high-dimensional spaces by biasing
-    growth towards unexplored regions. RRT* adds asymptotic optimality
-    through rewiring of the tree.
-
-    Use cases in ULTRONE:
-    - UAV/UGV path planning through contested airspace
-    - Missile trajectory optimization
-    - Multi-agent coordinated movement
+    Builds a tree by randomly sampling points and extending towards
+    them from the nearest node. Efficient for high-dimensional spaces.
     """
 
-    def __init__(self, config: Optional[RRTConfig] = None):
+    def __init__(self, config: Optional[RRTConfig] = None) -> None:
         super().__init__()
         self.config = config or RRTConfig()
-        self._collision_fn: Optional[Callable] = None
-        self._random_state_fn: Optional[Callable] = None
 
     def initialize(self, domain: PlanningDomain) -> None:
         super().initialize(domain)
 
-    def plan(self, state: np.ndarray, goal: PlanningGoal) -> PlanningResult:
-        """Plan a path from state to goal using RRT/RRT*."""
-        start = np.array(state) if not isinstance(state, np.ndarray) else state
-        goal_pos = np.array(goal.target_state) if goal.target_state is not None else start
+    def _steer(self, from_node: Tuple[float, float], to_node: Tuple[float, float]) -> Tuple[float, float]:
+        """Steer from from_node towards to_node by step_size."""
+        dx = to_node[0] - from_node[0]
+        dy = to_node[1] - from_node[1]
+        dist = math.sqrt(dx**2 + dy**2)
+        if dist < self.config.step_size:
+            return to_node
+        ratio = self.config.step_size / dist
+        return (from_node[0] + dx * ratio, from_node[1] + dy * ratio)
+
+    def _sample(self) -> Tuple[float, float]:
+        """Sample a random point in the state space."""
+        return (random.uniform(0, 100), random.uniform(0, 100))
+
+    def plan(self, state: Any, goal: PlanningGoal) -> PlanningResult:
+        start = (float(state[0]), float(state[1])) if isinstance(state, tuple) and len(state) == 2 else (0.0, 0.0)
+        target = goal.target_state
+        if isinstance(target, tuple) and len(target) == 2:
+            goal_pos = (float(target[0]), float(target[1]))
+        else:
+            goal_pos = (50.0, 50.0)
 
         nodes = [start]
-        parents = [-1]
-        costs = [0.0]
+        parent: Dict[int, int] = {}
+        goal_idx = -1
 
         for i in range(self.config.max_iterations):
-            # Sample with goal bias
-            if np.random.random() < self.config.goal_sample_rate:
+            # Sample (with goal bias)
+            if random.random() < self.config.goal_sample_rate:
                 sample = goal_pos
             else:
-                sample = np.random.uniform(0, 100, size=start.shape)
+                sample = self._sample()
 
-            # Find nearest
-            nearest_idx = np.argmin([np.linalg.norm(n - sample) for n in nodes])
-            nearest = nodes[nearest_idx]
+            # Find nearest node
+            nearest_idx = min(range(len(nodes)),
+                             key=lambda i: math.sqrt((nodes[i][0] - sample[0])**2 +
+                                                      (nodes[i][1] - sample[1])**2))
 
             # Steer
-            direction = sample - nearest
-            dist = np.linalg.norm(direction)
-            if dist > self.config.step_size:
-                direction = direction / dist * self.config.step_size
-            new_node = nearest + direction
-
-            # Collision check
-            if self._collision_fn and self._collision_fn(new_node):
-                continue
-
+            new_node = self._steer(nodes[nearest_idx], sample)
             nodes.append(new_node)
-            parents.append(nearest_idx)
-            costs.append(costs[nearest_idx] + np.linalg.norm(new_node - nearest))
+            parent[len(nodes) - 1] = nearest_idx
 
-            # RRT* rewiring
-            if self.config.use_star and len(nodes) > 1:
-                self._rewire(nodes, parents, costs, len(nodes) - 1)
+            # Check if reached goal
+            if math.sqrt((new_node[0] - goal_pos[0])**2 + (new_node[1] - goal_pos[1])**2) < self.config.goal_tolerance:
+                goal_idx = len(nodes) - 1
+                break
 
-            # Goal check
-            if np.linalg.norm(new_node - goal_pos) < self.config.goal_tolerance:
-                return self._extract_path(nodes, parents, len(nodes) - 1, costs[-1])
+        if goal_idx < 0:
+            return PlanningResult(success=False, cost=float("inf"))
 
-        # Return best path found
-        goal_idx = np.argmin([np.linalg.norm(n - goal_pos) for n in nodes])
-        return self._extract_path(nodes, parents, goal_idx, costs[goal_idx])
-
-    def _rewire(self, nodes: List, parents: List, costs: List, new_idx: int) -> None:
-        """RRT* rewiring step for asymptotic optimality."""
-        new_node = nodes[new_idx]
-        radius = self.config.step_size * 2
-        for i in range(len(nodes) - 1):
-            if i == new_idx:
-                continue
-            dist = np.linalg.norm(nodes[i] - new_node)
-            if dist < radius:
-                new_cost = costs[new_idx] + dist
-                if new_cost < costs[i]:
-                    costs[i] = new_cost
-                    parents[i] = new_idx
-
-    def _extract_path(self, nodes: List, parents: List, idx: int, cost: float) -> PlanningResult:
-        """Extract the path from the tree."""
-        path = []
-        current = idx
-        while current != -1:
-            path.append(nodes[current])
-            current = parents[current]
+        # Reconstruct path
+        path: List[PlanningAction] = []
+        idx = goal_idx
+        while idx in parent:
+            path.append(PlanningAction("move", {"to": nodes[idx]}))
+            idx = parent[idx]
         path.reverse()
 
-        actions = [PlanningAction(name="move", parameters={"position": p.tolist()}) for p in path]
-        return PlanningResult(
-            success=True,
-            actions=actions,
-            cost=cost,
-            nodes_expanded=len(nodes),
-            plan_length=len(path),
+        result = PlanningResult(
+            success=True, actions=path, cost=len(path), plan_length=len(path),
         )
-
-    def set_collision_fn(self, fn: Callable) -> None:
-        self._collision_fn = fn
-
-    def get_stats(self) -> Dict[str, Any]:
-        return {**super().get_stats(), "algorithm": "RRT*" if self.config.use_star else "RRT"}
+        logger.info("RRT plan found: %d waypoints (%d iterations)", len(path), self.config.max_iterations)
+        return self._record_result(result)

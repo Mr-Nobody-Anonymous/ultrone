@@ -14,8 +14,10 @@ from .evolutionary_coagen import EvolutionaryGenome, EvolutionaryCOAGenerator
 # Lazy-import search planners to keep startup fast
 _SEARCH_IMPORTED = False
 
+_search_mod = None
+
 def _import_search():
-    global _SEARCH_IMPORTED
+    global _SEARCH_IMPORTED, _search_mod
     if not _SEARCH_IMPORTED:
         from . import search as _search_mod
         _SEARCH_IMPORTED = True

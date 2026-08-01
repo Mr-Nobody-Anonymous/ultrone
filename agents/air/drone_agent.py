@@ -3,12 +3,12 @@
 
 import logging
 import random
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Optional
 import math
 
-from ..base_agent import BaseAgent, AgentCapability
-from ...data.entities import DomainType, Contact, AgentState, ThreatLevel
-from ...comms.protocol import Message, MessageType, Priority
+from agents.base_agent import BaseAgent, AgentCapability
+from data.entities import DomainType, Contact, AgentState, ThreatLevel
+from comms.protocol import Message, MessageType, Priority
 
 logger = logging.getLogger("Ultrone.Agents.Air.Drone")
 
@@ -19,7 +19,7 @@ class DroneAgent(BaseAgent):
     ISR+strike capabilities.
     """
     
-    class UAVState(AgentState):
+    class UAVState:
         LOITER = "loiter"
         ORBIT = "orbit"
         STRIKE = "strike"

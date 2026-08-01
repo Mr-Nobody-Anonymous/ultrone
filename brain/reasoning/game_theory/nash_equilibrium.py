@@ -28,16 +28,28 @@ class NashEquilibrium:
     def __init__(self, config: Optional[NashConfig] = None):
         self.config = config or NashConfig()
 
-    def solve(self, payoff_matrix_a: np.ndarray, payoff_matrix_b: np.ndarray) -> Dict[str, Any]:
+    def solve(self, payoff_matrix_a: np.ndarray, payoff_matrix_b: Optional[np.ndarray] = None) -> Dict[str, Any]:
         """Approximate Nash equilibrium using fictitious play.
 
         Args:
-            payoff_matrix_a: Payoff matrix for player A (num_actions_a x num_actions_b)
-            payoff_matrix_b: Payoff matrix for player B (num_actions_a x num_actions_b)
+            payoff_matrix_a: Payoff matrix for player A (num_actions_a x num_actions_b),
+                or a stacked 3D array of shape (2, num_actions_a, num_actions_b)
+                containing both players' payoffs.
+            payoff_matrix_b: Payoff matrix for player B (num_actions_a x num_actions_b).
+                If None, ``payoff_matrix_a`` must be a 3D array.
 
         Returns:
             Dict with mixed strategies for both players
         """
+        # Support 3D stacked input: [A_payoffs, B_payoffs]
+        if payoff_matrix_b is None:
+            if payoff_matrix_a.ndim == 3:
+                payoff_matrix_b = payoff_matrix_a[1]
+                payoff_matrix_a = payoff_matrix_a[0]
+            else:
+                # Zero-sum default: B minimizes A's payoff
+                payoff_matrix_b = -payoff_matrix_a
+
         n_a, n_b = payoff_matrix_a.shape
         strategy_a = np.ones(n_a) / n_a
         strategy_b = np.ones(n_b) / n_b
@@ -82,5 +94,15 @@ class NashEquilibrium:
             "converged": iteration < self.config.max_iterations - 1,
         }
 
-    def get_stats(self) -> Dict[str, Any]:
-        return {"type": "NashEquilibrium", "method": self.config.method}
+    def get_stats(self, payoff_matrix_a: Optional[np.ndarray] = None) -> Dict[str, Any]:
+        stats: Dict[str, Any] = {
+            "type": "NashEquilibrium",
+            "method": self.config.method,
+            "num_players": 2,
+        }
+        if payoff_matrix_a is not None:
+            if payoff_matrix_a.ndim == 3:
+                stats["num_actions_a"], stats["num_actions_b"] = payoff_matrix_a.shape[1], payoff_matrix_a.shape[2]
+            else:
+                stats["num_actions_a"], stats["num_actions_b"] = payoff_matrix_a.shape
+        return stats

@@ -47,15 +47,20 @@ class ConfidenceCalibration:
         self._calibrated: bool = False
         self._method = self.config.method
 
-    def calibrate(self, logits: np.ndarray, true_labels: np.ndarray) -> None:
+    def calibrate(self, logits: np.ndarray, true_labels: np.ndarray) -> Dict[str, Any]:
         """Fit calibration parameters using held-out validation data.
 
         Parameters
         ----------
         logits:
-            Raw model outputs (shape: n_samples x n_classes).
+            Raw model outputs (shape: n_samples x n_classes or n_samples,).
         true_labels:
             Ground-truth class indices (shape: n_samples,).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Calibration result summary.
         """
         if self._method == "temperature":
             self._calibrate_temperature(logits, true_labels)
@@ -67,6 +72,12 @@ class ConfidenceCalibration:
             logger.warning("Unknown calibration method '%s', using temperature scaling.", self._method)
             self._calibrate_temperature(logits, true_labels)
         self._calibrated = True
+        return {
+            "method": self._method,
+            "calibrated": True,
+            "temperature": self._temperature,
+            "platt_params": (self._platt_a, self._platt_b),
+        }
 
     def predict(self, logits: np.ndarray) -> np.ndarray:
         """Return calibrated probability predictions.
@@ -103,10 +114,15 @@ class ConfidenceCalibration:
 
     def _calibrate_temperature(self, logits: np.ndarray, labels: np.ndarray) -> None:
         """Optimize temperature T using negative log-likelihood."""
+        # Handle 1D logits (binary classification): reshape to (n, 2).
+        if logits.ndim == 1:
+            stacked = np.stack([-logits, logits], axis=-1)
+        else:
+            stacked = logits
         best_temp = 1.0
         best_nll = float("inf")
         for t in np.linspace(0.1, 10.0, 100):
-            scaled = logits / t
+            scaled = stacked / t
             probs = self._softmax(scaled)
             nll = -np.mean(np.log(probs[np.arange(len(labels)), labels] + 1e-12))
             if nll < best_nll:

@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar
+from typing import Any, Callable, Dict, Generic, List, Optional, Tuple, TypeVar
 
 logger = logging.getLogger("Ultrone.Brain.Reasoning.Search.Base")
 
@@ -52,9 +52,9 @@ class PlanningDomain:
     """
     state_shape: Optional[Tuple[int, ...]] = None
     discrete_actions: List[PlanningAction] = field(default_factory=list)
-    action_cost_fn: Optional[Any] = None
-    is_terminal_fn: Optional[Any] = None
-    heuristic_fn: Optional[Any] = None
+    action_cost_fn: Optional[Callable] = None
+    is_terminal_fn: Optional[Callable] = None
+    heuristic_fn: Optional[Callable] = None
 
 
 @dataclass
@@ -64,6 +64,7 @@ class PlanningGoal:
     predicates: Dict[str, Any] = field(default_factory=dict)
     target_state: Optional[Any] = None
     tolerance: float = 0.05
+    is_terminal_fn: Optional[Callable] = None
 
 
 @dataclass
@@ -174,4 +175,3 @@ class Planner(ABC, Generic[StateType]):
     @property
     def last_result(self) -> Optional[PlanningResult]:
         return self._last_result
-

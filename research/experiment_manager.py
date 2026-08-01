@@ -26,6 +26,7 @@ class ExperimentConfig:
 class ExperimentRun:
     """A single experiment run."""
     run_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
+    name: str = ""
     config: Dict[str, Any] = field(default_factory=dict)
     metrics: Dict[str, List[float]] = field(default_factory=dict)
     start_time: float = field(default_factory=time.time)
@@ -48,6 +49,14 @@ class ExperimentManager:
         self.config = config or ExperimentConfig()
         self._current_run: Optional[ExperimentRun] = None
         self._runs: List[ExperimentRun] = []
+
+    def create_experiment(self, name: str, config: Dict[str, Any]) -> str:
+        """Create a new experiment. Returns experiment ID."""
+        run = ExperimentRun(config=config, name=name)
+        self._current_run = run
+        self._runs.append(run)
+        logger.info("Experiment created: %s (name=%s)", run.run_id, name)
+        return run.run_id
 
     def create_run(self, run_config: Optional[Dict[str, Any]] = None) -> str:
         """Create a new experiment run. Returns run_id."""
@@ -88,6 +97,7 @@ class ExperimentManager:
     def get_stats(self) -> Dict[str, Any]:
         return {
             "type": "ExperimentManager",
+            "num_experiments": len(self._runs),
             "total_runs": len(self._runs),
             "current_run": self._current_run.run_id if self._current_run else None,
         }

@@ -61,6 +61,9 @@ class APIServer:
     - GET /status: Current training status
     - POST /override: Human override constraints
     - POST /ask_reasoning: XAI explanation of best genome
+    - GET /analysis: Current battlefield analysis snapshot
+    - GET /map/3d: 3D scene JSON for the frontend renderer
+    - WS /ws: Live WebSocket broadcast of telemetry + world state + analysis
     """
     
     def __init__(self, orchestrator: Any, intervention_manager: InterventionManager, host: str = "0.0.0.0", port: int = 8000) -> None:
@@ -70,19 +73,21 @@ class APIServer:
         self.port = port
         self._server_thread: Optional[threading.Thread] = None
         self._app: Any = None
+        self._analysis_cache: Dict[str, Any] = {}
+        self._ws_clients: List[Any] = []
+        self._ws_lock = threading.Lock()
         self._build_app()
     
     def _build_app(self) -> None:
         """Build FastAPI app with endpoints."""
         try:
             from fastapi import FastAPI
-            from fastapi.responses import JSONResponse
             import uvicorn
             
             app = FastAPI(title="ULTRONE Operational API", version="1.0")
             
             @app.get("/status")
-            def get_status() -> JSONResponse:
+            def get_status() -> Any:
                 """Return current training status."""
                 try:
                     summary = self.orchestrator.get_training_summary()
@@ -101,7 +106,7 @@ class APIServer:
                     except Exception:
                         pass
                     
-                    return JSONResponse({
+                    return {
                         "status": "running",
                         "episode": summary.get("total_episodes", 0),
                         "success_rate": summary.get("success_rate", 0),
@@ -109,35 +114,35 @@ class APIServer:
                         "red_survival_rate": 0.0,
                         "latest_briefing": briefing,
                         "active_constraints": constraints,
-                    })
+                    }
                 except Exception as e:
-                    return JSONResponse({"status": "error", "error": str(e)}, status_code=500)
+                    return {"status": "error", "error": str(e)}
             
             @app.post("/override")
-            def post_override(constraint: Dict[str, Any]) -> JSONResponse:
+            def post_override(constraint: Dict[str, Any]) -> Any:
                 """Apply human override constraint."""
                 try:
                     self.intervention_manager.add_constraint(constraint)
-                    return JSONResponse({"status": "override_applied", "constraint": constraint})
+                    return {"status": "override_applied", "constraint": constraint}
                 except Exception as e:
-                    return JSONResponse({"status": "error", "error": str(e)}, status_code=500)
+                    return {"status": "error", "error": str(e)}
             
             @app.post("/clear_constraints")
-            def post_clear() -> JSONResponse:
+            def post_clear() -> Any:
                 """Clear all override constraints."""
                 try:
                     self.intervention_manager.clear_constraints()
-                    return JSONResponse({"status": "constraints_cleared"})
+                    return {"status": "constraints_cleared"}
                 except Exception as e:
-                    return JSONResponse({"status": "error", "error": str(e)}, status_code=500)
+                    return {"status": "error", "error": str(e)}
             
             @app.post("/ask_reasoning")
-            def ask_reasoning() -> JSONResponse:
+            def ask_reasoning() -> Any:
                 """XAI: Get human-readable explanation of best genome."""
                 try:
                     best_genome = self.orchestrator.best_genome
                     if not best_genome:
-                        return JSONResponse({"explanation": "No best genome available yet."})
+                        return {"explanation": "No best genome available yet."}
                     
                     # Build genome description
                     action_weights = getattr(best_genome, 'action_weights', {})
@@ -154,17 +159,118 @@ class APIServer:
                         f"yields the highest reward in this adversarial environment."
                     )
                     
-                    return JSONResponse({"explanation": explanation})
+                    return {"explanation": explanation}
                 except Exception as e:
-                    return JSONResponse({"explanation": f"Error: {e}"}, status_code=500)
+                    return {"explanation": f"Error: {e}"}
+
+            @app.get("/analysis")
+            def get_analysis() -> Any:
+                """Return the latest battlefield analysis snapshot."""
+                try:
+                    if not self._analysis_cache:
+                        return {"status": "no_analysis", "message": "Analysis not yet available. Run a training episode first."}
+                    return {"status": "ok", "analysis": self._analysis_cache}
+                except Exception as e:
+                    return {"status": "error", "error": str(e)}
+
+            @app.get("/map/3d")
+            def get_map_3d() -> Any:
+                """Return the 3D battlefield scene JSON for the frontend."""
+                try:
+                    scene = self._get_3d_scene()
+                    return {"status": "ok", "scene": scene}
+                except Exception as e:
+                    return {"status": "error", "error": str(e)}
+
+            @app.websocket("/ws")
+            async def websocket_endpoint(websocket: Any) -> None:
+                """Live WebSocket - broadcast telemetry, world state & analysis."""
+                await websocket.accept()
+                with self._ws_lock:
+                    self._ws_clients.append(websocket)
+                try:
+                    while True:
+                        # Keep alive: wait for client messages, respond with latest state
+                        await websocket.receive_text()
+                        payload = self._build_broadcast_payload()
+                        await websocket.send_json(payload)
+                except Exception:
+                    pass
+                finally:
+                    with self._ws_lock:
+                        if websocket in self._ws_clients:
+                            self._ws_clients.remove(websocket)
             
             self._app = app
             self._uvicorn = uvicorn
-            logger.info("FastAPI app built successfully")
+            logger.info("FastAPI app built successfully (with analysis + 3D map + WebSocket)")
         except Exception as e:
             logger.error(f"Failed to build FastAPI app: {e}")
             self._app = None
-    
+
+    # ------------------------------------------------------------------
+    # Analysis / scene helpers
+    # ------------------------------------------------------------------
+
+    def _get_3d_scene(self) -> Dict[str, Any]:
+        """Build the 3D scene from the orchestrator's environment state."""
+        # Check if orchestrator has analysis components
+        if hasattr(self.orchestrator, 'battlefield_3d'):
+            scene = self.orchestrator.battlefield_3d.export_scene(
+                units=getattr(self.orchestrator, 'last_units', None),
+                contacts=getattr(self.orchestrator, 'last_contacts', None),
+                grid_size=(100, 100),
+            )
+            return scene
+
+        # Fallback: build scene from env observation if available
+        env = getattr(self.orchestrator, '_current_env', None)
+        if env is None:
+            return {"status": "unavailable", "message": "No battlefield environment available."}
+
+        try:
+            obs = env._get_observation()
+            from brain.perception.battlefield_3d import Battlefield3DExporter
+            exporter = Battlefield3DExporter()
+            scene = exporter.export_scene(
+                units=_entities_from_observation(obs),
+                grid_size=(100, 100),
+            )
+            return scene
+        except Exception as e:
+            logger.error(f"3D scene build failed: {e}")
+            return {"status": "error", "error": str(e)}
+
+    def _build_broadcast_payload(self) -> Dict[str, Any]:
+        """Build the WebSocket broadcast payload with latest state."""
+        payload: Dict[str, Any] = {
+            "type": "status",
+            "payload": {
+                "telemetry": self.orchestrator.get_training_summary() if hasattr(self.orchestrator, 'get_training_summary') else {},
+                "analysis": self._analysis_cache,
+            },
+        }
+        return payload
+
+    def publish_analysis(self, analysis: Dict[str, Any]) -> None:
+        """Store the latest analysis for REST polling and WS broadcast."""
+        self._analysis_cache = analysis
+
+    def broadcast(self, message: Dict[str, Any]) -> None:
+        """Broadcast a message to all connected WebSocket clients (best-effort)."""
+        with self._ws_lock:
+            clients = list(self._ws_clients)
+
+        for client in clients:
+            try:
+                import asyncio
+                loop = asyncio.new_event_loop()
+                loop.run_until_complete(client.send_json(message))
+                loop.close()
+            except Exception:
+                # Client likely disconnected; drop silently
+                pass
+
     def start(self) -> None:
         """Start API server in background thread."""
         if self._app is None:
@@ -214,3 +320,57 @@ def _interpret_actions(top_actions: List[tuple]) -> str:
         return "maneuver to optimal engagement positions"
     else:
         return "execute a balanced multi-action strategy"
+
+
+def _entities_from_observation(obs: Dict[str, Any]) -> List[Any]:
+    """Convert a BattlefieldEnv observation into entity-like objects.
+
+    Builds minimal unit-like objects with team, position, health, and type
+    attributes that the BattlefieldAnalyzer can consume.
+    """
+    class _Entity:
+        def __init__(self, eid: str, team: str, position: Any, health: float, etype: str):
+            self.unit_id = eid
+            self.team = team
+            self.position = position
+            self.health = health
+            self.unit_type = etype
+            self.capability = 1.0
+
+    entities: List[Any] = []
+
+    # Red force
+    red = obs.get("red_force", {})
+    if red:
+        entities.append(_Entity(
+            eid="red_force_main",
+            team="red",
+            position=red.get("position", (50, 50)),
+            health=red.get("health", 100),
+            etype=red.get("type", "unknown"),
+        ))
+
+    # Blue assets
+    blue = obs.get("blue_assets", {})
+    for asset_type, assets in blue.items():
+        for i, asset in enumerate(assets):
+            entities.append(_Entity(
+                eid=f"{asset_type}_{i}",
+                team="blue",
+                position=asset.get("position", (50, 50)),
+                health=asset.get("health", 100),
+                etype=asset_type,
+            ))
+
+    # Supply nodes (neutral infrastructure)
+    supply_nodes = obs.get("supply_nodes", {})
+    for sid, sn in supply_nodes.items():
+        entities.append(_Entity(
+            eid=sid,
+            team=sn.get("team", "neutral"),
+            position=sn.get("position", (50, 50)),
+            health=sn.get("health", 100),
+            etype="supply_node",
+        ))
+
+    return entities

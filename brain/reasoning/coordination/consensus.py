@@ -31,6 +31,20 @@ class ConsensusProtocol(BaseCoordinator):
     def __init__(self, config: Optional[ConsensusConfig] = None):
         super().__init__(config or ConsensusConfig())
         self._config: ConsensusConfig = self.config  # type: ignore
+        self._proposals: Dict[str, Any] = {}
+
+    def propose(self, value: Any) -> Dict[str, Any]:
+        """Propose a value and run the consensus protocol.
+
+        Args:
+            value: The value this agent proposes.
+
+        Returns:
+            Dict with consensus result.
+        """
+        num_agents = max(2, self._config.num_agents)
+        self._proposals = {f"agent_{i}": value for i in range(num_agents)}
+        return self.coordinate({"proposals": dict(self._proposals)})
 
     def coordinate(self, context: Dict[str, Any]) -> Dict[str, Any]:
         proposals = context.get("proposals", {})

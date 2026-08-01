@@ -1,5 +1,5 @@
-from ..base_agent import BaseAgent, AgentCapability
-from ...data.entities import DomainType
+from agents.base_agent import BaseAgent, AgentCapability
+from data.entities import DomainType
 
 class VesselAgent(BaseAgent):
     """Ship: CRUISE/COMBAT_STATION/AA/ASW/SHORE_BOMB states."""

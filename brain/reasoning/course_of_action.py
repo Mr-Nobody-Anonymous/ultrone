@@ -11,7 +11,7 @@ import random
 logger = logging.getLogger("Ultrone.Brain.Reasoning.COA")
 
 if TYPE_CHECKING:
-    from ..perception.situational_awareness import COPContact
+    from brain.perception.situational_awareness import COPContact
 
 
 class Action:

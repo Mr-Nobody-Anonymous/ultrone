@@ -5,9 +5,9 @@ import logging
 import random
 from typing import Dict, List, Any, Tuple
 
-from ..base_agent import BaseAgent, AgentCapability
-from ...data.entities import DomainType, AgentState
-from ...comms.protocol import Message
+from agents.base_agent import BaseAgent, AgentCapability
+from data.entities import DomainType, AgentState
+from comms.protocol import Message
 
 logger = logging.getLogger("Ultrone.Agents.Air.Missile")
 
@@ -15,7 +15,7 @@ logger = logging.getLogger("Ultrone.Agents.Air.Missile")
 class MissileAgent(BaseAgent):
     """Missile: LAUNCHED/MIDCOURSE/TERMINAL/IMPACT/MISS states."""
     
-    class MissileState(AgentState):
+    class MissileState:
         LAUNCHED = "launched"
         MIDCOURSE = "midcourse"
         TERMINAL = "terminal"

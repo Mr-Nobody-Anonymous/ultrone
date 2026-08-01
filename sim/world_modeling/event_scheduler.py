@@ -47,6 +47,19 @@ class EventScheduler(WorldModel):
         """Add an event to the schedule."""
         heapq.heappush(self._queue, event)
 
+    def schedule_event(self, name: str, delay: int = 0, callback: Optional[Callable] = None, context: Optional[Dict[str, Any]] = None) -> None:
+        """Schedule an event by name with a delay.
+        
+        Args:
+            name: Event name/type.
+            delay: Number of ticks from now to execute.
+            callback: Callback function (defaults to a no-op).
+            context: Optional context dict.
+        """
+        if callback is None:
+            callback = lambda **kw: logger.debug("Event '%s' triggered", name)
+        self.schedule_in(delay, name, callback, context)
+
     def schedule_in(self, ticks_from_now: int, name: str, callback: Callable,
                     context: Optional[Dict[str, Any]] = None, priority: int = 0) -> None:
         """Schedule an event N ticks from the current tick."""
@@ -82,4 +95,3 @@ class EventScheduler(WorldModel):
         super().reset()
         self._queue.clear()
         self._executed = 0
-

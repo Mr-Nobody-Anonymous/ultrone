@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Callable
 from enum import Enum
 
-logger = logging.getLogger("argus.auth")
+logger = logging.getLogger("Ultrone.Backend.Auth")
 
 
 class Role(Enum):
@@ -353,4 +353,21 @@ class AuthenticationManager:
     def _generate_token(self) -> str:
         return f"argus_{uuid.uuid4().hex}_{int(time.time())}"
 
-    def _log_attempt(self, username: str, success: bool, ip: Optional[str], reason: str) -> None
+    def _log_attempt(self, username: str, success: bool, ip: Optional[str], reason: str) -> None:
+        """Record an authentication attempt for audit logging."""
+        entry = {
+            "username": username,
+            "success": success,
+            "ip": ip,
+            "reason": reason,
+            "timestamp": time.time(),
+        }
+        with self._lock:
+            self._audit_log.append(entry)
+            # Keep audit log bounded
+            if len(self._audit_log) > 10000:
+                self._audit_log = self._audit_log[-10000:]
+        if success:
+            logger.debug(f"Auth success for '{username}' from {ip}")
+        else:
+            logger.warning(f"Auth FAILED for '{username}' from {ip}: {reason}")

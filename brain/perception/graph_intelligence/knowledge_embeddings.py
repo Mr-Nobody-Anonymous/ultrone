@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 import numpy as np
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger("Ultrone.Brain.Perception.GraphIntelligence.KGE")
 
@@ -33,6 +33,23 @@ class KnowledgeEmbeddings:
     def add_relation(self, name: str) -> None:
         self._relation_embeddings[name] = np.random.randn(self.config.embedding_dim)
 
+    def embed(self, entities: List[str]) -> np.ndarray:
+        """Return embeddings for a list of entities.
+        
+        Args:
+            entities: List of entity names to embed.
+            
+        Returns:
+            Array of shape (len(entities), embedding_dim) with entity embeddings.
+        """
+        embeddings = []
+        for entity in entities:
+            if entity in self._entity_embeddings:
+                embeddings.append(self._entity_embeddings[entity])
+            else:
+                embeddings.append(np.zeros(self.config.embedding_dim))
+        return np.array(embeddings)
+
     def predict_triple(self, head: str, relation: str, tail: str) -> float:
         """Score a triple (head, relation, tail)."""
         h = self._entity_embeddings.get(head, np.zeros(self.config.embedding_dim))
@@ -41,4 +58,4 @@ class KnowledgeEmbeddings:
         return -np.linalg.norm(h + r - t)
 
     def get_stats(self) -> Dict[str, Any]:
-        return {"type": "KnowledgeEmbeddings", "entities": len(self._entity_embeddings)}
+        return {"type": "KnowledgeEmbeddings", "num_entities": len(self._entity_embeddings)}

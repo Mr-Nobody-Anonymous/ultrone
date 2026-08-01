@@ -31,4 +31,4 @@ class BeliefPropagation:
         return self._beliefs
 
     def get_stats(self) -> Dict[str, Any]:
-        return {"type": "BeliefPropagation"}
+        return {"type": "BeliefPropagation", "num_nodes": len(self._beliefs)}

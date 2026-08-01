@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 import numpy as np
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 logger = logging.getLogger("Ultrone.Brain.Perception.Probabilistic.PF")
 
@@ -27,9 +27,14 @@ class ParticleFilter:
         self._particles = np.random.randn(self.config.num_particles, self.config.dim_state)
         self._weights = np.ones(self.config.num_particles) / self.config.num_particles
 
-    def predict(self, transition_fn: Callable[[np.ndarray], np.ndarray]) -> None:
-        """Apply transition function to all particles."""
-        self._particles = transition_fn(self._particles)
+    def predict(self, transition_fn: Optional[Callable] = None, step: int = 1) -> np.ndarray:
+        """Apply transition function to all particles.
+        
+        If no transition_fn is provided, returns the mean state.
+        """
+        if transition_fn is not None:
+            self._particles = transition_fn(self._particles)
+        return self.mean_state
 
     def update(self, likelihood_fn: Callable[[np.ndarray], np.ndarray]) -> None:
         """Update weights based on observation likelihood."""

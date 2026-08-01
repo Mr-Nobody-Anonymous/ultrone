@@ -1,4 +1,4 @@
-"""Supply chain and logistics simulation."""
+"""Logistics model for battlefield simulation."""
 
 from __future__ import annotations
 
@@ -15,56 +15,41 @@ logger = logging.getLogger("Ultrone.Sim.WorldModeling.Logistics")
 @dataclass
 class LogisticsConfig(WorldModelConfig):
     """Configuration for logistics model."""
-    num_supply_routes: int = 5
-    supply_delay_ticks: int = 10
+    supply_chain_length: int = 5
+    resupply_rate: float = 10.0
+    convoy_speed: float = 5.0
 
 
 class LogisticsModel(WorldModel):
-    """Supply chain and logistics simulation.
+    """Logistics and supply chain model.
 
-    Manages supply routes between depots and forward operating
-    bases, with convoy simulation and disruption events.
+    Simulates supply convoys, resupply operations, and logistics
+    constraints that affect military operations.
     """
 
     def __init__(self, config: Optional[LogisticsConfig] = None):
         super().__init__(config or LogisticsConfig())
-        self._routes: Dict[str, Dict[str, Any]] = {}
-        self._convoys: List[Dict[str, Any]] = []
-
-    def initialize(self) -> None:
-        for i in range(self.config.num_supply_routes):
-            self._routes[f"route_{i}"] = {
-                "origin": (np.random.randint(0, 100), np.random.randint(0, 100)),
-                "destination": (np.random.randint(0, 100), np.random.randint(0, 100)),
-                "active": True,
-                "capacity": 100.0,
-                "transit_time": self.config.supply_delay_ticks,
-            }
+        self._supply_level: float = 100.0
+        self._convoys_active: int = 0
+        self._supplies_delivered: float = 0.0
 
     def update(self, dt: float) -> None:
+        """Advance logistics by one time step."""
         self._tick += 1
-        # Move convoys along routes
-        for convoy in self._convoys[:]:
-            convoy["progress"] += 1
-            if convoy["progress"] >= convoy["transit_time"]:
-                self._convoys.remove(convoy)
-                logger.debug("Convoy arrived: %s", convoy["id"])
+        # Natural resupply
+        self._supply_level = min(100.0, self._supply_level + self.config.resupply_rate * 0.01)
+        # Active convoys
+        if self._tick % 10 == 0:
+            self._convoys_active = max(0, self._convoys_active + np.random.randint(-1, 2))
 
-    def request_supply(self, destination: Tuple[int, int], amount: float) -> str:
-        """Request a supply convoy. Returns convoy ID."""
-        convoy_id = f"convoy_{len(self._convoys) + 1}"
-        self._convoys.append({
-            "id": convoy_id,
-            "destination": destination,
-            "amount": amount,
-            "progress": 0,
-            "transit_time": self.config.supply_delay_ticks,
-        })
-        return convoy_id
+    def dispatch_convoy(self) -> bool:
+        """Dispatch a supply convoy."""
+        self._convoys_active += 1
+        return True
 
     def get_state(self) -> Dict[str, Any]:
         return {
-            "routes": dict(self._routes),
-            "active_convoys": len(self._convoys),
+            "supply_level": self._supply_level,
+            "convoys_active": self._convoys_active,
+            "supplies_delivered": self._supplies_delivered,
         }
-

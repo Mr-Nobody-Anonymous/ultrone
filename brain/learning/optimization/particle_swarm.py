@@ -34,9 +34,11 @@ class ParticleSwarm(BaseOptimizer):
         self,
         objective_fn: Callable[[np.ndarray], float],
         bounds: List[Tuple[float, float]],
+        max_iter: Optional[int] = None,
     ) -> OptimizationResult:
         dim = len(bounds)
         n = self._config.population_size
+        num_iterations = max_iter if max_iter is not None else self._config.max_iterations
         lb = np.array([b[0] for b in bounds])
         ub = np.array([b[1] for b in bounds])
 
@@ -53,7 +55,7 @@ class ParticleSwarm(BaseOptimizer):
         c1 = self._config.cognitive_coef
         c2 = self._config.social_coef
 
-        for iteration in range(self._config.max_iterations):
+        for iteration in range(num_iterations):
             r1, r2 = np.random.random((2, n, dim))
             velocities = (w * velocities + c1 * r1 * (personal_best - positions) +
                           c2 * r2 * (global_best - positions))
@@ -77,7 +79,7 @@ class ParticleSwarm(BaseOptimizer):
         return OptimizationResult(
             best_params=global_best,
             best_value=global_best_fitness,
-            n_iterations=self._config.max_iterations,
+            n_iterations=num_iterations,
             n_evaluations=self._n_evaluations,
             convergence_history=self._history,
         )

@@ -113,7 +113,7 @@ class Doctrine:
         
         # Check doctrine aggression threshold
         threat_score = context.get("threat_score", 0.5)
-        if threat_score < self.preset.aggression_threshold:
+        if threat_score < self.preset.aggression:
             return False
         
         # Check if we prefer standoff

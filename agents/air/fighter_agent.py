@@ -5,9 +5,9 @@ import logging
 import random
 from typing import Dict, List, Any, Tuple
 
-from ..base_agent import BaseAgent, AgentCapability
-from ...data.entities import DomainType, Contact, AgentState, ThreatLevel
-from ...comms.protocol import Message, MessageType, Priority
+from agents.base_agent import BaseAgent, AgentCapability
+from data.entities import DomainType, Contact, AgentState, ThreatLevel
+from comms.protocol import Message, MessageType, Priority
 
 logger = logging.getLogger("Ultrone.Agents.Air.Fighter")
 
@@ -15,7 +15,7 @@ logger = logging.getLogger("Ultrone.Agents.Air.Fighter")
 class FighterAgent(BaseAgent):
     """Fighter: PATROL/INTERCEPT/BVR/WVR/DEFENSIVE/RTB states."""
     
-    class FighterState(AgentState):
+    class FighterState:
         PATROL = "patrol"
         INTERCEPT = "intercept"
         BVR = "bvr"  # Beyond Visual Range

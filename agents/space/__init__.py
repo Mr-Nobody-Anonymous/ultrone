@@ -1,5 +1,5 @@
-from ..base_agent import BaseAgent, AgentCapability
-from ...data.entities import DomainType
+from agents.base_agent import BaseAgent, AgentCapability
+from data.entities import DomainType
 
 class SatelliteAgent(BaseAgent):
     """Satellite: ORBIT/IMAGE/COMMS/MANEUVER states."""
