@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, develop]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -20,30 +24,27 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-asyncio pytest-cov
-          pip install fastapi uvicorn pydantic
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -r requirements.txt
 
-      - name: Run existing tests
+      - name: Run tests
         run: |
           python -m pytest tests/ --tb=short -q
-
-      - name: Run research platform tests
-        run: |
-          python -m pytest tests/test_knowledge_engine.py tests/test_research_db.py tests/test_research_division.py tests/test_self_improvement.py tests/test_plugin_sdk.py tests/test_extension_log.py -v --tb=short
 
       - name: Generate coverage report
         run: |
           python -m pytest --cov=knowledge_engine --cov=research_db --cov=research_division --cov=self_improvement --cov=plugin_sdk --cov=extension_log --cov-report=xml
 
       - name: Upload coverage
+        if: always()
         uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
+          fail_ci_if_error: false
 
   lint:
     runs-on: ubuntu-latest
@@ -53,6 +54,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
       - name: Install linter
         run: pip install flake8 black mypy
       - name: Run flake8
@@ -69,3 +71,4 @@ jobs:
         run: docker build -f infra/docker/Dockerfile.research -t ultrone-research:latest .
       - name: Run container smoke test
         run: docker run --rm ultrone-research:latest python -c "from knowledge_engine import KnowledgeMemoryManager; print('OK')"
+

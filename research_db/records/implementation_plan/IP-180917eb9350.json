@@ -1,0 +1,18 @@
+{
+  "plan_id": "IP-180917eb9350",
+  "title": "Test Module",
+  "description": "",
+  "source_paper_ids": [],
+  "steps": [
+    {
+      "step": 1
+    }
+  ],
+  "estimated_effort": "",
+  "dependencies": [],
+  "risks": [],
+  "expected_improvements": [],
+  "status": "proposed",
+  "created_at": 1785703237.3998263,
+  "updated_at": 1785703237.3998263
+}

@@ -1,0 +1,40 @@
+# ULTRONE Research Platform — Core runtime & test dependencies
+# Used by CI (research-platform-ci.yml) and the Docker image (Dockerfile.research).
+
+# ── Core scientific computing ──────────────────────────────────────────────
+numpy>=1.24
+scipy>=1.10
+
+# ── Machine learning / deep learning ───────────────────────────────────────
+torch>=2.1
+torchvision>=0.16
+gymnasium>=0.29
+stable-baselines3>=2.2
+
+# ── Graph / reasoning ──────────────────────────────────────────────────────
+networkx>=3.1
+
+# ── Web / API ──────────────────────────────────────────────────────────────
+fastapi>=0.104
+uvicorn[standard]>=0.24
+pydantic>=2.5
+
+# ── AI / perception (module-level imports used by the test suite) ──────────
+transformers>=4.36
+Pillow>=10.0
+librosa>=0.10
+matplotlib>=3.8
+
+# ── Observability / infra clients (module-level imports) ───────────────────
+psutil>=5.9
+redis>=5.0
+prometheus-client>=0.19
+
+# ── HTTP / utilities ───────────────────────────────────────────────────────
+requests>=2.31
+
+# ── Testing ────────────────────────────────────────────────────────────────
+pytest>=7.4
+pytest-asyncio>=0.23
+pytest-cov>=4.1
+
