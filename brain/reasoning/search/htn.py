@@ -18,11 +18,32 @@ from .base import Planner, PlanningAction, PlanningDomain, PlanningGoal, Plannin
 logger = logging.getLogger("Ultrone.Brain.Reasoning.Search.HTN")
 
 
-@dataclass
 class HTNConfig:
-    """Configuration for HTN."""
-    max_decomposition_depth: int = 20
-    max_branching: int = 10
+    """Configuration for HTN.
+
+    Accepts ``max_depth`` (public API name) and ``max_branching``.  For
+    backwards compatibility, the historical field ``max_decomposition_depth``
+    is also accepted and is kept in sync with ``max_depth``.
+    """
+
+    def __init__(
+        self,
+        max_depth: int = 20,
+        max_branching: int = 10,
+        max_decomposition_depth: Optional[int] = None,
+    ) -> None:
+        if max_decomposition_depth is not None:
+            max_depth = max_decomposition_depth
+        self.max_depth = max_depth
+        self.max_branching = max_branching
+        # Keep the legacy attribute in sync so callers reading it still work.
+        self.max_decomposition_depth = max_depth
+
+    def __repr__(self) -> str:
+        return (
+            f"HTNConfig(max_depth={self.max_depth}, "
+            f"max_branching={self.max_branching})"
+        )
 
 
 @dataclass
@@ -39,6 +60,7 @@ class Method:
     task_name: str
     subtasks: List[Task]
     preconditions: Optional[Callable[[Dict[str, Any]], bool]] = None
+    description: str = ""
 
 
 class PrimitiveTask(Task):
@@ -109,7 +131,11 @@ class HTNPlanner(Planner):
     def plan(self, state: Any, goal: PlanningGoal) -> PlanningResult:
         tasks = goal.predicates.get("tasks", [])
         if not tasks:
-            tasks = [Task("plan", parameters={"goal": goal.description})]
+            # Use the goal description as the top-level compound task. This is
+            # what the public API/tests expect: ``plan({}, PlanningGoal(description="reach_goal"))``
+            # decomposes the registered ``reach_goal`` method.
+            top_name = goal.description or "plan"
+            tasks = [Task(top_name, parameters={"goal": goal.description})]
 
         all_actions: List[PlanningAction] = []
         for task in tasks:

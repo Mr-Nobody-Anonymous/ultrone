@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ultrone-config
+  namespace: ultrone
+data:
+  ARGUS_DB_PATH: /data/argus.db
+  REDIS_HOST: redis
+  QDRANT_HOST: qdrant
+  POSTGRES_HOST: postgres
+  LOG_LEVEL: INFO
+  ENVIRONMENT: production

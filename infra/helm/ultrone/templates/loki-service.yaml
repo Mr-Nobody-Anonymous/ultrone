@@ -1,0 +1,23 @@
+{{- if .Values.loki.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ultrone.loki.name" . }}
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: loki
+  {{- with .Values.loki.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.loki.service.type }}
+  ports:
+    - port: {{ .Values.loki.service.port }}
+      targetPort: {{ .Values.loki.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "ultrone.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: loki
+{{- end }}

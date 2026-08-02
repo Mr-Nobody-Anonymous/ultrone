@@ -324,8 +324,13 @@ class SIGINTAI(SpecializedAnalyzer):
             
             data = np.array(signal_data)
             
-            # Convert to byte values for entropy calculation
-            normalized = ((data - data.min()) / (data.max() - data.min()) * 255).astype(int)
+            # Convert to byte values for entropy calculation.
+            # Guard against a constant signal (range == 0) which would cause a
+            # divide-by-zero RuntimeWarning in NumPy.
+            data_range = data.max() - data.min()
+            if data_range == 0:
+                return 0.3  # constant signal carries no entropy/encryption signature
+            normalized = ((data - data.min()) / data_range * 255).astype(int)
             
             # Calculate Shannon entropy
             hist, _ = np.histogram(normalized, bins=256, range=(0, 255))
@@ -548,13 +553,19 @@ class VisualAI(SpecializedAnalyzer):
             import torch
             import numpy as np
             
-            # Load image from base64 or file path
+            # Load image from base64 or file path.
+            # ``Image.open`` is lazy: it keeps the underlying handle open until
+            # the pixel data is accessed. Use context managers so the file (or
+            # BytesIO buffer) is always closed, preventing ``ResourceWarning``
+            # "unclosed file" leaks.
             if isinstance(raw_data, str):
                 if raw_data.startswith("/"):  # File path
-                    image = Image.open(raw_data).convert("RGB")
+                    with Image.open(raw_data) as img:
+                        image = img.convert("RGB")
                 else:  # base64
                     image_data = base64.b64decode(raw_data)
-                    image = Image.open(io.BytesIO(image_data)).convert("RGB")
+                    with Image.open(io.BytesIO(image_data)) as img:
+                        image = img.convert("RGB")
             else:
                 image = raw_data
             

@@ -14,7 +14,20 @@ Transform ULTRONE from a battlefield simulation into a modular, research-grade a
 ```
 ultrone/
 ├── brain/
+│   ├── orchestrator.py          # Central brain orchestration
 │   ├── reasoning/
+│   │   ├── course_of_action.py      # COA generation with combinatorial tactics
+│   │   ├── evolutionary_coagen.py   # Genetic evolution of tactics
+│   │   ├── tactical_engine.py       # OODA loop execution
+│   │   ├── coevolution_engine.py    # Red vs Blue adversarial coevolution
+│   │   ├── kill_chain.py            # F2T2EA state machine
+│   │   ├── kill_chain_capsule.py    # Kill chain capsule
+│   │   ├── composite_kill_chain.py  # Multi-target kill chain orchestration
+│   │   ├── secretary_council.py     # AI strategic directive deliberation
+│   │   ├── monte_carlo_engine.py    # Monte Carlo simulation planning
+│   │   ├── resource_allocator.py    # Optimal asset allocation
+│   │   ├── red_force_genomes.py     # Red Force genome definitions
+│   │   ├── swarm_genomes.py         # Swarm genome architectures
 │   │   ├── search/              # ✅ COMPLETE: Search & Planning algorithms
 │   │   │   ├── __init__.py
 │   │   │   ├── base.py          # Base planner interface
@@ -62,6 +75,13 @@ ultrone/
 │   │       ├── influence_diagram.py
 │   │       └── structural_causal_model.py
 │   ├── learning/
+│   │   ├── evolution_lab.py         # Genome mutation engine
+│   │   ├── genome.py                # Gene/Capsule data structures
+│   │   ├── agent_evolver.py         # Domain-specialized sub-agent creation
+│   │   ├── experience_memory.py     # Cross-session memory persistence
+│   │   ├── pattern_recognizer.py    # Tactical pattern detection
+│   │   ├── llm_commander.py         # Hybrid LLM-guided command
+│   │   ├── performance_telemetry.py # Fitness & performance tracking
 │   │   ├── rl/                  # ✅ COMPLETE: Reinforcement Learning
 │   │   │   ├── __init__.py      # Module exports + RL_REGISTRY
 │   │   │   ├── base.py          # BaseRLAlgorithm, RLTrainer, ExperienceBuffer
@@ -130,6 +150,15 @@ ultrone/
 │   │       ├── transformer.py
 │   │       └── change_point.py
 │   ├── perception/
+│   │   ├── specialized_analyzers.py  # 11 AI experts per sensor type
+│   │   ├── multi_source_analyzer.py  # Fusion layer
+│   │   ├── sensor_fusion.py          # Combined sensor confidence
+│   │   ├── situational_awareness.py  # Battlefield state awareness
+│   │   ├── knowledge_graph.py        # Entity relationship graph
+│   │   ├── threat_classifier.py      # Threat level classification
+│   │   ├── battlefield_analyzer.py   # Battlefield analysis
+│   │   ├── battlefield_3d.py         # 3D battlefield visualization
+│   │   ├── terrain_analyzer.py       # Terrain analysis
 │   │   ├── probabilistic/       # ✅ COMPLETE: Probabilistic Reasoning
 │   │   │   ├── __init__.py
 │   │   │   ├── bayesian_network.py
@@ -165,15 +194,24 @@ ultrone/
 │   │   ├── working_memory.py
 │   │   ├── associative_memory.py
 │   │   └── memory_consolidation.py
-│   └── xai/                     # ✅ COMPLETE: Explainable AI
+│   ├── xai/                     # ✅ COMPLETE: Explainable AI
+│   │   ├── __init__.py
+│   │   ├── decision_trace.py
+│   │   ├── shap_explainer.py
+│   │   ├── lime_explainer.py
+│   │   ├── counterfactual.py
+│   │   ├── confidence_calibration.py
+│   │   └── reasoning_graph.py
+│   └── strategy/                # 🏛️ High-level planning
 │       ├── __init__.py
-│       ├── decision_trace.py
-│       ├── shap_explainer.py
-│       ├── lime_explainer.py
-│       ├── counterfactual.py
-│       ├── confidence_calibration.py
-│       └── reasoning_graph.py
+│       ├── doctrine.py              # Military doctrine presets (4 types)
+│       ├── operational_planner.py   # Mission decomposition
+│       └── strategic_planner.py     # Campaign objective management
 ├── sim/
+│   ├── battlefield_env.py           # 100x100 grid battlefield Gym env
+│   ├── world_state.py               # Global battlefield state
+│   ├── environment.py               # Environmental effects
+│   ├── clock.py                     # Simulation clock
 │   ├── world_modeling/          # ✅ COMPLETE: World Modeling
 │   │   ├── __init__.py
 │   │   ├── base.py
@@ -218,40 +256,71 @@ ultrone/
 │   ├── sea/                     # Vessel, submarine, naval air agents
 │   ├── space/                   # Satellite, orbital, space weapon agents
 │   └── cyber/                   # Recon, exploit, defend agents
-├── backend/                     # ✅ COMPLETE: Backend Services
-│   ├── api/                     # API v1 endpoints
-│   ├── analytics/
-│   ├── auth/
-│   ├── cache/
-│   ├── database/
-│   ├── events/
-│   ├── exporters/
-│   ├── integrations/
-│   ├── metrics/
-│   ├── middleware/
-│   ├── notifications/
-│   ├── pipeline/
-│   ├── plugins/
-│   ├── rules/
-│   ├── schedulers/
-│   ├── security/
-│   ├── vision/                  # Object detection, satellite, terrain, thermal
-│   └── workers/
-├── frontend/                    # ✅ COMPLETE: React/Vite Dashboard
+├── backend/                     # 🔧 Backend Services (partial implementation)
+│   ├── api/                     # ✅ API v1 endpoints (agents, algorithms, experiments, simulation)
+│   ├── analytics/               # 📋 Stub (package init only)
+│   ├── auth/                    # 📋 Stub (package init only)
+│   ├── cache/                   # 📋 Stub (package init only)
+│   ├── database/                # 📋 Stub (package init only)
+│   ├── events/                  # 📋 Stub (package init only)
+│   ├── exporters/               # 📋 Planned (empty)
+│   ├── integrations/            # 📋 Planned (empty)
+│   ├── metrics/                 # 📋 Stub (package init only)
+│   ├── middleware/              # 📋 Stub (package init only)
+│   ├── notifications/           # 📋 Stub (package init only)
+│   ├── pipeline/                # 📋 Stub (package init only)
+│   ├── plugins/                 # 📋 Planned (empty)
+│   ├── rules/                   # 📋 Stub (package init only)
+│   ├── schedulers/              # 📋 Planned (empty)
+│   ├── security/                # 📋 Stub (package init only)
+│   ├── vision/                  # ✅ Object detection, satellite, terrain, thermal
+│   └── workers/                 # 📋 Stub (package init only)
+├── frontend/                    # ✅ React/Vite Dashboard
 │   └── src/
-│       ├── components/          # TacticalMap, AgentInspector, AIReasoning, etc.
-│       ├── pages/               # Dashboard, Analytics, Experiment, Settings
-│       ├── contexts/            # Dashboard, Simulation, Theme contexts
-│       ├── layouts/
-│       ├── hooks/
-│       ├── stores/
-│       └── utils/
-├── infra/                       # ✅ COMPLETE: Infrastructure
-│   ├── docker/
-│   ├── helm/
-│   ├── kubernetes/
-│   ├── monitoring/
-│   └── nginx/
+│       ├── App.tsx              # Main app component
+│       ├── main.tsx             # Entry point
+│       ├── index.css            # Global styles
+│       ├── components/          # ✅ TacticalMap, AgentInspector, AIReasoning, etc.
+│       │   ├── TacticalMapView.tsx
+│       │   ├── AgentInspector.tsx
+│       │   ├── AIReasoningPanel.tsx
+│       │   ├── CommandPalette.tsx
+│       │   ├── DecisionTimeline.tsx
+│       │   ├── EventStream.tsx
+│       │   ├── KnowledgeGraph.tsx
+│       │   ├── LiveMetrics.tsx
+│       │   ├── PerformanceMonitor.tsx
+│       │   ├── Sidebar.tsx
+│       │   ├── TopBar.tsx
+│       │   ├── admin/AdminPanel.tsx
+│       │   ├── analytics/AnalyticsPanel.tsx
+│       │   ├── camera/CameraFeed.tsx
+│       │   ├── events/EventLog.tsx
+│       │   ├── rules/RuleEngine.tsx
+│       │   └── TacticalMap/MapLibreMap.tsx
+│       ├── pages/               # ✅ Dashboard, Analytics, Experiment, Settings, AgentInspector
+│       ├── contexts/            # ✅ Dashboard, Simulation, Theme contexts
+│       ├── layouts/             # ✅ MainLayout
+│       ├── maps/                # ✅ MapLayerControls
+│       ├── auth/                # 📋 Planned (empty)
+│       ├── charts/              # 📋 Planned (empty)
+│       ├── hooks/               # 📋 Planned (empty)
+│       ├── notifications/       # 📋 Planned (empty)
+│       ├── routing/             # 📋 Planned (empty)
+│       ├── stores/              # 📋 Planned (empty)
+│       ├── themes/              # 📋 Planned (empty)
+│       └── utils/               # 📋 Planned (empty)
+├── infra/                       # ✅ Infrastructure
+│   ├── docker/                  # ✅ Docker Compose
+│   ├── helm/                    # ✅ Helm Charts (35 templates)
+│   │   └── ultrone/
+│   │       ├── Chart.yaml
+│   │       ├── values.yaml
+│   │       └── templates/       # API, Frontend, Worker, Grafana, Loki, Prometheus,
+│   │                            # Redis, Qdrant, Postgres, Mediamtx, PVC, etc.
+│   ├── kubernetes/              # 📋 Planned (empty)
+│   ├── monitoring/              # 📋 Planned (empty)
+│   └── nginx/                   # 📋 Planned (empty)
 ├── comms/                       # ✅ COMPLETE: Communications
 │   ├── message_bus.py           # Async pub/sub with priority queue
 │   ├── api_server.py            # FastAPI HITL + XAI server
@@ -422,23 +491,44 @@ Interoperability with popular ML frameworks.
 **Implemented Adapters:**
 - PyTorch Lightning, ONNX, PyG, Ray, Stable-Baselines3, Torch, XGBoost
 
-### Phase 21: Backend Services (`backend/`) — ✅ COMPLETE
-Production-grade backend infrastructure.
+### Phase 21: Backend Services (`backend/`) — 🔧 Partial Implementation
+Production-grade backend infrastructure (scaffolded, partially implemented).
 
-**Implemented Modules:**
-- API v1, Analytics, Auth, Cache, Database, Events, Exporters, Integrations, Metrics, Middleware, Notifications, Pipeline, Plugins, Rules, Schedulers, Security, Vision (object detection, satellite, terrain, thermal), Workers
+**Fully Implemented:**
+- API v1 (agents, algorithms, experiments, simulation endpoints)
+- Vision (object detection, satellite processing, terrain vision, thermal processing)
 
-### Phase 22: Frontend Dashboard (`frontend/`) — ✅ COMPLETE
+**Stubbed (package init only):**
+- Analytics, Auth, Cache, Database, Events, Metrics, Middleware, Notifications, Pipeline, Rules, Security, Workers
+
+**Planned (empty directories):**
+- Exporters, Integrations, Plugins, Schedulers
+
+### Phase 22: Frontend Dashboard (`frontend/`) — ✅ Complete (core components)
 React/Vite-based operational dashboard.
 
 **Implemented Components:**
-- Tactical Map View, Agent Inspector, AI Reasoning Panel, Command Palette, Decision Timeline, Event Stream, Knowledge Graph, Live Metrics, Performance Monitor, Admin Panel, Analytics Panel, Event Log, Rule Engine, Camera Feed, Map Layer Controls
+- TacticalMapView, AgentInspector, AIReasoningPanel, CommandPalette, DecisionTimeline, EventStream, KnowledgeGraph, LiveMetrics, PerformanceMonitor, Sidebar, TopBar
+- Sub-components: AdminPanel, AnalyticsPanel, CameraFeed, EventLog, RuleEngine, MapLibreMap, MapLayerControls
 
-### Phase 23: Infrastructure (`infra/`) — ✅ COMPLETE
+**Implemented Pages:**
+- DashboardPage, AnalyticsPage, ExperimentPage, SettingsPage, AgentInspectorPage
+
+**Implemented Infrastructure:**
+- Contexts (Dashboard, Simulation, Theme), Layouts (MainLayout), App.tsx, main.tsx
+
+**Planned (empty directories):**
+- auth, charts, hooks, notifications, routing, stores, themes, utils
+
+### Phase 23: Infrastructure (`infra/`) — ✅ Partial Implementation
 Deployment and orchestration.
 
 **Implemented:**
-- Docker Compose, Helm Charts, Kubernetes Manifests, Monitoring, Nginx
+- Docker Compose (`docker/docker-compose.yml`)
+- Helm Charts (`helm/ultrone/` with 35 templates including API, Frontend, Worker, Grafana, Loki, Prometheus, Redis, Qdrant, Postgres, Mediamtx, PVC, HPA, PDB, Ingress, ServiceAccount, Secrets, ConfigMaps)
+
+**Planned (empty directories):**
+- Kubernetes Manifests, Monitoring, Nginx
 
 ## Testing Strategy
 - Unit tests for every module ✅

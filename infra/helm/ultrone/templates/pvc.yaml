@@ -1,0 +1,106 @@
+{{- if .Values.persistence.enabled }}
+{{- if .Values.api.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ultrone-data
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  {{- if .Values.persistence.storageClass }}
+  storageClassName: {{ .Values.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.data.size }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ultrone-snapshots
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  {{- if .Values.persistence.storageClass }}
+  storageClassName: {{ .Values.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.snapshots.size }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ultrone-videos
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  {{- if .Values.persistence.storageClass }}
+  storageClassName: {{ .Values.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.videos.size }}
+{{- end }}
+{{- if .Values.grafana.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ultrone.grafana.name" . }}-data
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.grafana.persistence.accessMode }}
+  {{- if .Values.grafana.persistence.storageClass }}
+  storageClassName: {{ .Values.grafana.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.grafana.persistence.size }}
+{{- end }}
+{{- if .Values.prometheus.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ultrone.prometheus.name" . }}-data
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.prometheus.persistence.accessMode }}
+  {{- if .Values.prometheus.persistence.storageClass }}
+  storageClassName: {{ .Values.prometheus.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.prometheus.persistence.size }}
+{{- end }}
+{{- if .Values.loki.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ultrone.loki.name" . }}-data
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.loki.persistence.accessMode }}
+  {{- if .Values.loki.persistence.storageClass }}
+  storageClassName: {{ .Values.loki.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.loki.persistence.size }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,20 @@
+{
+  "experiment_id": "E-2794d91787b6",
+  "hypothesis": "H",
+  "research_motivation": "",
+  "implementation": "",
+  "dataset": "D",
+  "training_config": {},
+  "evaluation_metrics": {},
+  "benchmark_comparison": {},
+  "resource_usage": {},
+  "execution_logs": [],
+  "performance_graphs": [],
+  "success_criteria": "",
+  "rollback_strategy": "",
+  "conclusion": "",
+  "recommendation": "adopt",
+  "status": "completed",
+  "created_at": 1785699728.1531682,
+  "updated_at": 1785699728.1555493
+}

@@ -129,12 +129,30 @@ class BehaviorTree(AIArchitecture):
     def set_root(self, root: BTNode) -> None:
         self._root = root
 
-    def decide(self, state: Dict[str, Any]) -> str:
+    def decide(self, state: Dict[str, Any], goals: Optional[List[str]] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """DecisionArchitecture interface compatibility."""
+        if goals is None:
+            goals = []
+        if context is None:
+            context = {}
         if self._root is None:
-            return "idle"
+            return {"action": "idle", "goals": goals, "context": context}
         status = self._root.tick(state)
         self._last_action = f"bt_status_{status}"
-        return f"status_{status}"
+        return {
+            "action": f"status_{status}",
+            "goals": goals,
+            "context": context,
+            "bt_status": status,
+        }
 
     def reset(self) -> None:
         pass
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Return behavior tree statistics."""
+        return {
+            "type": "BehaviorTree",
+            "has_root": self._root is not None,
+            "last_action": self._last_action,
+        }

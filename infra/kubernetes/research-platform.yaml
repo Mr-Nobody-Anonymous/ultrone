@@ -1,0 +1,165 @@
+# ULTRONE Research Platform Kubernetes Deployment
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ultrone-research
+  labels:
+    app: ultrone-research
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: research-config
+  namespace: ultrone-research
+data:
+  RESEARCH_DB_BACKEND: "sqlite"
+  RESEARCH_DB_PATH: "/data/research/ultrone_research.db"
+  LOG_DIR: "/data/logs"
+  KNOWLEDGE_EMBEDDING_DIM: "256"
+  ENABLE_GRAPH: "true"
+  ENABLE_VECTOR: "true"
+  ENABLE_ONTOLOGY: "true"
+  ENABLE_RAG: "true"
+  ENABLE_PLUGINS: "true"
+  PLUGIN_DIR: "/data/plugins"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: research-data
+  namespace: ultrone-research
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: research-api
+  namespace: ultrone-research
+  labels:
+    app: research-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: research-api
+  template:
+    metadata:
+      labels:
+        app: research-api
+    spec:
+      containers:
+        - name: research-api
+          image: ultrone-research:latest
+          ports:
+            - containerPort: 8000
+              name: api
+          envFrom:
+            - configMapRef:
+                name: research-config
+          volumeMounts:
+            - name: research-data
+              mountPath: /data
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          livenessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - "from knowledge_engine import KnowledgeMemoryManager; print('ok')"
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: research-data
+          persistentVolumeClaim:
+            claimName: research-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: research-api-service
+  namespace: ultrone-research
+spec:
+  selector:
+    app: research-api
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: api
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: research-api-lb
+  namespace: ultrone-research
+spec:
+  selector:
+    app: research-api
+  ports:
+    - port: 80
+      targetPort: 8000
+      name: http
+  type: LoadBalancer
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: research-api-hpa
+  namespace: ultrone-research
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: research-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: research-ingress
+  namespace: ultrone-research
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: research.ultrone.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: research-api-service
+                port:
+                  number: 8000

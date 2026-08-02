@@ -1,0 +1,37 @@
+# ULTRONE Research Platform Dockerfile
+# Multi-stage build for the autonomous research platform
+
+FROM python:3.11-slim as base
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt || true
+RUN pip install --no-cache-dir pytest pytest-asyncio fastapi uvicorn pydantic
+
+# Copy source code
+COPY . .
+
+# Set Python path
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Expose API port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD python -c "from knowledge_engine import KnowledgeMemoryManager; print('healthy')" || exit 1
+
+# Default command: run the research platform API
+CMD ["python", "-m", "uvicorn", "backend.api.v1:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Research platform entry point
+ENTRYPOINT ["python"]

@@ -1,0 +1,61 @@
+{{- if .Values.loki.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "ultrone.loki.name" . }}
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: loki
+spec:
+  serviceName: {{ include "ultrone.loki.name" . }}
+  replicas: {{ .Values.loki.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ultrone.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: loki
+  template:
+    metadata:
+      labels:
+        {{- include "ultrone.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: loki
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "ultrone.loki.name" . }}-config
+      containers:
+        - name: loki
+          image: {{ include "ultrone.image" (dict "root" . "local" .Values.loki.image) }}
+          imagePullPolicy: {{ .Values.loki.image.pullPolicy }}
+          args:
+            - -config.file=/etc/loki/loki-config.yaml
+          ports:
+            - name: http
+              containerPort: {{ .Values.loki.service.targetPort }}
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/loki
+            - name: data
+              mountPath: /loki
+          resources:
+            {{- toYaml .Values.loki.resources | nindent 12 }}
+  {{- if .Values.loki.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - {{ .Values.loki.persistence.accessMode }}
+        {{- if .Values.loki.persistence.storageClass }}
+        storageClassName: {{ .Values.loki.persistence.storageClass }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.loki.persistence.size }}
+  {{- end }}
+{{- end }}

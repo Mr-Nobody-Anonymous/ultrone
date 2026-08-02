@@ -66,20 +66,52 @@ class PDDLDomain:
     def add_predicate(self, name: str) -> None:
         self.predicates.append(name)
 
-    def add_action(self, name: str, parameters: List[str],
-                   precondition: List[str], effect: List[str]) -> None:
-        self.actions.append({
-            "name": name,
-            "parameters": parameters,
-            "precondition": precondition,
-            "effect": effect,
-        })
+    def add_action(
+        self,
+        action: PDDLAction,
+        parameters: Optional[List[str]] = None,
+        precondition: Optional[List[str]] = None,
+        effect: Optional[List[str]] = None,
+    ) -> None:
+        """Add a STRIPS action to the domain.
+
+        The primary calling convention passes a single :class:`PDDLAction`
+        object. For backwards compatibility, the legacy
+        ``add_action(name, parameters, precondition, effect)`` signature is
+        also supported (in that case the positional arguments are interpreted
+        as the legacy string-based format and converted to a ``PDDLAction``).
+        """
+        if isinstance(action, PDDLAction):
+            self.actions.append(action)
+            return
+        # Legacy string-based format: ``add_action(name, parameters, precondition, effect)``
+        name = action
+        precond_set = {PDDLPredicate(p) if not isinstance(p, PDDLPredicate) else p
+                       for p in (precondition or [])}
+        # Effects may be ``(not pred)`` negative literals or plain predicates.
+        add_set = set()
+        del_set = set()
+        for e in (effect or []):
+            if isinstance(e, PDDLPredicate):
+                add_set.add(e)
+            elif e.startswith("not "):
+                del_set.add(PDDLPredicate(e[4:]))
+            else:
+                add_set.add(PDDLPredicate(e))
+        self.actions.append(PDDLAction(
+            name=name,
+            preconditions=precond_set,
+            add_effects=add_set,
+            del_effects=del_set,
+            parameters=list(parameters or []),
+            cost=1.0,
+        ))
 
 
 @dataclass
 class PDDLProblem:
     """A PDDL problem instance."""
-    domain: str = ""
+    domain: Any = ""
     name: str = ""
     objects: List[str] = field(default_factory=list)
     init: set = field(default_factory=set)
@@ -109,11 +141,25 @@ class PDDLPlanner(Planner):
         super().initialize(domain)
 
     def plan(self, state: Any, goal: PlanningGoal) -> PlanningResult:
-        if self._domain is None or self._problem is None:
+        if self._domain is None:
             return PlanningResult(success=False)
 
-        current = set(self._problem.init)
-        goal_set = set(self._problem.goal)
+        # If a problem was loaded, use its init/goal; otherwise derive them
+        # from the ``state`` argument and ``goal.predicates`` so the planner
+        # can be used directly via the standard ``Planner.plan(state, goal)``
+        # interface (no separate ``load_problem`` call required).
+        if self._problem is not None:
+            current = set(self._problem.init)
+            goal_set = set(self._problem.goal)
+        else:
+            current = set(state) if isinstance(state, (set, frozenset)) else {state}
+            goal_set = {
+                PDDLPredicate(name) for name, val in (goal.predicates or {}).items()
+                if val is True
+            }
+            if not goal_set and goal.target_state is not None:
+                goal_set = {goal.target_state}
+
         plan: List[PlanningAction] = []
 
         # Simple forward search
@@ -130,6 +176,11 @@ class PDDLPlanner(Planner):
                 if isinstance(action, PDDLAction):
                     pre = action.preconditions
                     if pre.issubset(current):
+                        # Skip no-op applications: if the action's add-effects
+                        # are already present and it deletes nothing present,
+                        # re-applying it would only loop forever.
+                        if action.add_effects.issubset(current) and not (action.del_effects & current):
+                            continue
                         current = (current - action.del_effects) | action.add_effects
                         plan.append(PlanningAction(action.name, {"parameters": action.parameters}, cost=action.cost))
                         applied = True

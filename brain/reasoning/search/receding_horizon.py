@@ -72,3 +72,12 @@ class RecedingHorizonPlanner(Planner):
         )
         logger.info("RHC plan: %d actions (horizon %d)", result.plan_length, self.config.horizon)
         return self._record_result(result)
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Return diagnostics including the inner planner type."""
+        stats = super().get_stats()
+        stats["inner_planner"] = (
+            type(self.inner_planner).__name__ if self.inner_planner is not None else None
+        )
+        stats["horizon"] = self.config.horizon
+        return stats

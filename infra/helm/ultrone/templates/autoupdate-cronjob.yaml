@@ -1,0 +1,53 @@
+{{- if .Values.autoupdate.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "ultrone.fullname" . }}-autoupdate
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: autoupdate
+spec:
+  schedule: "{{ .Values.autoupdate.schedule }}"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "ultrone.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: autoupdate
+        spec:
+          {{- with .Values.global.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ include "ultrone.serviceAccountName" . }}
+          restartPolicy: Never
+          containers:
+            - name: autoupdate
+              image: "{{ .Values.autoupdate.image.repository }}:{{ .Values.autoupdate.image.tag }}"
+              imagePullPolicy: {{ .Values.autoupdate.image.pullPolicy }}
+              env:
+                - name: GITHUB_REPO
+                  value: "{{ .Values.autoupdate.githubRepo }}"
+                - name: GITHUB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: ultrone-secrets
+                      key: GITHUB_TOKEN
+                      optional: true
+                - name: HELM_RELEASE_NAME
+                  value: {{ .Release.Name | quote }}
+                - name: HELM_NAMESPACE
+                  value: {{ .Release.Namespace | quote }}
+                - name: HELM_CHART
+                  value: "{{ .Chart.Name }}"
+                - name: CHECK_INTERVAL
+                  value: "{{ .Values.autoupdate.checkInterval }}"
+                - name: AUTO_UPDATE
+                  value: "{{ .Values.autoupdate.autoUpdate }}"
+              resources:
+                {{- toYaml .Values.autoupdate.resources | nindent 16 }}
+{{- end }}

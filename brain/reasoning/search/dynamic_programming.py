@@ -44,13 +44,24 @@ class DPPlanner(Planner):
         self._state_enumeration = state_enumeration
 
     def _compute_value(self, state: Any, goal: Any, depth: int, domain: PlanningDomain) -> float:
-        """Compute value of state using backward induction."""
+        """Compute value of state using backward induction.
+
+        Memoized on ``(state, depth)`` to avoid the exponential blow-up that
+        occurs when the same state is reachable along many different action
+        sequences (which previously made the planner hang on any non-trivial
+        grid).
+        """
         if depth >= self.config.max_horizon:
             return 0.0
         if state == goal:
             return 1.0
 
+        key = (state, depth)
+        if key in self._value_table:
+            return self._value_table[key]
+
         best_value = float("-inf")
+        best_action = None
         for action in domain.discrete_actions:
             # Compute next state
             if isinstance(state, tuple) and len(state) == 2:
@@ -65,10 +76,15 @@ class DPPlanner(Planner):
             value = reward + self.config.gamma * self._compute_value(next_state, goal, depth + 1, domain)
             if value > best_value:
                 best_value = value
-                self._value_table[state] = value
-                self._policy[state] = action
+                best_action = action
 
-        return best_value if best_value > float("-inf") else 0.0
+        if best_action is not None:
+            self._value_table[key] = best_value
+            self._policy[key] = best_action
+        else:
+            self._value_table[key] = 0.0
+
+        return self._value_table[key]
 
     def plan(self, state: Any, goal: PlanningGoal) -> PlanningResult:
         domain = self._domain
@@ -79,14 +95,21 @@ class DPPlanner(Planner):
         self._value_table.clear()
         self._policy.clear()
 
+        # Start is the goal: trivially successful empty plan.
+        if state == target:
+            result = PlanningResult(success=True, actions=[], cost=0.0, plan_length=0)
+            return self._record_result(result)
+
         self._compute_value(state, target, 0, domain)
 
-        # Extract plan
+        # Extract plan following the depth-indexed policy.
         actions: List[PlanningAction] = []
         current = state
-        for _ in range(self.config.max_horizon):
-            if current in self._policy:
-                action = self._policy[current]
+        visited = set()
+        for step in range(self.config.max_horizon):
+            key = (current, step)
+            if key in self._policy:
+                action = self._policy[key]
                 actions.append(action)
                 if isinstance(current, tuple) and len(current) == 2:
                     x, y = current
@@ -95,6 +118,9 @@ class DPPlanner(Planner):
                     current = (nx, ny)
                 if current == target:
                     break
+                if current in visited:  # cycle guard
+                    break
+                visited.add(current)
             else:
                 break
 

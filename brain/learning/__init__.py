@@ -12,6 +12,16 @@ from .evolution_lab import EvolutionLab, EvolutionConfig
 from .agent_evolver import AgentEvolver, AgentPersonality
 from .experience_memory import EngagementHistory, ExperienceMemory
 from .pattern_recognizer import PatternRecognizer, ThreatPattern, PatternType
+from .world_model import (
+    WorldModelConfig,
+    LearnedWorldModel,
+    ReplayBuffer,
+    Encoder,
+    Decoder,
+    RSSM,
+    Actor,
+    Critic,
+)
 
 __all__ = [
     # Genome
@@ -27,4 +37,13 @@ __all__ = [
     "EngagementHistory", "ExperienceMemory",
     # Patterns
     "PatternRecognizer", "ThreatPattern", "PatternType",
+    # World Model
+    "WorldModelConfig",
+    "LearnedWorldModel",
+    "ReplayBuffer",
+    "Encoder",
+    "Decoder",
+    "RSSM",
+    "Actor",
+    "Critic",
 ]

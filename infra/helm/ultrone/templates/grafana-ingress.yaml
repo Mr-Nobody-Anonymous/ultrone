@@ -1,0 +1,36 @@
+{{- if and .Values.grafana.enabled .Values.grafana.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "ultrone.grafana.name" . }}
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+  {{- with .Values.grafana.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.grafana.ingress.className }}
+  ingressClassName: {{ .Values.grafana.ingress.className }}
+  {{- end }}
+  {{- if .Values.grafana.ingress.tls }}
+  tls:
+    {{- toYaml .Values.grafana.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range $host := .Values.grafana.ingress.hosts }}
+    - host: {{ $host.host | quote }}
+      http:
+        paths:
+          {{- range $path := $host.paths }}
+          - path: {{ $path.path }}
+            pathType: {{ $path.pathType }}
+            backend:
+              service:
+                name: {{ include "ultrone.grafana.name" $ }}
+                port:
+                  number: {{ $.Values.grafana.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

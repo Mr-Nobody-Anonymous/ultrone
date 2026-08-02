@@ -96,5 +96,78 @@ class MilitaryConfig:
         }
 
 
+@dataclass
+class ResearchPlatformConfig:
+    """
+    Configuration for the ULTRONE autonomous research platform.
+
+    Controls the research division agents, knowledge engine layers,
+    self-improvement loop, plugin system, and research database.
+    """
+
+    # Research division
+    enable_research_division: bool = True
+    research_poll_interval_seconds: float = 3600.0
+    research_agent_pool_size: int = 4
+    max_papers_per_cycle: int = 20
+
+    # Research sources to monitor
+    monitor_arxiv: bool = True
+    monitor_semantic_scholar: bool = True
+    monitor_huggingface: bool = True
+    monitor_papers_with_code: bool = True
+    monitor_openreview: bool = True
+    monitor_github: bool = True
+    monitor_conferences: bool = True
+    monitor_leaderboards: bool = True
+
+    # Knowledge engine
+    knowledge_embedding_dim: int = 768
+    knowledge_graph_enabled: bool = True
+    vector_memory_enabled: bool = True
+    ontology_enabled: bool = True
+    entity_linking_enabled: bool = True
+    rag_enabled: bool = True
+    confidence_threshold: float = 0.6
+    max_knowledge_entries: int = 100_000
+
+    # Self-improvement
+    enable_self_improvement: bool = True
+    improvement_loop_interval_seconds: float = 86400.0
+    max_concurrent_improvements: int = 3
+    require_benchmark_gain: float = 0.02  # min relative improvement to adopt
+
+    # Plugin system
+    enable_plugins: bool = True
+    plugin_dir: str = "plugins"
+    hot_reload: bool = True
+
+    # Research database
+    research_db_path: str = "research_db"
+    research_db_backend: str = "json"  # json, sqlite
+
+    # Logging
+    log_research_events: bool = True
+    log_dir: str = "logs"
+    log_to_json: bool = True
+    log_to_markdown: bool = True
+    log_to_sqlite: bool = True
+    log_to_vector: bool = True
+    log_to_knowledge_graph: bool = True
+
+    def to_dict(self) -> dict:
+        return {
+            "enable_research_division": self.enable_research_division,
+            "research_poll_interval_seconds": self.research_poll_interval_seconds,
+            "monitor_arxiv": self.monitor_arxiv,
+            "monitor_semantic_scholar": self.monitor_semantic_scholar,
+            "enable_self_improvement": self.enable_self_improvement,
+            "enable_plugins": self.enable_plugins,
+            "research_db_backend": self.research_db_backend,
+            "confidence_threshold": self.confidence_threshold,
+            "knowledge_embedding_dim": self.knowledge_embedding_dim,
+        }
+
+
 # Default configuration instance
 default_config = MilitaryConfig()

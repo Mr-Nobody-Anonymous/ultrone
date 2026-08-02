@@ -1,0 +1,32 @@
+{
+  "paper_id": "P-232929744946",
+  "title": "Test Paper",
+  "authors": [],
+  "venue": "",
+  "publication_date": null,
+  "citations": 0,
+  "abstract": "",
+  "summary": "",
+  "algorithms": [
+    "Transformer"
+  ],
+  "equations": [],
+  "architectures": [],
+  "datasets": [],
+  "hyperparameters": {},
+  "limitations": [],
+  "future_work": [],
+  "implementation_ideas": [],
+  "related_papers": [],
+  "github_repositories": [],
+  "benchmark_results": {},
+  "confidence_score": 0.5,
+  "knowledge_graph_links": [],
+  "arxiv_id": "",
+  "doi": "",
+  "url": "",
+  "metadata": {},
+  "version": 1,
+  "created_at": 1785698320.4226773,
+  "updated_at": 1785698320.4231768
+}

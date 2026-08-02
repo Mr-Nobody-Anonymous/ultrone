@@ -97,7 +97,7 @@ class SB3AdapterConfig:
     verbose: int = 0
     tensorboard_log: Optional[str] = None
     policy_kwargs: Dict[str, Any] = field(default_factory=lambda: dict(
-        net_arch=[dict(pi=[256, 256], vf=[256, 256])],
+        net_arch=[256, 256],
     ))
 
 
@@ -297,22 +297,30 @@ class SB3Adapter(BaseRLAlgorithm):
     def _policy_kwargs(self) -> Dict[str, Any]:
         """Return policy kwargs appropriate for this algorithm family.
 
-        Continuous off-policy algorithms (SAC/TD3/DDPG) need a flat
-        ``net_arch`` list, while on-policy algorithms (PPO) accept the
-        ``[dict(pi=..., vf=...)]`` form.
+        For off-policy algorithms (SAC/TD3/DDPG), returns ``net_arch`` with
+        ``pi`` and ``qf`` keys. For on-policy algorithms (PPO), returns
+        ``net_arch`` with ``pi`` and ``vf`` keys.
         """
         kwargs = dict(self._adapter_config.policy_kwargs)
-        if "net_arch" in kwargs and isinstance(kwargs["net_arch"], list):
+        # Ensure net_arch is in dict format with algorithm-specific keys
+        if "net_arch" in kwargs:
             arch = kwargs["net_arch"]
-            # If the first element is a dict, it is PPO-style — flatten it.
-            if arch and isinstance(arch[0], dict):
-                flat = []
-                for item in arch:
-                    if isinstance(item, dict):
-                        flat.extend(item.get("pi", []))
-                    else:
-                        flat.append(item)
-                kwargs["net_arch"] = flat or [256, 256]
+            if isinstance(arch, dict):
+                # Already in dict format - use as-is
+                return kwargs
+            elif isinstance(arch, list):
+                # Convert list to dict format
+                if arch and isinstance(arch[0], dict):
+                    # Old format: [dict(pi=..., vf=...)] -> convert to dict
+                    flat = {}
+                    for item in arch:
+                        if isinstance(item, dict):
+                            for key, value in item.items():
+                                flat[key] = value
+                    kwargs["net_arch"] = flat if flat else dict(pi=[256, 256])
+                else:
+                    # Flat list format: [256, 256] -> wrap in dict with 'pi' key
+                    kwargs["net_arch"] = dict(pi=arch)
         return kwargs
 
     def _infer_action_dim(self) -> int:
@@ -330,6 +338,17 @@ class PPOAdapter(SB3Adapter):
     def _create_model(self, env: gym.Env) -> BaseAlgorithm:
         if not SB3_AVAILABLE:
             return None  # type: ignore[return-value]
+        # PPO requires dict(pi=..., vf=...) format in net_arch (SB3 v1.8.0+)
+        net_arch = self._adapter_config.policy_kwargs.get("net_arch", [256, 256])
+        if isinstance(net_arch, list) and not (net_arch and isinstance(net_arch[0], dict)):
+            net_arch = dict(pi=net_arch, vf=net_arch)
+        elif isinstance(net_arch, list) and net_arch and isinstance(net_arch[0], dict):
+            net_arch_dict = {}
+            for item in net_arch:
+                if isinstance(item, dict):
+                    for key, value in item.items():
+                        net_arch_dict[key] = value
+            net_arch = net_arch_dict if net_arch_dict else dict(pi=[256, 256], vf=[256, 256])
         return sb3.PPO(
             policy=self._adapter_config.policy_type,
             env=env,
@@ -344,7 +363,7 @@ class PPOAdapter(SB3Adapter):
             max_grad_norm=0.5,
             verbose=self._adapter_config.verbose,
             tensorboard_log=self._adapter_config.tensorboard_log,
-            policy_kwargs=self._adapter_config.policy_kwargs,
+            policy_kwargs=dict(self._adapter_config.policy_kwargs, net_arch=net_arch),
             seed=self.config.seed,
             device=self.config.device,
         )
@@ -356,6 +375,20 @@ class SACAdapter(SB3Adapter):
     def _create_model(self, env: gym.Env) -> BaseAlgorithm:
         if not SB3_AVAILABLE:
             return None  # type: ignore[return-value]
+        # SAC requires dict(pi=..., qf=...) format in net_arch
+        net_arch = self._adapter_config.policy_kwargs.get("net_arch", [256, 256])
+        if isinstance(net_arch, list) and not (net_arch and isinstance(net_arch[0], dict)):
+            net_arch = dict(pi=net_arch, qf=net_arch)
+        elif isinstance(net_arch, list) and net_arch and isinstance(net_arch[0], dict):
+            net_arch_dict = {}
+            for item in net_arch:
+                if isinstance(item, dict):
+                    for key, value in item.items():
+                        if key == "vf":
+                            net_arch_dict["qf"] = value
+                        else:
+                            net_arch_dict[key] = value
+            net_arch = net_arch_dict if net_arch_dict else dict(pi=[256, 256], qf=[256, 256])
         return sb3.SAC(
             policy=self._adapter_config.policy_type,
             env=env,
@@ -367,7 +400,7 @@ class SACAdapter(SB3Adapter):
             ent_coef="auto_0.2",
             verbose=self._adapter_config.verbose,
             tensorboard_log=self._adapter_config.tensorboard_log,
-            policy_kwargs=self._policy_kwargs(),
+            policy_kwargs=dict(self._adapter_config.policy_kwargs, net_arch=net_arch),
             seed=self.config.seed,
             device=self.config.device,
         )
@@ -432,6 +465,18 @@ class DQNAdapter(SB3Adapter):
     def _create_model(self, env: gym.Env) -> BaseAlgorithm:
         if not SB3_AVAILABLE:
             return None  # type: ignore[return-value]
+        # DQN requires flat list format for net_arch
+        net_arch = self._adapter_config.policy_kwargs.get("net_arch", [256, 256])
+        if isinstance(net_arch, dict):
+            # Extract 'pi' or 'qf' key, or use first value
+            net_arch = net_arch.get("pi", net_arch.get("qf", list(net_arch.values())[0] if net_arch else [256, 256]))
+        elif isinstance(net_arch, list) and net_arch and isinstance(net_arch[0], dict):
+            # Extract from list-of-dicts format
+            flat = []
+            for item in net_arch:
+                if isinstance(item, dict):
+                    flat.extend(item.get("pi", item.get("qf", [])))
+            net_arch = flat if flat else [256, 256]
         return sb3.DQN(
             policy=self._adapter_config.policy_type,
             env=env,
@@ -442,7 +487,7 @@ class DQNAdapter(SB3Adapter):
             tau=self.config.tau,
             verbose=self._adapter_config.verbose,
             tensorboard_log=self._adapter_config.tensorboard_log,
-            policy_kwargs=self._policy_kwargs(),
+            policy_kwargs=dict(self._adapter_config.policy_kwargs, net_arch=net_arch),
             seed=self.config.seed,
             device=self.config.device,
         )

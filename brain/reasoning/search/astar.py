@@ -19,7 +19,7 @@ class AStarConfig:
     """Configuration for A* search."""
     heuristic_weight: float = 1.0
     max_expansions: int = 100_000
-    allow_diagonal: bool = True
+    allow_diagonal: bool = False
 
 
 class AStar(Planner):

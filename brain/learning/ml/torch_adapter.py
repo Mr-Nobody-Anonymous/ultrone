@@ -68,7 +68,7 @@ class PyTorchAdapter:
         """Load model checkpoint."""
         try:
             import torch
-            model.load_state_dict(torch.load(path, map_location=self._device))
+            model.load_state_dict(torch.load(path, map_location=self._device, weights_only=False))
             return model
         except Exception as e:
             logger.error("Failed to load checkpoint: %s", e)

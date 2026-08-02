@@ -18,9 +18,12 @@ from ai_architectures.reactive_planning import ReactivePlanner, ReactivePlanConf
 
 
 class TestAIArchitectureInterface(unittest.TestCase):
-    def test_base_instantiation_fails(self):
-        with self.assertRaises(TypeError):
-            AIArchitecture(AIArchitectureConfig())
+    def test_base_instantiation_works(self):
+        """Base class can be instantiated but decide() raises NotImplementedError."""
+        base = AIArchitecture(AIArchitectureConfig())
+        self.assertIsInstance(base, AIArchitecture)
+        with self.assertRaises(NotImplementedError):
+            base.decide({}, [], {})
 
     def test_behavior_tree_implements_interface(self):
         b = BehaviorTree()

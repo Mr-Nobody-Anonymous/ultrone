@@ -1,0 +1,41 @@
+{{- if .Values.loki.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ultrone.loki.name" . }}-config
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: loki
+data:
+  loki-config.yaml: |
+    auth_enabled: {{ .Values.loki.config.auth_enabled }}
+    server:
+      http_listen_port: {{ .Values.loki.service.targetPort }}
+    common:
+      path_prefix: /loki
+      storage:
+        filesystem:
+          chunks_directory: /loki/chunks
+          rules_directory: /loki/rules
+      replication_factor: 1
+      ring:
+        kvstore:
+          store: inmemory
+    schema_config:
+      configs:
+        - from: 2024-01-01
+          store: tsdb
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: index_
+            period: 24h
+    {{- with .Values.loki.config.limits_config }}
+    limits_config:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .Values.loki.config.compactor }}
+    compactor:
+      working_directory: {{ .working_directory }}
+    {{- end }}
+{{- end }}
