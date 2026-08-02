@@ -1,0 +1,64 @@
+{{- if .Values.prometheus.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ultrone.prometheus.name" . }}
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: prometheus
+spec:
+  replicas: {{ .Values.prometheus.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ultrone.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: prometheus
+  template:
+    metadata:
+      labels:
+        {{- include "ultrone.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: prometheus
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.prometheus.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "ultrone.prometheus.name" . }}-data
+        - name: config
+          configMap:
+            name: {{ include "ultrone.prometheus.name" . }}-config
+      {{- else }}
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: {{ include "ultrone.prometheus.name" . }}-config
+      {{- end }}
+      containers:
+        - name: prometheus
+          image: {{ include "ultrone.image" (dict "root" . "local" .Values.prometheus.image) }}
+          imagePullPolicy: {{ .Values.prometheus.image.pullPolicy }}
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time={{ .Values.prometheus.retention }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.prometheus.service.targetPort }}
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /prometheus
+            - name: config
+              mountPath: /etc/prometheus
+          resources:
+            {{- toYaml .Values.prometheus.resources | nindent 12 }}
+      {{- with .Values.prometheus.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

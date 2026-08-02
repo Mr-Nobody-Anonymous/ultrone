@@ -1,0 +1,19 @@
+﻿python : C:\Users\hp\AppData\Local\Programs\Python\Python310\lib\site-packages\_pytest\config\__init__.py:331: PluggyTeardownRaisedWarning: A plugin raised an exception during an old-style hookwrapper teardown.
+At line:1 char:33
++ ... op\ultrone; python -m pytest --timeout=30 -q --tb=short --no-header 2 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\hp\App...apper teardown.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Plugin: helpconfig, Hook: pytest_cmdline_parse
+UsageError: usage: __main__.py [options] [file_or_dir] [file_or_dir] [...]
+__main__.py: error: unrecognized arguments: --timeout=30
+  inifile: C:\Users\hp\Desktop\ultrone\pytest.ini
+  rootdir: C:\Users\hp\Desktop\ultrone
+For more information see https://pluggy.readthedocs.io/en/stable/api_reference.html#pluggy.PluggyTeardownRaisedWarning
+  config = pluginmanager.hook.pytest_cmdline_parse(
+ERROR: usage: __main__.py [options] [file_or_dir] [file_or_dir] [...]
+__main__.py: error: unrecognized arguments: --timeout=30
+  inifile: C:\Users\hp\Desktop\ultrone\pytest.ini
+  rootdir: C:\Users\hp\Desktop\ultrone
+

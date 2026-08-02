@@ -1,0 +1,59 @@
+{{- if .Values.mediamtx.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ultrone.mediamtx.name" . }}
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mediamtx
+spec:
+  replicas: {{ .Values.mediamtx.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ultrone.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: mediamtx
+  template:
+    metadata:
+      labels:
+        {{- include "ultrone.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: mediamtx
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: mediamtx
+          image: {{ include "ultrone.image" (dict "root" . "local" .Values.mediamtx.image) }}
+          imagePullPolicy: {{ .Values.mediamtx.image.pullPolicy }}
+          ports:
+            - name: rtsp
+              containerPort: {{ .Values.mediamtx.service.targetPort }}
+              protocol: TCP
+            - name: rtmp
+              containerPort: {{ .Values.mediamtx.service.rtmpTargetPort }}
+              protocol: TCP
+            - name: hls
+              containerPort: {{ .Values.mediamtx.service.hlsTargetPort }}
+              protocol: TCP
+            - name: webrtc
+              containerPort: {{ .Values.mediamtx.service.webrtcTargetPort }}
+              protocol: TCP
+            - name: webrtc-udp
+              containerPort: {{ .Values.mediamtx.service.webrtcTargetPort }}
+              protocol: UDP
+          resources:
+            {{- toYaml .Values.mediamtx.resources | nindent 12 }}
+      {{- with .Values.mediamtx.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mediamtx.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mediamtx.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

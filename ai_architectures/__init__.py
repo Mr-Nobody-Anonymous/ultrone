@@ -1,36 +1,29 @@
-"""AI Architecture Patterns for agent decision-making.
+# Copyright (c) Ultrone Contributors. All rights reserved.
+"""AI decision architectures module.
 
-Provides alternative decision-making architectures beyond
-the standard OODA loop:
-
-- ``BehaviorTree``: Behavior Trees for modular agent control
-- ``GOAP``: Goal-Oriented Action Planning
-- ``UtilityAI``: Utility-based AI for nuanced decisions
-- ``BDIAgent``: Belief–Desire–Intention architecture
-- ``FSM``: Finite State Machines
-- ``HierarchicalFSM``: Hierarchical State Machines
-- ``BlackboardSystem``: Blackboard-based coordination
-- ``ReactivePlanner``: Reactive planning systems
+Provides various decision-making patterns (Behavior Trees, GOAP, FSM, Utility AI, BDI)
+with unified interfaces for dynamic selection and hybridization.
 """
 
-from .base import AIArchitecture, AIArchitectureConfig
-from .behavior_tree import BehaviorTree, BTConfig, Sequence, Selector, Action, Condition
-from .goap import GOAP, GOAPConfig, GOAPAction, GOAPGoal
-from .utility_ai import UtilityAI, UtilityAIConfig, Consideration, Option
-from .bdi_agent import BDIAgent, BDIConfig, Belief, Desire, Intention
-from .fsm import FSM, FSMConfig, State, Transition
-from .hierarchical_fsm import HierarchicalFSM, HFSMConfig
-from .blackboard_system import BlackboardSystem, BlackboardEntry
-from .reactive_planning import ReactivePlanner, ReactivePlanConfig
+from .base import DecisionArchitecture, ArchitectureRouter
+from .behavior_tree import BehaviorTree
+from .fsm import FSM
+from .hierarchical_fsm import HierarchicalFSM
+from .bdi_agent import BDIAgent
+from .goap import GOAP
+from .utility_ai import UtilityAI
+from .reactive_planning import ReactivePlanner
+from .blackboard_system import BlackboardSystem
 
 __all__ = [
-    "AIArchitecture", "AIArchitectureConfig",
-    "BehaviorTree", "BTConfig", "Sequence", "Selector", "Action", "Condition",
-    "GOAP", "GOAPConfig", "GOAPAction", "GOAPGoal",
-    "UtilityAI", "UtilityAIConfig", "Consideration", "Option",
-    "BDIAgent", "BDIConfig", "Belief", "Desire", "Intention",
-    "FSM", "FSMConfig", "State", "Transition",
-    "HierarchicalFSM", "HFSMConfig",
-    "BlackboardSystem", "BlackboardEntry",
-    "ReactivePlanner", "ReactivePlanConfig",
+    "DecisionArchitecture",
+    "ArchitectureRouter",
+    "BehaviorTree",
+    "FSM",
+    "HierarchicalFSM",
+    "BDIAgent",
+    "GOAP",
+    "UtilityAI",
+    "ReactivePlanner",
+    "BlackboardSystem",
 ]

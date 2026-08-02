@@ -1,0 +1,61 @@
+************************************************************************
+  ULTRONE - Next-Gen Multi-Domain Battlefield AI
+  Release: {{ .Release.Name }}
+  Namespace: {{ .Release.Namespace }}
+  Version: {{ .Chart.AppVersion }}
+************************************************************************
+
+{{- if .Values.api.enabled }}
+** API Service **
+  The API server is available at:
+{{- if .Values.api.ingress.enabled }}
+  http://{{ (first .Values.api.ingress.hosts).host }}
+{{- else }}
+  kubectl port-forward svc/{{ include "ultrone.api.name" . }} 8000:8000 -n {{ .Release.Namespace }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.frontend.enabled }}
+** Frontend Dashboard **
+  The frontend dashboard is available at:
+{{- if .Values.frontend.ingress.enabled }}
+  http://{{ (first .Values.frontend.ingress.hosts).host }}
+{{- else }}
+  kubectl port-forward svc/{{ include "ultrone.frontend.name" . }} 80:80 -n {{ .Release.Namespace }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.grafana.enabled }}
+** Grafana **
+  Grafana is available at:
+{{- if .Values.grafana.ingress.enabled }}
+  http://{{ (first .Values.grafana.ingress.hosts).host }}
+{{- else }}
+  kubectl port-forward svc/{{ include "ultrone.grafana.name" . }} 3000:3000 -n {{ .Release.Namespace }}
+{{- end }}
+  Login: {{ .Values.grafana.admin.user }} (password set via values)
+{{- end }}
+
+{{- if .Values.prometheus.enabled }}
+** Prometheus **
+  kubectl port-forward svc/{{ include "ultrone.prometheus.name" . }} 9090:9090 -n {{ .Release.Namespace }}
+{{- end }}
+
+{{- if .Values.loki.enabled }}
+** Loki **
+  kubectl port-forward svc/{{ include "ultrone.loki.name" . }} 3100:3100 -n {{ .Release.Namespace }}
+{{- end }}
+
+** To verify all pods are running: **
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+** To watch the deployment status: **
+  kubectl rollout status deployment/{{ include "ultrone.api.name" . }} -n {{ .Release.Namespace }}
+
+** To uninstall the release: **
+  helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+************************************************************************
+  FOR EDUCATIONAL AND SIMULATION PURPOSES ONLY.
+  Not for real-world weapons systems.
+************************************************************************

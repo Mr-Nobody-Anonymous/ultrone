@@ -53,10 +53,10 @@ class PPO(BaseRLAlgorithm):
             from .adapter import PPOAdapter, SB3AdapterConfig
             adapter_cfg = SB3AdapterConfig(
                 policy_kwargs={
-                    "net_arch": [
-                        {"pi": [self._config.hidden_dim] * self._config.num_layers,
-                         "vf": [self._config.hidden_dim] * self._config.num_layers}
-                    ],
+                    "net_arch": {
+                        "pi": [self._config.hidden_dim] * self._config.num_layers,
+                        "vf": [self._config.hidden_dim] * self._config.num_layers
+                    },
                 },
             )
             self._adapter = PPOAdapter(config=self._config, adapter_config=adapter_cfg)

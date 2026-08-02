@@ -1,0 +1,23 @@
+{{- if .Values.grafana.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ultrone.grafana.name" . }}
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+  {{- with .Values.grafana.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.grafana.service.type }}
+  ports:
+    - port: {{ .Values.grafana.service.port }}
+      targetPort: {{ .Values.grafana.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "ultrone.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+{{- end }}

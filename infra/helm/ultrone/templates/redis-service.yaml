@@ -1,0 +1,23 @@
+{{- if .Values.redis.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ultrone.redis.name" . }}
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: redis
+  {{- with .Values.redis.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.redis.service.type }}
+  ports:
+    - port: {{ .Values.redis.service.port }}
+      targetPort: {{ .Values.redis.service.targetPort }}
+      protocol: TCP
+      name: redis
+  selector:
+    {{- include "ultrone.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: redis
+{{- end }}

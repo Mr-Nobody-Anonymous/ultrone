@@ -72,17 +72,25 @@ class BeamSearch(Planner):
         self._transition_fn = domain.action_cost_fn
         self._terminal_fn = domain.is_terminal_fn
 
-    def _transition(self, state: Any, action: PlanningAction) -> Any:
+    def _transition(self, state: Any, action: PlanningAction) -> Optional[Any]:
         """Apply an action to a state and return the next state.
-        
+
         For grid-based domains, uses action parameters to compute next state.
+        Returns ``None`` if the resulting state is out of bounds.
         """
         if isinstance(state, tuple) and len(state) == 2:
             x, y = state
             params = action.parameters
             dx = params.get("dx", 0)
             dy = params.get("dy", 0)
-            return (x + dx, y + dy)
+            nx, ny = x + dx, y + dy
+            # Bounds check against the domain's state_shape if available
+            if self._domain is not None and hasattr(self._domain, 'state_shape'):
+                shape = self._domain.state_shape
+                if isinstance(shape, tuple) and len(shape) == 2:
+                    if nx < 0 or nx >= shape[0] or ny < 0 or ny >= shape[1]:
+                        return None
+            return (nx, ny)
         return state
 
     def plan(self, state: Any, goal: PlanningGoal) -> PlanningResult:
@@ -125,6 +133,8 @@ class BeamSearch(Planner):
                 for action in domain.discrete_actions:
                     nodes_expanded += 1
                     next_state = self._transition(candidate.state, action)
+                    if next_state is None:
+                        continue
                     new_cost = candidate.cost + action.cost
                     new_score = new_cost + h_fn(next_state, target) * self.config.heuristic_weight
 

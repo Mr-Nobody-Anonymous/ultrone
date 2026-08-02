@@ -69,3 +69,11 @@ class AnytimePlanner(Planner):
         if best_result.success:
             return self._record_result(best_result)
         return best_result
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Return diagnostics including the inner planner type."""
+        stats = super().get_stats()
+        stats["inner_planner"] = (
+            type(self.inner_planner).__name__ if self.inner_planner is not None else None
+        )
+        return stats

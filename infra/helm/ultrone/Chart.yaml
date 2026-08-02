@@ -1,0 +1,19 @@
+apiVersion: v2
+name: ultrone
+description: ULTRONE - Next-Gen Multi-Domain Battlefield AI platform
+type: application
+version: 2.0.0
+appVersion: "2.0.0"
+keywords:
+  - ai
+  - battlefield
+  - simulation
+  - multi-agent
+  - reinforcement-learning
+home: https://github.com/Mr-Nobody-Anonymous/ultrone
+sources:
+  - https://github.com/Mr-Nobody-Anonymous/ultrone
+maintainers:
+  - name: ULTRONE Contributors
+    email: maintainers@ultrone.io
+dependencies: []

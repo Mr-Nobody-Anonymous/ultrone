@@ -1,0 +1,39 @@
+{{- if .Values.mediamtx.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ultrone.mediamtx.name" . }}
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mediamtx
+  {{- with .Values.mediamtx.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.mediamtx.service.type }}
+  ports:
+    - port: {{ .Values.mediamtx.service.port }}
+      targetPort: {{ .Values.mediamtx.service.targetPort }}
+      protocol: TCP
+      name: rtsp
+    - port: {{ .Values.mediamtx.service.rtmpPort }}
+      targetPort: {{ .Values.mediamtx.service.rtmpTargetPort }}
+      protocol: TCP
+      name: rtmp
+    - port: {{ .Values.mediamtx.service.hlsPort }}
+      targetPort: {{ .Values.mediamtx.service.hlsTargetPort }}
+      protocol: TCP
+      name: hls
+    - port: {{ .Values.mediamtx.service.webrtcPort }}
+      targetPort: {{ .Values.mediamtx.service.webrtcTargetPort }}
+      protocol: TCP
+      name: webrtc
+    - port: {{ .Values.mediamtx.service.webrtcPort }}
+      targetPort: {{ .Values.mediamtx.service.webrtcTargetPort }}
+      protocol: UDP
+      name: webrtc-udp
+  selector:
+    {{- include "ultrone.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: mediamtx
+{{- end }}

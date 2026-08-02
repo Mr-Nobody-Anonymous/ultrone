@@ -1,0 +1,27 @@
+{{- if .Values.qdrant.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ultrone.qdrant.name" . }}
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: qdrant
+  {{- with .Values.qdrant.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.qdrant.service.type }}
+  ports:
+    - port: {{ .Values.qdrant.service.apiPort }}
+      targetPort: {{ .Values.qdrant.service.apiTargetPort }}
+      protocol: TCP
+      name: http
+    - port: {{ .Values.qdrant.service.grpcPort }}
+      targetPort: {{ .Values.qdrant.service.grpcTargetPort }}
+      protocol: TCP
+      name: grpc
+  selector:
+    {{- include "ultrone.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: qdrant
+{{- end }}

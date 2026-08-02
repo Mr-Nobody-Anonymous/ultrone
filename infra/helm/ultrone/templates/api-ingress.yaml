@@ -1,0 +1,36 @@
+{{- if and .Values.api.enabled .Values.api.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "ultrone.api.name" . }}
+  labels:
+    {{- include "ultrone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+  {{- with .Values.api.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.api.ingress.className }}
+  ingressClassName: {{ .Values.api.ingress.className }}
+  {{- end }}
+  {{- if .Values.api.ingress.tls }}
+  tls:
+    {{- toYaml .Values.api.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range $host := .Values.api.ingress.hosts }}
+    - host: {{ $host.host | quote }}
+      http:
+        paths:
+          {{- range $path := $host.paths }}
+          - path: {{ $path.path }}
+            pathType: {{ $path.pathType }}
+            backend:
+              service:
+                name: {{ include "ultrone.api.name" $ }}
+                port:
+                  number: {{ $.Values.api.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

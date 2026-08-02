@@ -1,0 +1,23 @@
+{
+  "experiment_id": "E-ba079314a6d7",
+  "hypothesis": "Adopt Transformer from 'Test Paper'",
+  "research_motivation": "Implement algorithms from paper to improve platform capabilities",
+  "implementation": "Candidate implementation in isolated branch",
+  "dataset": "standard_benchmark",
+  "training_config": {},
+  "evaluation_metrics": {
+    "accuracy": 0.750385392812531,
+    "improvement": -0.049614607187469045
+  },
+  "benchmark_comparison": {},
+  "resource_usage": {},
+  "execution_logs": [],
+  "performance_graphs": [],
+  "success_criteria": "Improvement >= 2%",
+  "rollback_strategy": "",
+  "conclusion": "Experiment achieved -4.96% improvement. Does not meet adoption threshold of 2%.",
+  "recommendation": "reject",
+  "status": "completed",
+  "created_at": 1785698422.534244,
+  "updated_at": 1785698422.6298692
+}

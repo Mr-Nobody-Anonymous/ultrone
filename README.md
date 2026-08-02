@@ -89,12 +89,14 @@ Each sensor type has its own AI expert:
 ```
 ultrone/
 ├── brain/                          # 🧠 Central AI systems
+│   ├── orchestrator.py              # Central brain orchestration
 │   ├── reasoning/                  # 🎯 Tactical decision engine
 │   │   ├── course_of_action.py      # COA generation with combinatorial tactics
 │   │   ├── evolutionary_coagen.py   # Genetic evolution of tactics
-│   │   ├── tacitical_engine.py      # OODA loop execution
+│   │   ├── tactical_engine.py       # OODA loop execution
 │   │   ├── coevolution_engine.py    # Red vs Blue adversarial coevolution
 │   │   ├── kill_chain.py            # F2T2EA state machine
+│   │   ├── kill_chain_capsule.py    # Kill chain capsule
 │   │   ├── composite_kill_chain.py  # Multi-target kill chain orchestration
 │   │   ├── secretary_council.py     # AI strategic directive deliberation
 │   │   ├── monte_carlo_engine.py    # Monte Carlo simulation planning
@@ -112,6 +114,9 @@ ultrone/
 │   │   ├── situational_awareness.py # Battlefield state awareness
 │   │   ├── knowledge_graph.py       # Entity relationship graph
 │   │   ├── threat_classifier.py     # Threat level classification
+│   │   ├── battlefield_analyzer.py  # Battlefield analysis
+│   │   ├── battlefield_3d.py        # 3D battlefield visualization
+│   │   ├── terrain_analyzer.py      # Terrain analysis
 │   │   ├── probabilistic/           # ✅ Bayesian Networks, HMM, Kalman (KF/EKF/UKF), Particle Filter
 │   │   ├── graph_intelligence/      # ✅ GNN, GAT, Knowledge Embeddings, Community Detection
 │   │   └── knowledge/               # ✅ RAG Memory, Semantic Search, Vector DB, Graph Embeddings
@@ -197,29 +202,40 @@ ultrone/
 │   ├── statistical_evaluation.py    # Statistical evaluation
 │   ├── ablation_framework.py        # Ablation framework
 │   └── automated_report.py          # Automated reports
-├── backend/                        # ✅ Backend Services
-│   ├── api/                         # API v1 endpoints
-│   ├── analytics/                   # Analytics
-│   ├── auth/                        # Authentication
-│   ├── cache/                       # Caching
-│   ├── database/                    # Database
-│   ├── events/                      # Event handling
-│   ├── metrics/                     # Metrics
-│   ├── security/                    # Security
-│   ├── vision/                      # Object detection, satellite, terrain, thermal
-│   └── workers/                     # Background workers
+├── backend/                        # 🔧 Backend Services (partial)
+│   ├── api/                         # ✅ API v1 (agents, algorithms, experiments, simulation)
+│   ├── analytics/                   # 📋 Stub
+│   ├── auth/                        # 📋 Stub
+│   ├── cache/                       # 📋 Stub
+│   ├── database/                    # 📋 Stub
+│   ├── events/                      # 📋 Stub
+│   ├── exporters/                   # 📋 Planned
+│   ├── integrations/                # 📋 Planned
+│   ├── metrics/                     # 📋 Stub
+│   ├── middleware/                  # 📋 Stub
+│   ├── notifications/               # 📋 Stub
+│   ├── pipeline/                    # 📋 Stub
+│   ├── plugins/                     # 📋 Planned
+│   ├── rules/                       # 📋 Stub
+│   ├── schedulers/                  # 📋 Planned
+│   ├── security/                    # 📋 Stub
+│   ├── vision/                      # ✅ Object detection, satellite, terrain, thermal
+│   └── workers/                     # 📋 Stub
 ├── frontend/                       # ✅ React/Vite Dashboard
 │   └── src/
-│       ├── components/              # TacticalMap, AgentInspector, AIReasoning, etc.
-│       ├── pages/                   # Dashboard, Analytics, Experiment, Settings
-│       ├── contexts/                # Dashboard, Simulation, Theme contexts
-│       └── layouts/                 # Main layout
+│       ├── App.tsx                  # Main app component
+│       ├── main.tsx                 # Entry point
+│       ├── components/              # ✅ TacticalMap, AgentInspector, AIReasoning, etc.
+│       ├── pages/                   # ✅ Dashboard, Analytics, Experiment, Settings, AgentInspector
+│       ├── contexts/                # ✅ Dashboard, Simulation, Theme contexts
+│       ├── layouts/                 # ✅ Main layout
+│       └── maps/                    # ✅ Map layer controls
 ├── infra/                          # ✅ Infrastructure
-│   ├── docker/                      # Docker Compose
-│   ├── helm/                        # Helm Charts
-│   ├── kubernetes/                  # Kubernetes Manifests
-│   ├── monitoring/                  # Monitoring
-│   └── nginx/                       # Nginx config
+│   ├── docker/                      # ✅ Docker Compose
+│   ├── helm/                        # ✅ Helm Charts (35 templates)
+│   ├── kubernetes/                  # 📋 Planned
+│   ├── monitoring/                  # 📋 Planned
+│   └── nginx/                       # 📋 Planned
 ├── comms/                          # 📡 Communications
 │   ├── message_bus.py               # Async pub/sub with priority queue
 │   ├── api_server.py                # FastAPI HITL + XAI server
@@ -365,10 +381,12 @@ print(sat.analyze({'formation': 'tanks'}, {}))
 - [x] ✅ Knowledge & RAG (Semantic Search, Vector DB, RAG Memory, Graph Embeddings)
 - [x] ✅ ML Framework Adapters (PyTorch, SB3, ONNX, Ray, XGBoost, PyG)
 - [x] ✅ Generative AI (Diffusion Planner, Normalizing Flows, Tactic Transformer, Tactic VAE)
-- [x] ✅ Backend Services (API, Analytics, Auth, Cache, Database, Events, Security, Vision)
+- [x] ✅ Backend Services (API v1, Vision — partial: most modules scaffolded)
 - [x] ✅ Frontend Dashboard (React/Vite: Tactical Map, Agent Inspector, Analytics, Admin)
-- [x] ✅ Infrastructure (Docker, Helm, Kubernetes, Monitoring, Nginx)
+- [x] ✅ Infrastructure (Docker Compose, Helm Charts with 35 templates)
 - [x] ✅ Comprehensive Test Suite (13 test files)
+- [ ] 🔧 Backend module implementations (Analytics, Auth, Cache, Database, Events, etc.)
+- [ ] 📦 Kubernetes manifests, Monitoring configs, Nginx configs
 - [ ] 🌐 Distributed evolution across nodes
 - [ ] 📱 Battle-damage assessment
 - [ ] 🎯 Predictive kill-chain optimization
