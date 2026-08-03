@@ -106,9 +106,7 @@ class KnowledgeMemoryManager:
             vector_memory=self.vector_memory,
             knowledge_graph=self.knowledge_graph,
         )
-        self.consolidation = KnowledgeConsolidation(
-            cross_reference=self.cross_reference
-        )
+        self.consolidation = KnowledgeConsolidation(cross_reference=self.cross_reference)
 
         # Track all entries globally
         self._all_entries: Dict[str, KnowledgeEntry] = {}
@@ -143,9 +141,7 @@ class KnowledgeMemoryManager:
 
         # Entity linking registration
         if self.enable_entity_linking:
-            self.entity_linker.register_entity(
-                stored.entry_id, stored.content[:50], aliases=stored.tags[:5]
-            )
+            self.entity_linker.register_entity(stored.entry_id, stored.content[:50], aliases=stored.tags[:5])
 
         # RAG registration
         if self.enable_rag:
@@ -156,7 +152,7 @@ class KnowledgeMemoryManager:
     def _index_in_graph(self, entry: KnowledgeEntry) -> None:
         """Add or update a knowledge graph node for the entry."""
         node_type = self._category_to_node_type(entry.category)
-        node = self.knowledge_graph.add_node(
+        self.knowledge_graph.add_node(
             label=entry.content[:80],
             node_type=node_type,
             properties={
@@ -311,9 +307,10 @@ class KnowledgeMemoryManager:
         confidence_score: float = 0.5,
     ) -> bool:
         """Add a graph edge. Returns True on success."""
-        return self.knowledge_graph.add_edge(
-            source_id, target_id, edge_type=edge_type, confidence_score=confidence_score
-        ) is not None
+        return (
+            self.knowledge_graph.add_edge(source_id, target_id, edge_type=edge_type, confidence_score=confidence_score)
+            is not None
+        )
 
     def add_ontology_concept(
         self,

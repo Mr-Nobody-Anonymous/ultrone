@@ -50,8 +50,4 @@ class ProjectMemory(KnowledgeMemoryBase):
         return None
 
     def list_modules_by_status(self, status: str) -> List[KnowledgeEntry]:
-        return [
-            e for e in self._entries.values()
-            if (e.metadata or {}).get("status") == status
-        ]
-
+        return [e for e in self._entries.values() if (e.metadata or {}).get("status") == status]

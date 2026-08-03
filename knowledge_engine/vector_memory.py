@@ -214,9 +214,7 @@ class VectorMemory:
         return {
             "embedding_dim": self.embedding_dim,
             "backend": self.backend,
-            "vectors": {
-                eid: vec for eid, vec in self._vectors.items()
-            },
+            "vectors": {eid: vec for eid, vec in self._vectors.items()},
         }
 
     @classmethod

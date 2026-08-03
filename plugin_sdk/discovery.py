@@ -9,7 +9,7 @@ import pkgutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .base import Plugin, PluginContext
+from .base import Plugin
 
 logger = logging.getLogger("Ultrone.PluginSDK.Discovery")
 
@@ -49,11 +49,7 @@ class PluginDiscovery:
         # Find plugin class (subclass of Plugin)
         for attr_name in dir(module):
             attr = getattr(module, attr_name)
-            if (
-                isinstance(attr, type)
-                and issubclass(attr, Plugin)
-                and attr is not Plugin
-            ):
+            if isinstance(attr, type) and issubclass(attr, Plugin) and attr is not Plugin:
                 return attr()
         return None
 
@@ -67,11 +63,7 @@ class PluginDiscovery:
                     module = importlib.import_module(f"{package_name}.{module_name}")
                     for attr_name in dir(module):
                         attr = getattr(module, attr_name)
-                        if (
-                            isinstance(attr, type)
-                            and issubclass(attr, Plugin)
-                            and attr is not Plugin
-                        ):
+                        if isinstance(attr, type) and issubclass(attr, Plugin) and attr is not Plugin:
                             plugin = attr()
                             plugins.append(plugin)
                             self._loaded_plugins[plugin.plugin_id] = plugin

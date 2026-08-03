@@ -6,11 +6,10 @@ research findings, experiment proposals, and integration roadmaps.
 from __future__ import annotations
 
 import logging
-import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from comms.protocol import MessageType, Priority
-from knowledge_engine.base import KnowledgeSource, KnowledgeCategory, ConfidenceLevel
+from comms.protocol import MessageType
+from knowledge_engine.base import KnowledgeSource
 from research_db.schema import ImplementationPlan, PaperRecord
 from .base_agent import ResearchAgent, ResearchAgentRole
 
@@ -60,36 +59,38 @@ class ImplementationPlanner(ResearchAgent):
         steps = []
 
         for i, algo in enumerate(paper.algorithms or ["Core approach"]):
-            steps.append({
-                "step": i + 1,
-                "action": f"Implement {algo}",
-                "description": f"Create module implementing {algo} from paper '{paper.title}'",
-                "estimated_hours": 8,
-                "dependencies": paper.algorithms[:i] if i > 0 else [],
-            })
+            steps.append(
+                {
+                    "step": i + 1,
+                    "action": f"Implement {algo}",
+                    "description": f"Create module implementing {algo} from paper '{paper.title}'",
+                    "estimated_hours": 8,
+                    "dependencies": paper.algorithms[:i] if i > 0 else [],
+                }
+            )
 
-        steps.append({
-            "step": len(steps) + 1,
-            "action": "Integrate and test",
-            "description": "Integrate modules, write unit tests, run benchmark suite",
-            "estimated_hours": 4,
-            "dependencies": [],
-        })
+        steps.append(
+            {
+                "step": len(steps) + 1,
+                "action": "Integrate and test",
+                "description": "Integrate modules, write unit tests, run benchmark suite",
+                "estimated_hours": 4,
+                "dependencies": [],
+            }
+        )
 
         plan = ImplementationPlan(
             title=f"Implement {algorithms} from '{paper.title}'",
             description=f"Implementation plan for algorithms extracted from paper: {paper.title}. "
-                        f"Includes {len(paper.algorithms)} algorithm implementations.",
+            f"Includes {len(paper.algorithms)} algorithm implementations.",
             source_paper_ids=[paper.paper_id],
             steps=steps,
             estimated_effort=f"{sum(s.get('estimated_hours', 4) for s in steps)} hours",
             dependencies=[],
             risks=["Performance regression risk", "Integration complexity", "Numerical instability"],
-            expected_improvements=[
-                f"Incorporate {algo}" for algo in paper.algorithms
-            ],
+            expected_improvements=[f"Incorporate {algo}" for algo in paper.algorithms],
         )
-        stored = self.research_db.save_implementation_plan(plan)
+        self.research_db.save_implementation_plan(plan)
 
         # Store in knowledge
         self.knowledge.store_auto_categorized(
@@ -105,7 +106,6 @@ class ImplementationPlanner(ResearchAgent):
         self._log_action("plan_created", {"plan_id": plan.plan_id, "paper_id": paper.paper_id}, None)
         return plan
 
-
     def create_experiment_proposal(
         self,
         hypothesis: str,
@@ -116,6 +116,7 @@ class ImplementationPlanner(ResearchAgent):
     ) -> Any:
         """Create an experiment proposal record."""
         from research_db.schema import ExperimentRecord
+
         experiment = ExperimentRecord(
             hypothesis=hypothesis,
             research_motivation=motivation,

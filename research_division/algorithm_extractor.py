@@ -7,10 +7,10 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-from comms.protocol import MessageType, Priority
-from knowledge_engine.base import KnowledgeSource, KnowledgeCategory, ConfidenceLevel
+from comms.protocol import MessageType
+from knowledge_engine.base import KnowledgeSource
 from research_db.schema import PaperRecord
 from .base_agent import ResearchAgent, ResearchAgentRole
 
@@ -77,7 +77,7 @@ class AlgorithmExtractor(ResearchAgent):
         for algo in paper.algorithms:
             self.knowledge.store_auto_categorized(
                 content=f"Algorithm '{algo}' from paper '{title}': equations={equations}, "
-                        f"hyperparameters={hyperparameters}",
+                f"hyperparameters={hyperparameters}",
                 source=KnowledgeSource.PAPER,
                 tags=["algorithm", "equations", "hyperparameters"],
                 entities=[algo],

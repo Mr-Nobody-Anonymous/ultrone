@@ -7,7 +7,6 @@ cycle for the ULTRONE autonomous research platform.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
 from typing import Any, Dict, List, Optional
@@ -44,9 +43,7 @@ class SelfImprovementLoop:
         self.research_db = research_db or ResearchDatabase()
         self.telemetry = TelemetryCollector()
         self.hypothesis_generator = HypothesisGenerator()
-        self.literature_search = LiteratureSearch(
-            knowledge=self.knowledge, research_db=self.research_db
-        )
+        self.literature_search = LiteratureSearch(knowledge=self.knowledge, research_db=self.research_db)
         self.min_benchmark_gain = min_benchmark_gain
         self._cycle_count = 0
         self._adopted: List[Dict[str, Any]] = []
@@ -71,10 +68,12 @@ class SelfImprovementLoop:
         research_results = []
         for hypothesis in all_hypotheses[:5]:  # Limit concurrent improvements
             related = self.literature_search.find_related_research(hypothesis)
-            research_results.append({
-                "hypothesis": hypothesis,
-                "related": related,
-            })
+            research_results.append(
+                {
+                    "hypothesis": hypothesis,
+                    "related": related,
+                }
+            )
 
         # Phase 4: Experiment
         experiment_results = []
@@ -96,14 +95,16 @@ class SelfImprovementLoop:
                 self._rejected.append(validation)
 
         # Phase 7: Archive
-        self._archive_cycle({
-            "cycle": self._cycle_count,
-            "weaknesses": weaknesses,
-            "hypotheses": all_hypotheses,
-            "experiments": experiment_results,
-            "validations": validation_results,
-            "duration_seconds": time.time() - cycle_start,
-        })
+        self._archive_cycle(
+            {
+                "cycle": self._cycle_count,
+                "weaknesses": weaknesses,
+                "hypotheses": all_hypotheses,
+                "experiments": experiment_results,
+                "validations": validation_results,
+                "duration_seconds": time.time() - cycle_start,
+            }
+        )
 
         return {
             "cycle": self._cycle_count,
@@ -131,6 +132,7 @@ class SelfImprovementLoop:
 
         # Simulated experiment execution
         import random
+
         improvement = random.uniform(-0.05, 0.15)
         metrics = {
             "accuracy": 0.80 + improvement,
@@ -177,9 +179,9 @@ class SelfImprovementLoop:
         """Archive a cycle in the knowledge engine."""
         self.knowledge.store_auto_categorized(
             content=f"Self-improvement cycle {cycle_data['cycle']} completed: "
-                    f"{len(cycle_data['hypotheses'])} hypotheses, "
-                    f"{len(cycle_data['experiments'])} experiments, "
-                    f"{len(cycle_data['validations'])} validations",
+            f"{len(cycle_data['hypotheses'])} hypotheses, "
+            f"{len(cycle_data['experiments'])} experiments, "
+            f"{len(cycle_data['validations'])} validations",
             tags=["self_improvement", "cycle"],
             entities=[f"cycle-{cycle_data['cycle']}"],
             confidence_score=0.9,

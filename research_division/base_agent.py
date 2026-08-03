@@ -10,9 +10,7 @@ from __future__ import annotations
 
 import logging
 import time
-import uuid
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -25,6 +23,7 @@ logger = logging.getLogger("Ultrone.ResearchDivision.Base")
 
 class ResearchAgentRole(Enum):
     """Roles for research division agents."""
+
     SCOUT = "research_scout"
     ANALYZER = "paper_analyzer"
     EXTRACTOR = "algorithm_extractor"
@@ -154,4 +153,3 @@ class ResearchAgent(ABC):
 
         Must be implemented by each specialized agent.
         """
-        pass

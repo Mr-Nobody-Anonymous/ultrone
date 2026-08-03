@@ -9,13 +9,14 @@ import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger("Ultrone.PluginSDK")
 
 
 class PluginType(Enum):
     """Types of plugins supported by ULTRONE."""
+
     ALGORITHM = "algorithm"
     PLANNER = "planner"
     RL_METHOD = "rl_method"
@@ -33,6 +34,7 @@ class PluginType(Enum):
 @dataclass
 class PluginContext:
     """Context provided to plugins at runtime."""
+
     knowledge: Any = None
     research_db: Any = None
     message_bus: Any = None
@@ -99,4 +101,3 @@ class Plugin(ABC):
     @abstractmethod
     def execute(self, *args: Any, **kwargs: Any) -> Any:
         """Execute the plugin's primary function."""
-        pass

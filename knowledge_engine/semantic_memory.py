@@ -43,9 +43,7 @@ class SemanticKnowledgeMemory(KnowledgeMemoryBase):
         """Find entries related to a concept (case-insensitive)."""
         c = concept.lower()
         return [
-            e for e in self._entries.values()
-            if any(c == ent.lower() for ent in e.entities)
-            or c in e.content.lower()
+            e for e in self._entries.values() if any(c == ent.lower() for ent in e.entities) or c in e.content.lower()
         ]
 
     @staticmethod

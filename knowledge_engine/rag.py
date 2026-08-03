@@ -69,9 +69,7 @@ class RAGPipeline:
 
         # 1. Vector search (semantic)
         if self.vector_memory is not None:
-            for entry, score in self.vector_memory.search_with_entries(
-                query, self._entries, limit=limit
-            ):
+            for entry, score in self.vector_memory.search_with_entries(query, self._entries, limit=limit):
                 results[entry.entry_id] = (entry, max(score, results.get(entry.entry_id, (None, 0.0))[1]))
 
         # 2. Keyword search (lexical)

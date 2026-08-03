@@ -20,6 +20,7 @@ logger = logging.getLogger("Ultrone.KnowledgeEngine.Ontology")
 @dataclass
 class OntologyConcept:
     """A concept in the ontology."""
+
     concept_id: str = field(default_factory=lambda: f"C-{uuid.uuid4().hex[:12]}")
     name: str = ""
     description: str = ""
@@ -178,10 +179,7 @@ class OntologyEngine:
         concept = self._concepts.get(concept_id)
         if concept is None or concept.parent_id is None:
             return []
-        return [
-            c for c in self._concepts.values()
-            if c.parent_id == concept.parent_id and c.concept_id != concept_id
-        ]
+        return [c for c in self._concepts.values() if c.parent_id == concept.parent_id and c.concept_id != concept_id]
 
     def most_specific_common_ancestor(self, id_a: str, id_b: str) -> Optional[OntologyConcept]:
         """Find the most specific common ancestor of two concepts."""

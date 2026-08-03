@@ -59,10 +59,7 @@ class WorkingKnowledgeMemory(KnowledgeMemoryBase):
 
     def _evict_expired(self) -> None:
         now = time.time()
-        expired = [
-            eid for eid, ts in self._last_access.items()
-            if now - ts > self.ttl_seconds
-        ]
+        expired = [eid for eid, ts in self._last_access.items() if now - ts > self.ttl_seconds]
         for eid in expired:
             self._entries.pop(eid, None)
             self._last_access.pop(eid, None)

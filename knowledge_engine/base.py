@@ -7,11 +7,12 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 
 class KnowledgeSource(Enum):
     """Provenance of a knowledge entry."""
+
     PAPER = "paper"
     EXPERIMENT = "experiment"
     BENCHMARK = "benchmark"
@@ -26,6 +27,7 @@ class KnowledgeSource(Enum):
 
 class KnowledgeCategory(Enum):
     """Category of knowledge."""
+
     ALGORITHM = "algorithm"
     ARCHITECTURE = "architecture"
     THEORY = "theory"
@@ -42,10 +44,11 @@ class KnowledgeCategory(Enum):
 
 class ConfidenceLevel(Enum):
     """Confidence level of a knowledge entry."""
-    VERIFIED = "verified"          # Confirmed by experiment/benchmark
-    HIGH = "high"                  # Strong evidence
-    MEDIUM = "medium"              # Some evidence
-    LOW = "low"                    # Weak/uncertain evidence
+
+    VERIFIED = "verified"  # Confirmed by experiment/benchmark
+    HIGH = "high"  # Strong evidence
+    MEDIUM = "medium"  # Some evidence
+    LOW = "low"  # Weak/uncertain evidence
     HYPOTHETICAL = "hypothetical"  # Not yet validated
     UNKNOWN = "unknown"
 
@@ -201,9 +204,7 @@ class KnowledgeMemoryBase:
     def _enforce_capacity(self) -> None:
         if len(self._entries) > self.capacity:
             # Remove lowest-confidence entries first.
-            ordered = sorted(
-                self._entries.values(), key=lambda e: (e.confidence_score, e.updated_at)
-            )
+            ordered = sorted(self._entries.values(), key=lambda e: (e.confidence_score, e.updated_at))
             for e in ordered[: len(self._entries) - self.capacity]:
                 del self._entries[e.entry_id]
 

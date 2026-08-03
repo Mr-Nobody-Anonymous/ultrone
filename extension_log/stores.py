@@ -8,7 +8,7 @@ import logging
 import sqlite3
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, List
 
 from .audit import LogEntry, LogLevel, LogCategory
 
@@ -73,7 +73,6 @@ class MarkdownLogStore(BaseLogStore):
     def read(self, limit: int = 100) -> List[LogEntry]:
         if not self.path.exists():
             return []
-        content = self.path.read_text()
         # Simple parse - just return empty for now (markdown is for human reading)
         return []
 
@@ -111,7 +110,9 @@ class SQLiteLogStore(BaseLogStore):
         conn = self._connect()
         try:
             conn.execute(
-                "INSERT OR REPLACE INTO logs (log_id, timestamp, level, category, component, message, details) VALUES (?,?,?,?,?,?,?)",
+                "INSERT OR REPLACE INTO logs "
+                "(log_id, timestamp, level, category, component, message, details) "
+                "VALUES (?,?,?,?,?,?,?)",
                 (
                     entry.log_id,
                     entry.timestamp,
@@ -130,7 +131,8 @@ class SQLiteLogStore(BaseLogStore):
         conn = self._connect()
         try:
             cur = conn.execute(
-                "SELECT log_id, timestamp, level, category, component, message, details FROM logs ORDER BY timestamp DESC LIMIT ?",
+                "SELECT log_id, timestamp, level, category, component, message, details "
+                "FROM logs ORDER BY timestamp DESC LIMIT ?",
                 (limit,),
             )
             rows = cur.fetchall()
@@ -155,6 +157,7 @@ class VectorLogStore(BaseLogStore):
 
     def __init__(self, knowledge: Any = None):
         from knowledge_engine.vector_memory import VectorMemory
+
         self.vector_memory = knowledge.vector_memory if knowledge else VectorMemory()
         self._entries: List[LogEntry] = []
 
@@ -162,6 +165,7 @@ class VectorLogStore(BaseLogStore):
         self._entries.append(entry)
         # Index in vector memory for semantic search
         from knowledge_engine.base import KnowledgeEntry, KnowledgeSource, KnowledgeCategory
+
         ke = KnowledgeEntry(
             content=f"{entry.message} {json.dumps(entry.details, default=str)}",
             category=KnowledgeCategory.INSIGHT,
@@ -177,13 +181,13 @@ class VectorLogStore(BaseLogStore):
     def search(self, query: str, limit: int = 10) -> List[LogEntry]:
         """Search logs semantically."""
         results = self.vector_memory.search(query, limit=limit)
-        # Map back to entries by log_id
+        # Map back to entries by log_id (entry_id is the KnowledgeEntry ID)
         log_by_id = {e.log_id: e for e in self._entries}
         matched = []
         for entry_id, score in results:
-            # entry_id is the KnowledgeEntry ID, not log_id
-            pass
-        return matched
+            if entry_id in log_by_id:
+                matched.append(log_by_id[entry_id])
+        return matched[:limit]
 
 
 class KnowledgeGraphLogStore(BaseLogStore):
@@ -191,6 +195,7 @@ class KnowledgeGraphLogStore(BaseLogStore):
 
     def __init__(self, knowledge: Any = None):
         from knowledge_engine.knowledge_graph import KnowledgeGraph, NodeType
+
         self._NodeType = NodeType
         self.knowledge_graph = knowledge.knowledge_graph if knowledge else KnowledgeGraph()
         self._entries: List[LogEntry] = []

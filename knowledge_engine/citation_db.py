@@ -11,7 +11,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("Ultrone.KnowledgeEngine.CitationDB")
 
@@ -19,6 +19,7 @@ logger = logging.getLogger("Ultrone.KnowledgeEngine.CitationDB")
 @dataclass
 class Citation:
     """A single structured citation record."""
+
     citation_id: str = field(default_factory=lambda: f"CT-{uuid.uuid4().hex[:12]}")
     title: str = ""
     authors: List[str] = field(default_factory=list)
@@ -107,10 +108,7 @@ class CitationDatabase:
         return self._citations.get(cid) if cid else None
 
     def find_by_author(self, author: str) -> List[Citation]:
-        return [
-            c for c in self._citations.values()
-            if any(a.lower() == author.lower() for a in c.authors)
-        ]
+        return [c for c in self._citations.values() if any(a.lower() == author.lower() for a in c.authors)]
 
     def find_by_venue(self, venue: str) -> List[Citation]:
         v = venue.lower()
@@ -128,10 +126,7 @@ class CitationDatabase:
 
     def cited_by(self, citation_id: str) -> List[Citation]:
         """Return citations that reference the given citation (reverse lookup)."""
-        return [
-            c for c in self._citations.values()
-            if citation_id in c.references
-        ]
+        return [c for c in self._citations.values() if citation_id in c.references]
 
     def citation_count(self, citation_id: str) -> int:
         return len(self.cited_by(citation_id))

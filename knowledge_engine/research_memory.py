@@ -73,4 +73,3 @@ class ResearchMemory(KnowledgeMemoryBase):
                 continue
             results.append(e)
         return results
-

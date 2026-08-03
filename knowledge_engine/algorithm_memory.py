@@ -62,4 +62,3 @@ class AlgorithmMemory(KnowledgeMemoryBase):
         if entry:
             return dict((entry.metadata or {}).get("hyperparameters", {}))
         return {}
-

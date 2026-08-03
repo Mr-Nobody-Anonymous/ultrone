@@ -6,11 +6,9 @@ the citation database for all research records.
 from __future__ import annotations
 
 import logging
-import time
 from typing import Any, Dict, List, Optional
 
-from comms.protocol import MessageType, Priority
-from knowledge_engine.base import KnowledgeSource, KnowledgeCategory, ConfidenceLevel
+from comms.protocol import MessageType
 from knowledge_engine.citation_db import Citation
 from .base_agent import ResearchAgent, ResearchAgentRole
 
@@ -58,7 +56,9 @@ class CitationManager(ResearchAgent):
             title=paper.title,
             authors=paper.authors,
             venue=paper.venue,
-            year=int(paper.publication_date[:4]) if paper.publication_date and len(paper.publication_date) >= 4 else None,
+            year=(
+                int(paper.publication_date[:4]) if paper.publication_date and len(paper.publication_date) >= 4 else None
+            ),
             doi=paper.doi,
             arxiv_id=paper.arxiv_id,
             url=paper.url,

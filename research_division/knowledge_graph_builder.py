@@ -6,11 +6,9 @@ from research findings, linking papers, algorithms, datasets, and concepts.
 from __future__ import annotations
 
 import logging
-import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
-from comms.protocol import MessageType, Priority
-from knowledge_engine.base import KnowledgeSource, KnowledgeCategory, ConfidenceLevel
+from comms.protocol import MessageType
 from knowledge_engine.knowledge_graph import NodeType, EdgeType
 from .base_agent import ResearchAgent, ResearchAgentRole
 
@@ -87,9 +85,7 @@ class KnowledgeGraphBuilder(ResearchAgent):
                 )
             else:
                 algo_node_id = algo_node.node_id
-            self.knowledge.add_graph_edge(
-                node_id, algo_node_id, edge_type=EdgeType.USES
-            )
+            self.knowledge.add_graph_edge(node_id, algo_node_id, edge_type=EdgeType.USES)
 
         # Link authors
         for author in paper.authors:
@@ -102,9 +98,7 @@ class KnowledgeGraphBuilder(ResearchAgent):
                 )
             else:
                 author_node_id = author_node.node_id
-            self.knowledge.add_graph_edge(
-                node_id, author_node_id, edge_type=EdgeType.AUTHORS
-            )
+            self.knowledge.add_graph_edge(node_id, author_node_id, edge_type=EdgeType.AUTHORS)
 
         return node_id
 

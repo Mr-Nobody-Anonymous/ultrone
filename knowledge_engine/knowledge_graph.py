@@ -20,6 +20,7 @@ logger = logging.getLogger("Ultrone.KnowledgeEngine.KnowledgeGraph")
 
 class NodeType(Enum):
     """Typed nodes in the knowledge graph."""
+
     PAPER = "paper"
     AUTHOR = "author"
     ALGORITHM = "algorithm"
@@ -39,6 +40,7 @@ class NodeType(Enum):
 
 class EdgeType(Enum):
     """Typed edges between knowledge graph nodes."""
+
     CITES = "cites"
     AUTHORS = "authors"
     USES = "uses"
@@ -55,6 +57,7 @@ class EdgeType(Enum):
 @dataclass
 class KnowledgeNode:
     """A node in the knowledge graph."""
+
     node_id: str = field(default_factory=lambda: f"N-{uuid.uuid4().hex[:12]}")
     label: str = ""
     node_type: NodeType = NodeType.CONCEPT
@@ -96,6 +99,7 @@ class KnowledgeNode:
 @dataclass
 class KnowledgeEdge:
     """A directed edge between two knowledge graph nodes."""
+
     edge_id: str = field(default_factory=lambda: f"E-{uuid.uuid4().hex[:12]}")
     source_id: str = ""
     target_id: str = ""
@@ -217,10 +221,7 @@ class KnowledgeGraph:
             return False
         del self._nodes[node_id]
         # Remove edges connected to this node
-        edge_ids = [
-            eid for eid, e in self._edges.items()
-            if e.source_id == node_id or e.target_id == node_id
-        ]
+        edge_ids = [eid for eid, e in self._edges.items() if e.source_id == node_id or e.target_id == node_id]
         for eid in edge_ids:
             del self._edges[eid]
         self._adjacency.pop(node_id, None)
@@ -245,7 +246,8 @@ class KnowledgeGraph:
         if source_id not in self._nodes or target_id not in self._nodes:
             logger.warning(
                 "Cannot add edge: missing node source=%s target=%s",
-                source_id, target_id,
+                source_id,
+                target_id,
             )
             return None
         edge = KnowledgeEdge(
@@ -274,10 +276,7 @@ class KnowledgeGraph:
         """Return edges optionally filtered by incident node."""
         if node_id is None:
             return list(self._edges.values())
-        return [
-            e for e in self._edges.values()
-            if e.source_id == node_id or e.target_id == node_id
-        ]
+        return [e for e in self._edges.values() if e.source_id == node_id or e.target_id == node_id]
 
     # ------------------------------------------------------------------
     # Traversal
@@ -382,7 +381,6 @@ class KnowledgeGraph:
                 # Score based on shared neighbors
                 related[nbr2] = related.get(nbr2, 0.0) + 1.0
         # Normalize and filter by confidence
-        max_score = max(related.values()) if related else 1.0
         result = []
         for nid, score in related.items():
             node = self._nodes.get(nid)

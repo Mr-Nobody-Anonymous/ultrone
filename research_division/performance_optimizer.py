@@ -6,11 +6,10 @@ and tracks resource usage across the research platform.
 from __future__ import annotations
 
 import logging
-import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from comms.protocol import MessageType, Priority
-from knowledge_engine.base import KnowledgeSource, KnowledgeCategory, ConfidenceLevel
+from comms.protocol import MessageType
+from knowledge_engine.base import KnowledgeSource
 from .base_agent import ResearchAgent, ResearchAgentRole
 
 logger = logging.getLogger("Ultrone.ResearchDivision.Optimizer")
@@ -76,8 +75,7 @@ class PerformanceOptimizer(ResearchAgent):
         }
 
         self.knowledge.store_auto_categorized(
-            content=f"Performance analysis for experiment '{experiment.experiment_id}': "
-                    f"suggestions={suggestions}",
+            content=f"Performance analysis for experiment '{experiment.experiment_id}': " f"suggestions={suggestions}",
             source=KnowledgeSource.ANALYSIS,
             tags=["performance", "optimization"],
             entities=[experiment.experiment_id],

@@ -12,7 +12,7 @@ import time
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
 
-from .base import KnowledgeEntry, ConfidenceLevel, KnowledgeSource
+from .base import KnowledgeEntry, ConfidenceLevel
 from .cross_reference import CrossReferenceEngine
 
 logger = logging.getLogger("Ultrone.KnowledgeEngine.Consolidation")
@@ -45,9 +45,7 @@ class KnowledgeConsolidation:
 
         Returns (kept_entries, report).
         """
-        duplicates = self.cross_reference.find_duplicates(
-            entries, threshold=self.max_merge_similarity
-        )
+        duplicates = self.cross_reference.find_duplicates(entries, threshold=self.max_merge_similarity)
         merged_ids = set()
         merged_entries: Dict[str, List[KnowledgeEntry]] = defaultdict(list)
 

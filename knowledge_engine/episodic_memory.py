@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import time
 from typing import Any, Dict, List, Optional
 
 from .base import (
@@ -47,9 +46,7 @@ class EpisodicKnowledgeMemory(KnowledgeMemoryBase):
 
     def recall_since(self, since_ts: float, limit: int = 50) -> List[KnowledgeEntry]:
         """Recall entries created after a timestamp."""
-        results = [
-            e for e in self._entries.values() if e.created_at >= since_ts
-        ]
+        results = [e for e in self._entries.values() if e.created_at >= since_ts]
         results.sort(key=lambda e: e.created_at, reverse=True)
         return results[:limit]
 
@@ -60,6 +57,7 @@ class EpisodicKnowledgeMemory(KnowledgeMemoryBase):
     @staticmethod
     def _category_for_event(event_type: str):
         from .base import KnowledgeCategory
+
         et = event_type.lower()
         if "benchmark" in et or "result" in et:
             return KnowledgeCategory.RESULT

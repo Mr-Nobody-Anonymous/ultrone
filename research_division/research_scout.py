@@ -9,11 +9,10 @@ discovery events and stores paper records.
 from __future__ import annotations
 
 import logging
-import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from comms.protocol import MessageType, Priority
-from knowledge_engine.base import KnowledgeSource, KnowledgeCategory, ConfidenceLevel
+from knowledge_engine.base import KnowledgeSource
 from research_db.schema import PaperRecord
 from .base_agent import ResearchAgent, ResearchAgentRole
 
@@ -68,7 +67,7 @@ class ResearchScout(ResearchAgent):
             stored_ids.append(stored.paper_id)
 
             # Create knowledge entry
-            entry = self.knowledge.store_auto_categorized(
+            self.knowledge.store_auto_categorized(
                 content=f"Paper discovered: {paper.title}",
                 source=KnowledgeSource.PAPER,
                 tags=["paper", paper.venue] + paper.algorithms,
@@ -95,11 +94,15 @@ class ResearchScout(ResearchAgent):
                 priority=Priority.PRIORITY,
             )
 
-        self._log_action("discovery_cycle", {
-            "sources_scanned": sources,
-            "papers_discovered": len(discovered),
-            "papers_stored": len(stored_ids),
-        }, {"paper_ids": stored_ids})
+        self._log_action(
+            "discovery_cycle",
+            {
+                "sources_scanned": sources,
+                "papers_discovered": len(discovered),
+                "papers_stored": len(stored_ids),
+            },
+            {"paper_ids": stored_ids},
+        )
 
         return {
             "discovered": len(discovered),
