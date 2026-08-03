@@ -8,12 +8,9 @@ release. Manages agent lifecycle and event routing.
 
 from __future__ import annotations
 
-import asyncio
 import logging
-import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
-from comms.protocol import MessageType, Priority
 from knowledge_engine.memory_manager import KnowledgeMemoryManager
 from research_db.store import ResearchDatabase
 from .base_agent import ResearchAgent, ResearchAgentRole
@@ -177,7 +174,5 @@ class ResearchDivisionCoordinator(ResearchAgent):
         """Get coordinator and agent statistics."""
         return {
             "coordinator": super().get_stats(),
-            "agents": {
-                name: agent.get_stats() for name, agent in self.agents.items()
-            },
+            "agents": {name: agent.get_stats() for name, agent in self.agents.items()},
         }

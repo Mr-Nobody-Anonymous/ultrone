@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from .base import (
     ConfidenceLevel,
@@ -69,4 +69,3 @@ class ExperimentMemory(KnowledgeMemoryBase):
         if status == "failed":
             return ConfidenceLevel.LOW
         return ConfidenceLevel.MEDIUM
-

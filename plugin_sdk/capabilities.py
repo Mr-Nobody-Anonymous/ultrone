@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Set
 
 from .base import Plugin, PluginType
 
@@ -14,6 +14,7 @@ logger = logging.getLogger("Ultrone.PluginSDK.Capabilities")
 
 class Capability(Enum):
     """Capabilities a plugin can declare."""
+
     TRAINING = "training"
     INFERENCE = "inference"
     OPTIMIZATION = "optimization"
@@ -49,9 +50,7 @@ class PluginCapabilities:
 
     def __init__(self, plugin: Plugin):
         self.plugin = plugin
-        self._capabilities: Set[Capability] = set(
-            self.DEFAULT_CAPABILITIES.get(plugin.plugin_type, set())
-        )
+        self._capabilities: Set[Capability] = set(self.DEFAULT_CAPABILITIES.get(plugin.plugin_type, set()))
 
     def add_capability(self, capability: Capability) -> None:
         """Add a capability to the plugin."""

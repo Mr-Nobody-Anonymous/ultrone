@@ -6,11 +6,10 @@ quality, correctness, and reproducibility.
 from __future__ import annotations
 
 import logging
-import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from comms.protocol import MessageType, Priority
-from knowledge_engine.base import KnowledgeSource, KnowledgeCategory, ConfidenceLevel
+from comms.protocol import MessageType
+from knowledge_engine.base import KnowledgeSource
 from .base_agent import ResearchAgent, ResearchAgentRole
 
 logger = logging.getLogger("Ultrone.ResearchDivision.Reviewer")
@@ -84,7 +83,7 @@ class QualityReviewer(ResearchAgent):
         # Store review in knowledge
         self.knowledge.store_auto_categorized(
             content=f"Quality review for experiment '{experiment.experiment_id}': score={score:.2f}, "
-                    f"issues={issues}",
+            f"issues={issues}",
             source=KnowledgeSource.ANALYSIS,
             tags=["quality_review", "review"],
             entities=[experiment.experiment_id],

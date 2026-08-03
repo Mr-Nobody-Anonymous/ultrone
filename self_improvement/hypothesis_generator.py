@@ -38,7 +38,7 @@ class HypothesisGenerator:
             hypothesis = {
                 "hypothesis_id": f"H-{uuid.uuid4().hex[:8]}",
                 "title": f"Adopt {', '.join(paper.algorithms[:2])} from '{paper.title}'",
-                "description": f"Implement algorithms from paper to improve platform capabilities",
+                "description": "Implement algorithms from paper to improve platform capabilities",
                 "source": "research",
                 "paper_id": paper.paper_id,
                 "algorithms": paper.algorithms,
@@ -61,7 +61,7 @@ class HypothesisGenerator:
                 "hypothesis_id": f"H-{uuid.uuid4().hex[:8]}",
                 "title": f"Reduce failure rate in {component}",
                 "description": f"Component '{component}' has high failure rate. "
-                               f"Hypothesis: adding error recovery and retry logic will reduce failures.",
+                f"Hypothesis: adding error recovery and retry logic will reduce failures.",
                 "source": "telemetry",
                 "component": component,
                 "severity": severity,
@@ -75,7 +75,7 @@ class HypothesisGenerator:
                 "hypothesis_id": f"H-{uuid.uuid4().hex[:8]}",
                 "title": f"Improve {metric} performance",
                 "description": f"Metric '{metric}' shows degradation. "
-                               f"Hypothesis: optimizing the implementation will restore performance.",
+                f"Hypothesis: optimizing the implementation will restore performance.",
                 "source": "telemetry",
                 "metric": metric,
                 "severity": severity,
@@ -88,7 +88,7 @@ class HypothesisGenerator:
                 "hypothesis_id": f"H-{uuid.uuid4().hex[:8]}",
                 "title": "Reduce warning noise",
                 "description": "Excessive warnings detected. "
-                               "Hypothesis: improving error handling will reduce warning noise.",
+                "Hypothesis: improving error handling will reduce warning noise.",
                 "source": "telemetry",
                 "severity": severity,
                 "confidence": 0.4,

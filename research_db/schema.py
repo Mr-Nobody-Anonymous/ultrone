@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 @dataclass
 class PaperRecord:
     """Structured record for a research paper."""
+
     paper_id: str = field(default_factory=lambda: f"P-{uuid.uuid4().hex[:12]}")
     title: str = ""
     authors: List[str] = field(default_factory=list)
@@ -114,6 +115,7 @@ class PaperRecord:
 @dataclass
 class ExperimentRecord:
     """Structured record for a research experiment."""
+
     experiment_id: str = field(default_factory=lambda: f"E-{uuid.uuid4().hex[:12]}")
     hypothesis: str = ""
     research_motivation: str = ""
@@ -182,6 +184,7 @@ class ExperimentRecord:
 @dataclass
 class BenchmarkRecord:
     """Structured record for a benchmark run."""
+
     benchmark_id: str = field(default_factory=lambda: f"B-{uuid.uuid4().hex[:12]}")
     name: str = ""
     description: str = ""
@@ -232,6 +235,7 @@ class BenchmarkRecord:
 @dataclass
 class ImplementationPlan:
     """Structured implementation plan for a research finding."""
+
     plan_id: str = field(default_factory=lambda: f"IP-{uuid.uuid4().hex[:12]}")
     title: str = ""
     description: str = ""

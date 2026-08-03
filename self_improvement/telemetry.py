@@ -31,29 +31,35 @@ class TelemetryCollector:
 
     def record_event(self, event_type: str, details: Dict[str, Any] = None) -> None:
         """Record an event."""
-        self._events.append({
-            "timestamp": time.time(),
-            "type": event_type,
-            "details": details or {},
-        })
+        self._events.append(
+            {
+                "timestamp": time.time(),
+                "type": event_type,
+                "details": details or {},
+            }
+        )
 
     def record_failure(self, component: str, error: str, details: Dict[str, Any] = None) -> None:
         """Record a failure."""
-        self._failures.append({
-            "timestamp": time.time(),
-            "component": component,
-            "error": error,
-            "details": details or {},
-        })
+        self._failures.append(
+            {
+                "timestamp": time.time(),
+                "component": component,
+                "error": error,
+                "details": details or {},
+            }
+        )
 
     def record_warning(self, component: str, message: str, details: Dict[str, Any] = None) -> None:
         """Record a warning."""
-        self._warnings.append({
-            "timestamp": time.time(),
-            "component": component,
-            "message": message,
-            "details": details or {},
-        })
+        self._warnings.append(
+            {
+                "timestamp": time.time(),
+                "component": component,
+                "message": message,
+                "details": details or {},
+            }
+        )
 
     def get_metric_stats(self, name: str) -> Dict[str, Any]:
         """Get statistics for a metric."""
@@ -79,12 +85,14 @@ class TelemetryCollector:
                 by_component[f["component"]] += 1
             for component, count in by_component.items():
                 if count >= 3:
-                    weaknesses.append({
-                        "type": "high_failure_rate",
-                        "component": component,
-                        "failures": count,
-                        "severity": "high" if count >= 5 else "medium",
-                    })
+                    weaknesses.append(
+                        {
+                            "type": "high_failure_rate",
+                            "component": component,
+                            "failures": count,
+                            "severity": "high" if count >= 5 else "medium",
+                        }
+                    )
 
         # Performance degradation
         for name, values in self._metrics.items():
@@ -92,21 +100,25 @@ class TelemetryCollector:
                 recent = values[-3:]
                 older = values[:-3]
                 if older and sum(recent) / len(recent) > sum(older) / len(older) * 1.2:
-                    weaknesses.append({
-                        "type": "performance_degradation",
-                        "metric": name,
-                        "recent_avg": sum(recent) / len(recent),
-                        "older_avg": sum(older) / len(older),
-                        "severity": "medium",
-                    })
+                    weaknesses.append(
+                        {
+                            "type": "performance_degradation",
+                            "metric": name,
+                            "recent_avg": sum(recent) / len(recent),
+                            "older_avg": sum(older) / len(older),
+                            "severity": "medium",
+                        }
+                    )
 
         # High warning count
         if len(self._warnings) > 10:
-            weaknesses.append({
-                "type": "excessive_warnings",
-                "count": len(self._warnings),
-                "severity": "low",
-            })
+            weaknesses.append(
+                {
+                    "type": "excessive_warnings",
+                    "count": len(self._warnings),
+                    "severity": "low",
+                }
+            )
 
         return weaknesses
 

@@ -64,9 +64,7 @@ class CrossReferenceEngine:
                 if pair in compared:
                     continue
                 compared.add(pair)
-                score = self.vector_memory.similarity_between(
-                    entry_a.entry_id, entry_b.entry_id
-                )
+                score = self.vector_memory.similarity_between(entry_a.entry_id, entry_b.entry_id)
                 if score >= threshold:
                     results.append((entry_a, entry_b, score))
         return results

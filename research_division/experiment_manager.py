@@ -7,10 +7,10 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from comms.protocol import MessageType, Priority
-from knowledge_engine.base import KnowledgeSource, KnowledgeCategory, ConfidenceLevel
+from knowledge_engine.base import KnowledgeSource
 from research_db.schema import ExperimentRecord
 from .base_agent import ResearchAgent, ResearchAgentRole
 
@@ -78,16 +78,14 @@ class ExperimentManagerAgent(ResearchAgent):
         experiment.status = "completed"
         experiment.evaluation_metrics = metrics
         experiment.resource_usage = resource_usage
-        experiment.execution_logs.append(
-            f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Experiment completed successfully"
-        )
+        experiment.execution_logs.append(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Experiment completed successfully")
         experiment.conclusion = (
             f"Experiment validated hypothesis with accuracy {metrics['accuracy']:.2%}. "
             f"Results are reproducible and consistent with expectations."
         )
         experiment.recommendation = "adopt" if metrics["accuracy"] >= 0.8 else "review"
         experiment.updated_at = time.time()
-        stored = self.research_db.save_experiment(experiment)
+        self.research_db.save_experiment(experiment)
 
         # Store in knowledge
         self.knowledge.store_auto_categorized(
@@ -106,6 +104,7 @@ class ExperimentManagerAgent(ResearchAgent):
 
         # Publish result
         import asyncio
+
         try:
             asyncio.get_event_loop().run_until_complete(
                 self.publish(

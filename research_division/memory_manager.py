@@ -6,11 +6,8 @@ and cross-layer memory integration for the research platform.
 from __future__ import annotations
 
 import logging
-import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from comms.protocol import MessageType, Priority
-from knowledge_engine.base import KnowledgeSource, KnowledgeCategory, ConfidenceLevel
 from .base_agent import ResearchAgent, ResearchAgentRole
 
 logger = logging.getLogger("Ultrone.ResearchDivision.MemoryManager")
@@ -42,10 +39,14 @@ class ResearchMemoryManagerAgent(ResearchAgent):
                 entry.related_entry_ids = related_ids
 
         stats = self.knowledge.get_stats()
-        self._log_action("memory_consolidation", {
-            "consolidation": consolidation_report,
-            "cross_references": len(references),
-        }, stats)
+        self._log_action(
+            "memory_consolidation",
+            {
+                "consolidation": consolidation_report,
+                "cross_references": len(references),
+            },
+            stats,
+        )
         return {
             "consolidation": consolidation_report,
             "cross_references_created": len(references),

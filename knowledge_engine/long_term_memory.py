@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from .base import KnowledgeEntry, KnowledgeMemoryBase
 
@@ -60,4 +60,3 @@ class LongTermMemory(KnowledgeMemoryBase):
             self._entries[entry.entry_id] = entry
             count += 1
         return count
-

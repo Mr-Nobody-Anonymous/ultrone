@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import time
 import uuid
@@ -16,6 +15,7 @@ logger = logging.getLogger("Ultrone.ExtensionLog")
 
 class LogLevel(Enum):
     """Log severity levels."""
+
     DEBUG = "debug"
     INFO = "info"
     WARNING = "warning"
@@ -25,6 +25,7 @@ class LogLevel(Enum):
 
 class LogCategory(Enum):
     """Categories of log entries."""
+
     DECISION = "decision"
     EXPERIMENT = "experiment"
     BENCHMARK = "benchmark"
@@ -47,6 +48,7 @@ class LogCategory(Enum):
 @dataclass
 class LogEntry:
     """A single log entry."""
+
     log_id: str = field(default_factory=lambda: f"LOG-{uuid.uuid4().hex[:8]}")
     timestamp: float = field(default_factory=time.time)
     level: LogLevel = LogLevel.INFO
@@ -118,16 +120,40 @@ class AuditLogger:
         return entry
 
     # Convenience methods
-    def info(self, message: str, category: LogCategory = LogCategory.GENERAL, component: str = "", details: Dict[str, Any] = None) -> LogEntry:
+    def info(
+        self,
+        message: str,
+        category: LogCategory = LogCategory.GENERAL,
+        component: str = "",
+        details: Dict[str, Any] = None,
+    ) -> LogEntry:
         return self.log(message, LogLevel.INFO, category, component, details)
 
-    def warning(self, message: str, category: LogCategory = LogCategory.WARNING, component: str = "", details: Dict[str, Any] = None) -> LogEntry:
+    def warning(
+        self,
+        message: str,
+        category: LogCategory = LogCategory.WARNING,
+        component: str = "",
+        details: Dict[str, Any] = None,
+    ) -> LogEntry:
         return self.log(message, LogLevel.WARNING, category, component, details)
 
-    def error(self, message: str, category: LogCategory = LogCategory.FAILURE, component: str = "", details: Dict[str, Any] = None) -> LogEntry:
+    def error(
+        self,
+        message: str,
+        category: LogCategory = LogCategory.FAILURE,
+        component: str = "",
+        details: Dict[str, Any] = None,
+    ) -> LogEntry:
         return self.log(message, LogLevel.ERROR, category, component, details)
 
-    def critical(self, message: str, category: LogCategory = LogCategory.EXCEPTION, component: str = "", details: Dict[str, Any] = None) -> LogEntry:
+    def critical(
+        self,
+        message: str,
+        category: LogCategory = LogCategory.EXCEPTION,
+        component: str = "",
+        details: Dict[str, Any] = None,
+    ) -> LogEntry:
         return self.log(message, LogLevel.CRITICAL, category, component, details)
 
     def get_entries(self, limit: int = 100) -> List[LogEntry]:

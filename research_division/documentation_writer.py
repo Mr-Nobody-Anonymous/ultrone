@@ -6,11 +6,10 @@ research findings, generated modules, experiments, and releases.
 from __future__ import annotations
 
 import logging
-import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from comms.protocol import MessageType, Priority
-from knowledge_engine.base import KnowledgeSource, KnowledgeCategory, ConfidenceLevel
+from comms.protocol import MessageType
+from knowledge_engine.base import KnowledgeSource
 from .base_agent import ResearchAgent, ResearchAgentRole
 
 logger = logging.getLogger("Ultrone.ResearchDivision.Writer")

@@ -6,11 +6,10 @@ integration tests, benchmark suites, and documentation from implementation plans
 from __future__ import annotations
 
 import logging
-import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-from comms.protocol import MessageType, Priority
-from knowledge_engine.base import KnowledgeSource, KnowledgeCategory, ConfidenceLevel
+from comms.protocol import MessageType
+from knowledge_engine.base import KnowledgeSource
 from research_db.schema import ImplementationPlan
 from .base_agent import ResearchAgent, ResearchAgentRole
 
@@ -94,6 +93,7 @@ class CodeGeneratorAgent(ResearchAgent):
     def _sanitize_name(name: str) -> str:
         """Convert a plan title to a valid Python module name."""
         import re
+
         name = re.sub(r"[^a-zA-Z0-9_]", "_", name.lower())
         name = re.sub(r"_+", "_", name).strip("_")
         return name[:60] or "generated_module"
@@ -119,7 +119,7 @@ class CodeGeneratorAgent(ResearchAgent):
             "class GeneratedModule:",
             '    """Auto-generated implementation from research plan."""',
             "",
-            '    def __init__(self, config: Optional[Dict[str, Any]] = None):',
+            "    def __init__(self, config: Optional[Dict[str, Any]] = None):",
             "        self.config = config or {}",
             "        self.initialized = True",
             "",

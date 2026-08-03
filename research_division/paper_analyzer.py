@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from comms.protocol import MessageType, Priority
-from knowledge_engine.base import KnowledgeSource, KnowledgeCategory, ConfidenceLevel
+from knowledge_engine.base import KnowledgeSource
 from research_db.schema import PaperRecord
 from .base_agent import ResearchAgent, ResearchAgentRole
 
@@ -51,9 +51,13 @@ class PaperAnalyzer(ResearchAgent):
             result = self._analyze_paper(paper)
             analyzed.append(result)
 
-        self._log_action("analyze_cycle", {
-            "papers_analyzed": len(analyzed),
-        }, {"paper_ids": [p.get("paper_id") for p in analyzed]})
+        self._log_action(
+            "analyze_cycle",
+            {
+                "papers_analyzed": len(analyzed),
+            },
+            {"paper_ids": [p.get("paper_id") for p in analyzed]},
+        )
 
         return {
             "analyzed": len(analyzed),
@@ -92,8 +96,10 @@ class PaperAnalyzer(ResearchAgent):
         limitations = self._extract_limitations(title, abstract)
 
         # Generate summary
-        summary = f"Analysis of '{title}': explores {', '.join(algorithms) if algorithms else 'novel approaches'}. " \
-                  f"Uses {', '.join(datasets) if datasets else 'various datasets'} for evaluation."
+        summary = (
+            f"Analysis of '{title}': explores {', '.join(algorithms) if algorithms else 'novel approaches'}. "
+            f"Uses {', '.join(datasets) if datasets else 'various datasets'} for evaluation."
+        )
 
         # Update paper record
         paper.summary = summary
@@ -103,7 +109,7 @@ class PaperAnalyzer(ResearchAgent):
         paper.limitations = list(dict.fromkeys(paper.limitations + limitations))
         paper.confidence_score = min(0.9, paper.confidence_score + 0.1)
         paper.updated_at = time.time()
-        stored = self.research_db.save_paper(paper)
+        self.research_db.save_paper(paper)
 
         # Store knowledge entries
         for algo in algorithms:
@@ -119,6 +125,7 @@ class PaperAnalyzer(ResearchAgent):
 
         # Publish analysis event
         import asyncio
+
         try:
             asyncio.get_event_loop().run_until_complete(
                 self.publish(
@@ -137,7 +144,7 @@ class PaperAnalyzer(ResearchAgent):
             # Event loop already running - schedule
             try:
                 loop = asyncio.get_running_loop()
-                import asyncio as aio
+
                 loop.create_task(self._async_publish_analyzed(paper, summary, algorithms, architectures))
             except RuntimeError:
                 pass
@@ -152,7 +159,9 @@ class PaperAnalyzer(ResearchAgent):
         self._log_action("paper_analyzed", {"paper_id": paper.paper_id}, result)
         return result
 
-    async def _async_publish_analyzed(self, paper: PaperRecord, summary: str, algorithms: List[str], architectures: List[str]) -> None:
+    async def _async_publish_analyzed(
+        self, paper: PaperRecord, summary: str, algorithms: List[str], architectures: List[str]
+    ) -> None:
         """Async helper for publishing analysis event."""
         await self.publish(
             MessageType.RESEARCH_PAPER_ANALYZED,
@@ -170,10 +179,21 @@ class PaperAnalyzer(ResearchAgent):
         """Extract algorithm names from text (keyword-based)."""
         text = f"{title} {abstract}".lower()
         known = [
-            "transformer", "diffusion", "reinforcement learning", "attention",
-            "mixture of experts", "rag", "graph neural network", "gan",
-            "vae", "normalizing flow", "kalman filter", "particle filter",
-            "monte carlo tree search", "evolutionary", "bayesian",
+            "transformer",
+            "diffusion",
+            "reinforcement learning",
+            "attention",
+            "mixture of experts",
+            "rag",
+            "graph neural network",
+            "gan",
+            "vae",
+            "normalizing flow",
+            "kalman filter",
+            "particle filter",
+            "monte carlo tree search",
+            "evolutionary",
+            "bayesian",
         ]
         found = []
         for algo in known:

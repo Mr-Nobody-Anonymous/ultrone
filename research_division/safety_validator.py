@@ -6,11 +6,10 @@ considerations, and compliance with platform guidelines.
 from __future__ import annotations
 
 import logging
-import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from comms.protocol import MessageType, Priority
-from knowledge_engine.base import KnowledgeSource, KnowledgeCategory, ConfidenceLevel
+from comms.protocol import MessageType
+from knowledge_engine.base import KnowledgeSource
 from .base_agent import ResearchAgent, ResearchAgentRole
 
 logger = logging.getLogger("Ultrone.ResearchDivision.Safety")
@@ -77,7 +76,7 @@ class SafetyValidator(ResearchAgent):
 
         self.knowledge.store_auto_categorized(
             content=f"Safety validation for experiment '{experiment.experiment_id}': passed={passed}, "
-                    f"warnings={warnings}",
+            f"warnings={warnings}",
             source=KnowledgeSource.ANALYSIS,
             tags=["safety", "validation"],
             entities=[experiment.experiment_id],
