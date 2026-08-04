@@ -18,6 +18,7 @@ from .reproducibility import ReproducibilityManager, ReproducibilityConfig
 from .statistical_evaluation import StatisticalEvaluator, EvalConfig
 from .ablation_framework import AblationFramework, AblationConfig
 from .automated_report import AutomatedReport, ReportConfig
+from .reproducer import PaperReproducer, ReproducerConfig
 
 __all__ = [
     "ExperimentManager", "ExperimentConfig",
@@ -27,4 +28,5 @@ __all__ = [
     "StatisticalEvaluator", "EvalConfig",
     "AblationFramework", "AblationConfig",
     "AutomatedReport", "ReportConfig",
+    "PaperReproducer", "ReproducerConfig",
 ]
