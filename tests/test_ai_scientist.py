@@ -34,13 +34,15 @@ class TestNoveltyDetector(unittest.TestCase):
     def setUp(self):
         self.detector = NoveltyDetector()
 
-
-        self.assertIn("is_novel", report)
+    def test_assess(self):
+        report = self.detector.assess("test idea", keywords=["ai", "test"], related_work=["x"])
+        self.assertIn("novelty_score", report)
+        self.assertIn("verdict", report)
 
     def test_get_stats(self):
         self.detector.assess("test", related_work=["x"])
         stats = self.detector.get_stats()
-        self.assertIn("assessments", stats)
+        self.assertIn("assessments_performed", stats)
 
 
 class TestExperimentDesigner(unittest.TestCase):
