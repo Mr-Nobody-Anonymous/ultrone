@@ -1,24 +1,83 @@
-# CI Fix Task — ULTRONE Research Platform
+# ULTRONE Research Ecosystem — Implementation TODO
 
-## Goal
-Fix GitHub Actions CI failure: `ModuleNotFoundError: No module named 'numpy'` / `'torch'` during test collection.
+## Phase 1 — AI Model Lifecycle (fix broken package) ✅ DONE
+- [x] `brain/models/model_manager.py` — ModelManager (train/eval lifecycle, LoRA/PEFT)
+- [x] `brain/models/quantization.py` — QuantizationManager (int8/fp16/int4)
+- [x] `brain/models/distillation.py` — DistillationManager (teacher/student)
+- [x] `brain/models/pruning.py` — PruningManager (magnitude/structured)
+- [x] `brain/models/exporter.py` — ModelExporter (ONNX/TensorRT/GGUF)
+- [x] `brain/models/converter.py` — ModelConverter (framework conversion)
+- [x] `brain/models/rollback.py` — ModelRollback (automatic rollback, comparison)
+- [x] `tests/test_model_lifecycle.py` — 18 tests passing
 
-## Root Cause
-`requirements.txt` does not exist in the repo, so the CI workflow's conditional
-`pip install -r requirements.txt` is silently skipped. The workflow only installs
-`pytest`/`fastapi`/`pydantic`, which do not provide `numpy`/`torch` that the
-test-suite imports at module load time.
+## Phase 2 — Memory Compression ✅ DONE
+- [x] `brain/memory/memory_index.py` — MemoryIndex
+- [x] `brain/memory/forgetting.py` — ForgettingEngine
+- [x] `brain/memory/compression.py` — MemoryCompressor
+- [x] `brain/memory/summarization.py` — MemorySummarizer
+- [x] `brain/memory/importance.py` — ImportanceScorer
+- [x] `brain/memory/retrieval_optimizer.py` — RetrievalOptimizer
+- [x] `tests/test_memory_compression.py` — 10 tests passing
 
-## Steps
-- [x] 1. Create `requirements.txt` with all runtime/test dependencies
-- [x] 2. Update `.github/workflows/research-platform-ci.yml`:
-       - Install `requirements.txt` unconditionally
-       - Add pip dependency caching
-       - Add `concurrency` guard to cancel stale runs
-       - Consolidate redundant test runs / fix coverage collection path
-- [x] 3. Update `infra/docker/Dockerfile.research`:
-       - Remove `|| true` so dependency install failures are not silently swallowed
-       - Install `requirements.txt` (now present) instead of hardcoded package list
-- [x] 4. Validate: run tests locally (if environment allows) to confirm imports resolve
-       → `307 passed` (pytest tests/ --tb=short -q) — full suite green
+## Phase 3 — Data & MLOps ✅ DONE
+- [x] `datasets/` package (registry, downloader, preprocessing, augmentation, validation, synthetic_generator, versioning, metadata)
+- [x] `mlops/` package (experiment_tracker, model_registry, deployment, monitoring, drift_detection, feature_store, lineage, artifact_store)
+- [x] `tests/test_datasets.py`, `tests/test_mlops.py`
 
+## Phase 4 — Research & AI Scientist ✅ DONE
+- [x] `research/reproducer.py` — PaperReproducer
+- [x] `brain/science/` package (citation_network, experiment_designer, hypothesis_generator, novelty_detector, peer_reviewer)
+- [x] `tests/test_reproducer.py`, `tests/test_ai_scientist.py`
+
+## Phase 5 — Benchmark Zoo & Simulation ✅ DONE
+- [x] `benchmarks/` package (base, registry — Benchmark, BenchmarkConfig, BenchmarkResult, BenchmarkRegistry)
+- [x] `simulation/` package (digital_twin, physics, environment_generator — DigitalTwin, PhysicsEngine, EnvironmentGenerator)
+- [x] `tests/test_benchmarks.py` — 3 tests passing
+- [x] `tests/test_simulation.py` — 4 tests passing
+
+## Phase 6 — Compiler, Distributed, AutoML, Hardware ✅ DONE
+- [x] `compiler/` package (graph_optimizer, operator_fusion, kernel_generator)
+- [x] `brain/learning/distributed/` (federated, parameter_server)
+- [x] `automl/` package (nas, auto_tuner, auto_ensemble)
+- [x] `hardware/` package (backend — HardwareBackend, BackendRegistry, CPUBackend)
+- [x] `tests/test_compiler.py` — 4 tests passing
+- [x] `tests/test_distributed.py` — 2 tests passing
+- [x] `tests/test_automl.py` — 3 tests passing
+- [x] `tests/test_hardware.py` — 2 tests passing
+
+## Phase 7 — Distributed Memory, Security, Plugins, Robotics ✅ DONE
+- [x] `memory_cluster/` package (base, redis_backend, duckdb_backend — ClusterBackend, ClusterRegistry)
+- [x] `security/` package (sandbox, permissions, secret_manager)
+- [x] `plugins/marketplace/` (installer, plugin_registry — PluginInstaller, PluginMarketplace)
+- [x] `robotics/` package (robot_interface, controller — RobotInterface, RobotState, RobotController)
+- [x] `tests/test_memory_cluster.py` — 3 tests passing
+- [x] `tests/test_security.py` — 4 tests passing
+- [x] `tests/test_plugins.py` — 3 tests passing
+- [x] `tests/test_robotics.py` — 3 tests passing
+
+## Phase 8 — Explainability 2.0, KG 2.0, Coding Agent, AI OS ✅ DONE
+- [x] Extended `brain/xai/` (decision_trace, counterfactual, lime_explainer, reasoning_graph, confidence_calibration)
+- [x] Extended `knowledge_engine/` (knowledge_graph, ontology, semantic_memory, episodic_memory, vector_memory)
+- [x] `coding_agent/` package (agent — CodingAgent, TaskResult)
+- [x] `ultrone_os/` package (kernel, scheduler, service_registry)
+- [x] `tests/test_xai2.py` — 2 tests passing
+- [x] `tests/test_kg2.py` — 2 tests passing
+- [x] `tests/test_coding_agent.py` — 3 tests passing
+- [x] `tests/test_ultrone_os.py` — 6 tests passing
+
+## Situational Awareness System ✅ DONE
+- [x] `brain/perception/situational_awareness/` — 33 modules implementing Endsley 3-level model
+- [x] `tests/test_situational_awareness.py` — 54 tests passing
+- [x] `tests/benchmark_situational_awareness.py` — Full benchmark suite
+- [x] `docs/SITUATIONAL_AWARENESS.md` — Architecture diagrams and documentation
+
+## Backend Infrastructure ✅ DONE
+- [x] `backend/exporters/` — CSV, JSON, Parquet, Stream exporters
+- [x] `backend/integrations/` — REST, Webhook integrations
+- [x] `backend/plugins/` — Plugin system with discovery and lifecycle
+- [x] `backend/schedulers/` — Task scheduler with retry and monitoring
+
+## Final ✅ DONE
+- [x] Update `requirements.txt`
+- [x] Update `README.md` roadmap
+- [x] Run full test suite — 98+ tests passing across all phases

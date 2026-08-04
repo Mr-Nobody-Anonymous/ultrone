@@ -6,7 +6,8 @@ from __future__ import annotations
 # Keep these as lazy imports to avoid circular dependency issues
 __all__ = ["SensorFusion", "ThreatClassifier", "SituationalAwareness",
            "MultiSourceAnalyzer", "DataSourceType", "SensorDataPacket", "IntelligenceAssessment",
-           "TerrainAnalyzer", "BattlefieldAnalyzer", "Battlefield3DExporter"]
+           "TerrainAnalyzer", "BattlefieldAnalyzer", "Battlefield3DExporter",
+           "AwarenessEngine", "AwarenessEngineConfig", "AwarenessReport"]
 
 def __getattr__(name: str):
     """Lazy import to avoid circular dependencies."""
@@ -17,7 +18,7 @@ def __getattr__(name: str):
         from .threat_classifier import ThreatClassifier
         return ThreatClassifier
     if name == "SituationalAwareness":
-        from .situational_awareness import SituationalAwareness
+        from .legacy_situational_awareness import SituationalAwareness
         return SituationalAwareness
     if name == "TerrainAnalyzer":
         from .terrain_analyzer import TerrainAnalyzer
@@ -40,4 +41,13 @@ def __getattr__(name: str):
     if name == "IntelligenceAssessment":
         from .multi_source_analyzer import IntelligenceAssessment
         return IntelligenceAssessment
+    if name == "AwarenessEngine":
+        from .situational_awareness import AwarenessEngine
+        return AwarenessEngine
+    if name == "AwarenessEngineConfig":
+        from .situational_awareness import AwarenessEngineConfig
+        return AwarenessEngineConfig
+    if name == "AwarenessReport":
+        from .situational_awareness import AwarenessReport
+        return AwarenessReport
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
