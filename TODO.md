@@ -81,3 +81,27 @@
 - [x] Update `requirements.txt`
 - [x] Update `README.md` roadmap
 - [x] Run full test suite — 98+ tests passing across all phases
+
+## Cognitive Architecture — 15-Layer Autonomous AI ✅ DONE
+- [x] `cognitive/types.py` — Core data types (Observation, SceneGraph, WorldState, DecisionTrace, Plan, Action)
+- [x] `cognitive/perception_layer.py` — Multimodal perception with probabilistic scene graph fusion
+- [x] `cognitive/situational_awareness_layer.py` — Entity tracking, event detection, novelty/anomaly detection
+- [x] `cognitive/world_model_layer.py` — Predictive world state with entity dynamics and causal structure
+- [x] `cognitive/active_inference_layer.py` — Uncertainty minimization and information gain
+- [x] `cognitive/memory_layer.py` — Multi-tier memory (working, episodic, semantic, procedural, vector, graph)
+- [x] `cognitive/knowledge_layer.py` — Knowledge graph, vector search, hybrid retrieval, RAG
+- [x] `cognitive/reasoning_layer.py` — 12 reasoning strategies (deductive, inductive, abductive, causal, etc.)
+- [x] `cognitive/planning_layer.py` — 10 planner types (HTN, GOAP, MCTS, MPC, hierarchical, etc.)
+- [x] `cognitive/prediction_layer.py` — Ensemble prediction with confidence intervals
+- [x] `cognitive/self_reflection_layer.py` — Post-task evaluation and improvement
+- [x] `cognitive/meta_learning_layer.py` — Automatic architecture improvement
+- [x] `cognitive/agentic_layer.py` — Multi-agent collaboration (blackboard, consensus, coalitions)
+- [x] `cognitive/learning_layer.py` — Continual learning (online, transfer, RL)
+- [x] `cognitive/explainability_layer.py` — Full decision traces with evidence, alternatives, counterfactuals
+- [x] `cognitive/safety_layer.py` — Continuous robustness monitoring with auto-fallback
+- [x] `cognitive/cognitive_agent.py` — Unified autonomous cognitive agent
+- [x] `cognitive/cognitive_loop.py` — Multi-layer cognitive loop orchestration
+- [x] `cognitive/integration.py` — Unified facade for the complete cognitive architecture
+- [x] `cognitive/__init__.py` — Full public API exports
+- [x] `tests/test_cognitive_architecture.py` — 41 tests passing
+- [x] Full test suite — 509 tests passing, 41 new cognitive tests
