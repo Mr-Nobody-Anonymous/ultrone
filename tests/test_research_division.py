@@ -24,7 +24,13 @@ from research_division.coordinator import ResearchDivisionCoordinator
 
 def run_async(coro):
     """Helper to run async coroutines in sync tests."""
-    return asyncio.get_event_loop().run_until_complete(coro)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        loop.close()
+        asyncio.set_event_loop(None)
 
 
 class TestBaseAgent:

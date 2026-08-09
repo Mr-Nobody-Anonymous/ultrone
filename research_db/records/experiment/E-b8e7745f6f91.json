@@ -1,0 +1,20 @@
+{
+  "experiment_id": "E-b8e7745f6f91",
+  "hypothesis": "Test hypothesis",
+  "research_motivation": "",
+  "implementation": "",
+  "dataset": "",
+  "training_config": {},
+  "evaluation_metrics": {},
+  "benchmark_comparison": {},
+  "resource_usage": {},
+  "execution_logs": [],
+  "performance_graphs": [],
+  "success_criteria": "",
+  "rollback_strategy": "",
+  "conclusion": "",
+  "recommendation": "",
+  "status": "proposed",
+  "created_at": 1786288424.19788,
+  "updated_at": 1786288424.1981678
+}

@@ -38,7 +38,7 @@ class RMSNorm:
 
     def forward(self, x):
         """Apply RMS normalization."""
-        if TORCH_AVAILABLE:
+        if TORCH_AVAILABLE and hasattr(x, "requires_grad"):
             variance = x.to(torch.float32).pow(2).mean(-1, keepdim=True)
             x = x * torch.rsqrt(variance + self.eps)
             return self.weight * x.to(x.dtype)
@@ -71,7 +71,7 @@ class LayerNorm:
 
     def forward(self, x):
         """Apply layer normalization."""
-        if TORCH_AVAILABLE:
+        if TORCH_AVAILABLE and hasattr(x, "requires_grad"):
             mean = x.mean(-1, keepdim=True)
             var = x.var(-1, keepdim=True, unbiased=False)
             x = (x - mean) / torch.sqrt(var + self.eps)

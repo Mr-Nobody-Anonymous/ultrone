@@ -31,8 +31,9 @@ class BPETokenizer:
         self.merges: Dict[Tuple[str, str], int] = {}
         self.vocab: Dict[str, int] = {}
         self._special_tokens: Dict[str, int] = {}
+        # Python's re does not support \p{L}; use ASCII-aware splitting.
         self._pre_token_re = re.compile(
-            r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
+            r"""'s|'t|'re|'ve|'m|'ll|'d| ?[A-Za-z]+| ?[0-9]+| ?[^\sA-Za-z0-9]+|\s+(?!\S)|\s+"""
         )
 
     # ------------------------------------------------------------------

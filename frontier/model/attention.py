@@ -290,7 +290,7 @@ class MultiHeadAttention:
 
             if return_attention:
                 return attn_output, attn_weights.detach()
-            return attn_output
+            return attn_output, None  # always return (output, past_key_value) tuple
 
         # Pure-Python fallback (simplified)
         import math
@@ -324,7 +324,7 @@ class MultiHeadAttention:
                     head_out.append(val)
                 scores.append(head_out)
             out.append(scores)
-        return out
+        return out, None  # always return (output, past_key_value) tuple
 
     def _transpose(self, matrix):
         """Transpose a list-of-lists matrix."""

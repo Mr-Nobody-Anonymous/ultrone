@@ -16,6 +16,7 @@ from research_db.store import ResearchDatabase
 from .telemetry import TelemetryCollector
 from .hypothesis_generator import HypothesisGenerator
 from .literature_search import LiteratureSearch
+from .experiment_runner import ExperimentRunner
 
 logger = logging.getLogger("Ultrone.SelfImprovement.Loop")
 
@@ -38,6 +39,7 @@ class SelfImprovementLoop:
         knowledge: Optional[KnowledgeMemoryManager] = None,
         research_db: Optional[ResearchDatabase] = None,
         min_benchmark_gain: float = 0.02,
+        experiment_runner: Optional[ExperimentRunner] = None,
     ):
         self.knowledge = knowledge or KnowledgeMemoryManager()
         self.research_db = research_db or ResearchDatabase()
@@ -45,6 +47,7 @@ class SelfImprovementLoop:
         self.hypothesis_generator = HypothesisGenerator()
         self.literature_search = LiteratureSearch(knowledge=self.knowledge, research_db=self.research_db)
         self.min_benchmark_gain = min_benchmark_gain
+        self.experiment_runner = experiment_runner or ExperimentRunner(min_improvement=min_benchmark_gain)
         self._cycle_count = 0
         self._adopted: List[Dict[str, Any]] = []
         self._rejected: List[Dict[str, Any]] = []
@@ -117,7 +120,12 @@ class SelfImprovementLoop:
         }
 
     def _run_experiment(self, hypothesis: Dict[str, Any]) -> Dict[str, Any]:
-        """Run an experiment for a hypothesis."""
+        """Run a real experiment for a hypothesis.
+
+        Uses the ExperimentRunner which compares baseline vs candidate via
+        actual evaluation functions. No random numbers — improvements are
+        measured, not simulated.
+        """
         from research_db.schema import ExperimentRecord
 
         experiment = ExperimentRecord(
@@ -130,23 +138,38 @@ class SelfImprovementLoop:
         )
         self.research_db.save_experiment(experiment)
 
-        # Simulated experiment execution
-        import random
+        # Run the real experiment (baseline vs candidate comparison).
+        # If no real evaluation functions are configured, this will raise
+        # rather than fabricate results.
+        try:
+            result = self.experiment_runner.run(hypothesis)
+        except ValueError as exc:
+            # No real evaluation configured: record the experiment as needing
+            # configuration rather than fabricating a result.
+            experiment.status = "needs_configuration"
+            experiment.conclusion = f"Experiment requires real evaluation functions: {exc}"
+            experiment.recommendation = "reject"
+            experiment.updated_at = time.time()
+            self.research_db.save_experiment(experiment)
+            return {
+                "experiment_id": experiment.experiment_id,
+                "hypothesis": hypothesis,
+                "metrics": {},
+                "recommendation": "reject",
+                "error": str(exc),
+            }
 
-        improvement = random.uniform(-0.05, 0.15)
-        metrics = {
-            "accuracy": 0.80 + improvement,
-            "improvement": improvement,
-        }
+        improvement = result.improvement
+        metrics = result.metrics
 
         experiment.status = "completed"
         experiment.evaluation_metrics = metrics
         experiment.conclusion = (
             f"Experiment achieved {improvement:.2%} improvement. "
-            f"{'Meets' if improvement >= self.min_benchmark_gain else 'Does not meet'} "
-            f"adoption threshold of {self.min_benchmark_gain:.0%}."
+            f"{'Passes' if result.passed else 'Does not pass'} adoption threshold "
+            f"of {self.min_benchmark_gain:.0%} with confidence {result.statistical_confidence:.2f}."
         )
-        experiment.recommendation = "adopt" if improvement >= self.min_benchmark_gain else "reject"
+        experiment.recommendation = "adopt" if result.passed else "reject"
         experiment.updated_at = time.time()
         self.research_db.save_experiment(experiment)
 
@@ -155,6 +178,7 @@ class SelfImprovementLoop:
             "hypothesis": hypothesis,
             "metrics": metrics,
             "recommendation": experiment.recommendation,
+            "statistical_confidence": result.statistical_confidence,
         }
 
     def _validate_experiment(self, experiment: Dict[str, Any]) -> Dict[str, Any]:
