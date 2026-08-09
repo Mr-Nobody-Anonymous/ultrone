@@ -1,5 +1,45 @@
 # ULTRONE Research-Grade Extensions — Progress
 
+## Frontier Intelligence — *Complete*
+
+### Status
+Added a solver-agnostic Frontier Intelligence layer to improve reasoning,
+self-correction, calibrated decision-making, and software engineering for
+frontier benchmarks (GSM8K, MMLU, GPQA, HumanEval, MBPP, MATH, AIME,
+SWE-bench). All tests use deterministic backend-agnostic test doubles.
+
+### Files
+- `frontier/reasoning/` — tree_of_thoughts, graph_of_thoughts,
+  self_consistency, multi_agent_debate, constitutional_critique,
+  beam_search_reasoner ✅
+- `frontier/adaptation/` — critic_model, reflection_engine,
+  self_correction_engine ✅
+- `frontier/agents/` — planner, executor, verifier, tool_router ✅
+- `frontier/decision/` — uncertainty, calibration, bayesian_decision ✅
+- `coding_agent/` — full SWE stack (ast_analyzer, repository_indexer,
+  symbol_search, static_analysis, test_runner, test_generator, bug_localizer,
+  patch_validator) integrated into `CodingAgent` ✅
+- `benchmarks/` — harness, runners, history, graph (extends base/registry) ✅
+- `tests/test_frontier_reasoning.py` — 27 tests ✅
+- `tests/test_coding_agent2.py` — 20 tests ✅
+- `tests/test_benchmark_harness.py` — 20 tests ✅
+- `docs/FRONTIER_INTELLIGENCE.md` — architecture documentation ✅
+
+### Key Improvements
+- **Search-based reasoning**: Tree of Thoughts, Graph of Thoughts, Beam Search
+- **Consensus & debate**: Self-Consistency voting, Multi-Agent Debate
+- **Self-correction**: Reflection Engine, Self-Correction Engine, Critic
+- **Agent orchestration**: Planner, Executor, Verifier, Tool Router
+- **Calibrated decisions**: Uncertainty estimation, confidence calibration,
+  Bayesian decision layer with abstention
+- **SWE automation**: AST analysis, repo indexing, symbol search, static
+  analysis, dynamic test running, unit test generation, bug localization,
+  patch validation
+- **Benchmark harness**: solver-driven evaluation with append-only history
+  (never overwrites prior runs) and improvement graphs
+
+---
+
 ## Phase 1: Search & Planning — *Complete*
 
 ### Status

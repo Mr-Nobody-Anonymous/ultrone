@@ -258,7 +258,7 @@ ultrone/
 │   ├── entities.py                  # Entity definitions
 │   ├── feeds.py                     # Data feed definitions
 │   └── terrain.py                   # Terrain data
-├── tests/                          # ✅ 13 test suites
+├── tests/                          # ✅ 50+ test suites (600+ tests)
 │   ├── test_search_planning.py
 │   ├── test_reinforcement_learning.py
 │   ├── test_coordination.py
@@ -271,7 +271,111 @@ ultrone/
 │   ├── test_memory.py
 │   ├── test_world_modeling.py
 │   ├── test_ai_architectures.py
-│   └── test_research_tooling.py
+│   ├── test_research_tooling.py
+│   ├── test_cognitive_architecture.py
+│   ├── test_frontier_reasoning.py
+│   ├── test_coding_agent.py
+│   ├── test_coding_agent2.py
+│   ├── test_benchmark_harness.py
+│   ├── test_situational_awareness.py
+│   ├── test_model_lifecycle.py
+│   ├── test_memory_compression.py
+│   ├── test_datasets.py
+│   ├── test_mlops.py
+│   ├── test_compiler.py
+│   ├── test_distributed.py
+│   ├── test_automl.py
+│   ├── test_hardware.py
+│   ├── test_memory_cluster.py
+│   ├── test_security.py
+│   ├── test_plugins.py
+│   ├── test_robotics.py
+│   ├── test_ultrone_os.py
+│   ├── test_kg2.py
+│   ├── test_knowledge_engine.py
+│   ├── test_research_db.py
+│   ├── test_research_division.py
+│   ├── test_self_improvement.py
+│   ├── test_dreamer_v3.py
+│   ├── test_learned_world_model.py
+│   └── ... (dataset, MLOPs, reproducibility, simulation, etc.)
+├── frontier/                       # 🧠 Frontier Intelligence (agent-agnostic reasoning)
+│   ├── reasoning/                  # ✅ ToT, GoT, Self-Consistency, Multi-Agent Debate, Constitutional Critique, Beam Search
+│   ├── adaptation/                 # ✅ Critic Model, Reflection Engine, Self-Correction Engine
+│   ├── agents/                     # ✅ Planner, Executor, Verifier, Tool Router
+│   └── decision/                   # ✅ Bayesian Decision, Uncertainty Estimation, Confidence Calibration
+├── cognitive/                      # 🧠 15-Layer Cognitive Architecture
+│   ├── perception_layer.py         # Multimodal perception + scene-graph fusion
+│   ├── situational_awareness_layer.py
+│   ├── world_model_layer.py        # Predictive + causal world state
+│   ├── active_inference_layer.py
+│   ├── memory_layer.py             # Multi-tier memory (working/episodic/semantic/procedural/vector/graph)
+│   ├── knowledge_layer.py          # KG, vector search, RAG
+│   ├── reasoning_layer.py          # 12 reasoning strategies
+│   ├── planning_layer.py           # 10 planner types
+│   ├── prediction_layer.py
+│   ├── self_reflection_layer.py
+│   ├── meta_learning_layer.py
+│   ├── agentic_layer.py            # Multi-agent collaboration
+│   ├── learning_layer.py
+│   ├── explainability_layer.py
+│   ├── safety_layer.py
+│   ├── cognitive_agent.py          # Unified cognitive agent
+│   ├── cognitive_loop.py           # Cognitive loop orchestration
+│   └── integration.py              # Unified facade
+├── coding_agent/                   # 🛠️ Software Engineering Agent (full SWE stack)
+│   ├── agent.py                    # CodingAgent facade (analyze/write/refactor/test/patch)
+│   ├── ast_analyzer.py             # AST analysis
+│   ├── repository_indexer.py       # Repo indexing
+│   ├── symbol_search.py            # Symbol search
+│   ├── static_analysis.py          # Static analysis
+│   ├── test_runner.py              # Dynamic test running
+│   ├── test_generator.py           # Unit test generation
+│   ├── bug_localizer.py            # Bug localization
+│   └── patch_validator.py          # Patch validation
+├── research_division/              # 🔬 Autonomous Research Division
+│   ├── coordinator.py              # Research pipeline orchestration
+│   ├── research_scout.py / paper_analyzer.py / algorithm_extractor.py
+│   ├── implementation_planner.py / code_generator.py / benchmark_agent.py
+│   ├── experiment_manager.py / quality_reviewer.py / safety_validator.py
+│   └── ... (15 specialized agents)
+├── research_db/                    # 💾 Research Database (JSON + SQLite, versioned)
+│   ├── schema.py                   # PaperRecord, ExperimentRecord, BenchmarkRecord, ImplementationPlan
+│   └── store.py                    # ResearchDatabase with history + audit trail
+├── self_improvement/               # 🔄 Self-Improvement Loop
+│   ├── improvement_loop.py         # Observe → Hypothesize → Experiment → Validate → Adopt
+│   ├── telemetry.py / hypothesis_generator.py / literature_search.py
+├── knowledge_engine/               # 🧠 Knowledge Engine 2.0
+│   ├── knowledge_graph.py / ontology.py / semantic_memory.py / episodic_memory.py
+│   ├── vector_memory.py / long_term_memory.py / working_memory.py / procedural_memory.py
+│   ├── rag.py / cross_reference.py / entity_linking.py / consolidation.py
+│   └── memory_manager.py
+├── automl/                         # 🤖 AutoML
+│   ├── nas.py                      # Neural Architecture Search
+│   ├── auto_tuner.py               # Hyperparameter tuning
+│   └── auto_ensemble.py            # Ensemble construction
+├── mlops/                          # 📊 MLOps
+│   ├── experiment_tracker.py / model_registry.py / deployment.py / monitoring.py
+│   ├── drift_detection.py / feature_store.py / lineage.py / artifact_store.py
+├── compiler/                       # ⚙️ Compiler & Optimization
+│   ├── graph_optimizer.py / operator_fusion.py / kernel_generator.py
+├── memory_cluster/                 # 🗄️ Distributed Memory
+│   ├── base.py / redis_backend.py / duckdb_backend.py
+├── security/                       # 🔒 Security
+│   ├── sandbox.py / permissions.py / secret_manager.py
+├── plugins/                        # 🔌 Plugin System
+│   └── marketplace/ (installer.py, plugin_registry.py)
+├── robotics/                       # 🤖 Robotics
+│   ├── robot_interface.py / controller.py
+├── ultrone_os/                     # 🖥️ AI OS
+│   ├── kernel.py / scheduler.py / service_registry.py
+├── simulation/                     # 🎲 Simulation Extensions
+│   ├── digital_twin.py / physics.py / environment_generator.py
+├── datasets/                       # 📦 Dataset Management
+│   ├── registry.py / downloader.py / preprocessing.py / augmentation.py
+│   ├── validation.py / synthetic_generator.py / versioning.py / metadata.py
+├── extension_log/                  # 📝 Structured Logging
+│   ├── audit.py / stores.py
 └── utils/                          # 🛠️ Utilities
     ├── geo.py                       # Geospatial calculations
     ├── helpers.py                   # General helpers
@@ -385,6 +489,9 @@ print(sat.analyze({'formation': 'tanks'}, {}))
 - [x] ✅ Frontend Dashboard (React/Vite: Tactical Map, Agent Inspector, Analytics, Admin)
 - [x] ✅ Infrastructure (Docker Compose, Helm Charts with 35 templates)
 - [x] ✅ Comprehensive Test Suite (13 test files)
+- [x] ✅ Frontier Intelligence (ToT, GoT, Self-Consistency, Multi-Agent Debate, Reflection/Self-Correction, Bayesian Decision, Confidence Calibration)
+- [x] ✅ Software Engineering Agent (AST analysis, repo indexing, symbol search, static analysis, test generation, bug localization, patch validation)
+- [x] ✅ Benchmark Harness (GSM8K, MMLU, HumanEval, MBPP runners, append-only history, improvement graphs)
 - [ ] 🔧 Backend module implementations (Analytics, Auth, Cache, Database, Events, etc.)
 - [ ] 📦 Kubernetes manifests, Monitoring configs, Nginx configs
 - [ ] 🌐 Distributed evolution across nodes

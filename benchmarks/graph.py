@@ -49,7 +49,8 @@ class BenchmarkGraph:
         Returns
         -------
         str
-            The absolute path of the saved chart.
+            The absolute path of the saved chart. Returns an empty string if
+            there is no history to plot.
         """
         try:
             import matplotlib
@@ -68,6 +69,7 @@ class BenchmarkGraph:
             return ""
 
         fig, ax = plt.subplots(figsize=(10, 6))
+        plotted_any = False
         for name in names:
             timestamps, accuracies = self.history.get_timeseries(name)
             if not timestamps:
@@ -76,6 +78,12 @@ class BenchmarkGraph:
             base = timestamps[0]
             xs = [(t - base) / 60.0 for t in timestamps]
             ax.plot(xs, accuracies, marker="o", label=name)
+            plotted_any = True
+
+        if not plotted_any:
+            logger.warning("No benchmark history to plot")
+            plt.close(fig)
+            return ""
 
         ax.set_xlabel("Elapsed time (minutes)")
         ax.set_ylabel("Accuracy")

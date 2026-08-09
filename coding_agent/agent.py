@@ -39,7 +39,7 @@ class CodingAgent:
 
     Parameters
     ----------
-    workspace
+    workspace : str
         The repository root directory to operate within.
     """
 
@@ -59,7 +59,7 @@ class CodingAgent:
     # ------------------------------------------------------------------
     # Analysis
     # ------------------------------------------------------------------
-def analyze_code(self, path: str) -> TaskResult:
+    def analyze_code(self, path: str) -> TaskResult:
         """Analyze a Python source file and return its AST structure."""
         try:
             analysis = self.ast_analyzer.analyze_file(self._resolve(path))
@@ -105,7 +105,7 @@ def analyze_code(self, path: str) -> TaskResult:
     # ------------------------------------------------------------------
     # Static analysis & searching
     # ------------------------------------------------------------------
-def run_static_analysis(self, path: str) -> List[StaticIssue]:
+    def run_static_analysis(self, path: str) -> List[StaticIssue]:
         """Run static analysis on a source file."""
         return self.static_analyzer.analyze_file(self._resolve(path))
 
@@ -156,7 +156,7 @@ def run_static_analysis(self, path: str) -> List[StaticIssue]:
         function_name: str,
         examples: Optional[List[Dict[str, Any]]] = None,
     ) -> str:
-"""Generate unit tests for a function in a source file."""
+        """Generate unit tests for a function in a source file."""
         analysis = self.ast_analyzer.analyze_file(self._resolve(path))
         return self.test_generator.generate_for_function(analysis, function_name, examples)
 
@@ -179,7 +179,7 @@ def run_static_analysis(self, path: str) -> List[StaticIssue]:
     # Refactoring
     # ------------------------------------------------------------------
     def refactor(self, path: str) -> TaskResult:
-"""Analyze a file and report refactoring suggestions."""
+        """Analyze a file and report refactoring suggestions."""
         issues = self.static_analyzer.analyze_file(self._resolve(path))
         suggestions = [
             i.message for i in issues if i.severity in ("warning", "error")

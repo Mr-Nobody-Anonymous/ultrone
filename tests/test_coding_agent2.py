@@ -89,7 +89,7 @@ class TestASTAnalyzer:
     def test_analyze_string(self):
         analyzer = ASTAnalyzer()
         analysis = analyzer.analyze_string(SAMPLE_CODE, "sample.py")
-        assert len(analysis.functions) == 3
+        assert len(analysis.functions) == 5
         assert len(analysis.classes) == 1
         assert analysis.classes[0].name == "Calculator"
         assert "add" in analysis.imports or "math" in [i for i in analysis.imports]

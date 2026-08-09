@@ -53,14 +53,16 @@ through architectural improvements — not benchmark hacks.
 - [x] `benchmarks/history.py`
 - [x] `benchmarks/graph.py`
 
-## Phase 7 — Tests & Docs
-- [ ] `tests/test_frontier_reasoning.py`
-- [ ] `tests/test_coding_agent2.py`
-- [ ] `tests/test_benchmark_harness.py`
-- [ ] `docs/FRONTIER_INTELLIGENCE.md`
-- [ ] Update `README.md`, `PROJECT_PROGRESS.md`
+## Phase 7 — Tests & Docs ✅ DONE
+- [x] `tests/test_frontier_reasoning.py` — 27 tests passing
+- [x] `tests/test_coding_agent2.py` — 20 tests passing
+- [x] `tests/test_benchmark_harness.py` — 20 tests passing
+- [x] `docs/FRONTIER_INTELLIGENCE.md` — architecture documentation
+- [x] Update `README.md`, `PROJECT_PROGRESS.md` — Frontier Intelligence section
 
 ## Final
-- [ ] Run new test suites
-- [ ] Run full test suite
-- [ ] Update progress docs
+- [x] Run new test suites (frontier + coding_agent + benchmark_harness) — 70 passed
+- [x] Run full test suite — 597 passed, 15 pre-existing failures in
+      `test_research_division.py` (async `run_async` helper + shared DB state
+      isolation), unrelated to Frontier Intelligence changes
+- [x] Update progress docs (README.md, PROJECT_PROGRESS.md, TODO.md)
