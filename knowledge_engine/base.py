@@ -100,6 +100,15 @@ class KnowledgeEntry:
     version: int = 1
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
+    # ── Provenance fields ──────────────────────────────────────────────
+    source_hash: str = ""
+    retrieved_at: Optional[float] = None
+    author: str = ""
+    publication_date: str = ""
+    license: str = ""
+    content_hash: str = ""
+    embedding: Optional[List[float]] = None
+    relationships: List[Dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -116,6 +125,14 @@ class KnowledgeEntry:
             "version": self.version,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
+            "source_hash": self.source_hash,
+            "retrieved_at": self.retrieved_at,
+            "author": self.author,
+            "publication_date": self.publication_date,
+            "license": self.license,
+            "content_hash": self.content_hash,
+            "embedding": self.embedding,
+            "relationships": self.relationships,
         }
 
     @classmethod
@@ -134,6 +151,14 @@ class KnowledgeEntry:
             version=data.get("version", 1),
             created_at=data.get("created_at", time.time()),
             updated_at=data.get("updated_at", time.time()),
+            source_hash=data.get("source_hash", ""),
+            retrieved_at=data.get("retrieved_at"),
+            author=data.get("author", ""),
+            publication_date=data.get("publication_date", ""),
+            license=data.get("license", ""),
+            content_hash=data.get("content_hash", ""),
+            embedding=data.get("embedding"),
+            relationships=data.get("relationships", []),
         )
 
 

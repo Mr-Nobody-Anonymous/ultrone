@@ -47,7 +47,7 @@ class TokenEmbedding:
 
     def forward(self, input_ids):
         """Embed token IDs."""
-        if TORCH_AVAILABLE:
+        if TORCH_AVAILABLE and hasattr(input_ids, "requires_grad"):
             return self.weight[input_ids]
         if hasattr(input_ids, "__iter__"):
             return [self.weight[i] for i in input_ids]
@@ -80,7 +80,7 @@ class LearnedPositionEmbedding:
 
     def forward(self, position_ids):
         """Get position embeddings for position IDs."""
-        if TORCH_AVAILABLE:
+        if TORCH_AVAILABLE and hasattr(position_ids, "requires_grad"):
             return self.weight[position_ids]
         if hasattr(position_ids, "__iter__"):
             return [self.weight[p] for p in position_ids]
@@ -110,7 +110,7 @@ def compute_rotary_embeddings(
     -------
     (cos, sin) tensors of shape (..., head_dim)
     """
-    if TORCH_AVAILABLE:
+    if TORCH_AVAILABLE and hasattr(positions, "requires_grad"):
         inv_freq = 1.0 / (theta ** (torch.arange(0, head_dim, 2, dtype=torch.float32) / head_dim))
         freqs = torch.outer(positions.to(torch.float32), inv_freq)
         emb = torch.cat((freqs, freqs), dim=-1)
@@ -148,7 +148,7 @@ def apply_rotary_pos_emb(q, k, cos, sin):
     -------
     (q_rot, k_rot)
     """
-    if TORCH_AVAILABLE:
+    if TORCH_AVAILABLE and hasattr(q, "requires_grad"):
         head_dim = q.size(-1)
         half = head_dim // 2
         q1, q2 = q[..., :half], q[..., half:]
@@ -221,12 +221,20 @@ class EmbeddingModule:
         -------
         hidden_states : tensor [..., seq_len, hidden_size]
         """
+        # If torch is available and input is a plain list, convert to tensor
+        # so the entire pipeline uses the torch path consistently.
+        if TORCH_AVAILABLE and not hasattr(input_ids, "requires_grad"):
+            try:
+                input_ids = torch.tensor(input_ids, dtype=torch.long)
+            except (ValueError, TypeError):
+                pass
+
         embeddings = self.token_embedding(input_ids)
 
         if position_ids is None:
-            if TORCH_AVAILABLE:
+            if TORCH_AVAILABLE and hasattr(input_ids, "requires_grad"):
                 position_ids = torch.arange(input_ids.size(-1), dtype=torch.long, device=input_ids.device)
-            else:
+            elif position_ids is None:
                 position_ids = list(range(len(input_ids)))
 
         if self.position_embedding is not None:

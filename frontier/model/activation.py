@@ -87,7 +87,8 @@ class ActivationFunction:
 
     def __call__(self, x):
         """Apply the activation function."""
-        if TORCH_AVAILABLE and self._torch_fn is not None:
+        # If input is a PyTorch tensor, use torch fn
+        if TORCH_AVAILABLE and hasattr(x, "requires_grad"):
             return self._torch_fn(x)
         # Pure-Python fallback for scalars / lists
         if hasattr(x, "__iter__") and not isinstance(x, (str, bytes)):
