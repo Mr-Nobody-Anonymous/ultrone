@@ -1674,3 +1674,260 @@ The biggest risks are:
 ---
 
 *Review completed. This assessment is brutally honest but constructively critical. ULTRONE has the potential to become a world-class platform with focused engineering effort over 18-24 months.*
+
+---
+
+# 7. Supplementary Review — Post-Initial-Review Implementations
+
+**Review Date:** 2026-08-05
+**Status:** The original review (2026-08-01) scored ULTRONE **4.5/10** as a research prototype and identified numerous critical gaps. Since then, a large volume of the missing/stub capabilities have been implemented. This supplementary review documents the newly added subsystems, maps them against the original gaps, and provides an updated assessment.
+
+> Note: The README architecture tree has not been fully updated to reflect these packages. The following sections document the actual modules present in the repository.
+
+---
+
+## 7.1 Cognitive Architecture — 15-Layer Autonomous AI
+
+### Purpose
+A unified, layered cognitive loop that orchestrates perception → awareness → world model → reasoning → planning → memory → action, tightly integrated with self-reflection, meta-learning, safety, and explainability.
+
+### Actual Modules (`cognitive/`)
+| Layer | File | Function |
+|-------|------|----------|
+| Types | `types.py` | Observation, SceneGraph, WorldState, DecisionTrace, Plan, Action |
+| Perception | `perception_layer.py` | Multimodal perception with probabilistic scene-graph fusion |
+| Situational Awareness | `situational_awareness_layer.py` | Entity tracking, event detection, novelty/anomaly detection |
+| World Model | `world_model_layer.py` | Predictive world state with entity dynamics and causal structure |
+| Active Inference | `active_inference_layer.py` | Uncertainty minimization and information gain |
+| Memory | `memory_layer.py` | Working, episodic, semantic, procedural, vector, graph memory |
+| Knowledge | `knowledge_layer.py` | Knowledge graph, vector search, hybrid retrieval, RAG |
+| Reasoning | `reasoning_layer.py` | 12 reasoning strategies (deductive, inductive, abductive, causal, etc.) |
+| Planning | `planning_layer.py` | 10 planner types (HTN, GOAP, MCTS, MPC, hierarchical, etc.) |
+| Prediction | `prediction_layer.py` | Ensemble prediction with confidence intervals |
+| Self-Reflection | `self_reflection_layer.py` | Post-task evaluation and improvement |
+| Meta-Learning | `meta_learning_layer.py` | Automatic architecture improvement |
+| Agentic | `agentic_layer.py` | Multi-agent collaboration (blackboard, consensus, coalitions) |
+| Learning | `learning_layer.py` | Continual learning (online, transfer, RL) |
+| Explainability | `explainability_layer.py` | Decision traces with evidence, alternatives, counterfactuals |
+| Safety | `safety_layer.py` | Continuous robustness monitoring with auto-fallback |
+
+### Facades
+- `cognitive/cognitive_agent.py` — unified autonomous cognitive agent
+- `cognitive/cognitive_loop.py` — multi-layer cognitive loop orchestration
+- `cognitive/integration.py` — unified facade/API
+- `cognitive/__init__.py` — full public API exports
+
+### Tests
+- `tests/test_cognitive_architecture.py` — 41 tests passing
+
+---
+
+## 7.2 Frontier Intelligence — Reasoning, Adaptation & Decision
+
+### Purpose
+Provider-agnostic frontier reasoning strategies and agent orchestration to make ULTRONE competitive on reasoning/coding/math benchmarks (GSM8K, MATH, MMLU, GPQA, HumanEval, MBPP, SWE-bench) through architecture, not benchmark hacks.
+
+### Actual Modules (`frontier/`)
+
+**Reasoning (`frontier/reasoning/`)**
+- `base.py` — Solver/Verifier Protocol, ReasoningStrategy base
+- `tree_of_thoughts.py` — Tree-of-Thoughts (BFS/DFS over thoughts)
+- `graph_of_thoughts.py` — Graph-of-Thoughts (DAG memories, aggregation)
+- `self_consistency.py` — N-sample majority / weighted voting
+- `multi_agent_debate.py` — multi-solver debate convergence
+- `constitutional_critique.py` — generate → critique → revise
+- `beam_search_reasoner.py` — beam search over reasoning steps
+
+**Adaptation (`frontier/adaptation/`)**
+- `critic_model.py` — heuristic or explicit critic
+- `reflection_engine.py` — solve → reflect → improve
+- `self_correction_engine.py` — solve → verify → correct
+
+**Agents (`frontier/agents/`)**
+- `planner.py` — decompose goals into plans, replan on failure
+- `executor.py` — execute plan steps with tool dispatch, stop-on-failure
+- `verifier.py` — oracle/check-function verification
+- `tool_router.py` — route to registered tools by capability
+
+**Decision (`frontier/decision/`)**
+- `bayesian_decision.py` — BayesianDecisionLayer, Belief update/abstain
+- `uncertainty.py` — UncertaintyEstimator (ensemble/variance/entropy)
+- `calibration.py` — ConfidenceCalibrator (ECE, temperature scaling)
+
+### Tests
+- `tests/test_frontier_reasoning.py` — 27 tests passing
+
+---
+
+## 7.3 Software Engineering Agent — Full SWE Stack
+
+### Purpose
+Autonomous coding agent with static/dynamic analysis, repository indexing, test generation, bug localization, and patch validation.
+
+### Actual Modules (`coding_agent/`)
+| File | Function |
+|------|----------|
+| `agent.py` | CodingAgent facade integrating the full stack; `TaskResult` preserved |
+| `ast_analyzer.py` | AST analysis (functions, classes, imports, methods) |
+| `repository_indexer.py` | Repository index (symbol → files) |
+| `symbol_search.py` | Symbol search and definition lookup |
+| `static_analysis.py` | Static issue detection (undefined names, bare except, syntax, unreachable, duplicate def) |
+| `test_runner.py` | Dynamic pytest/subprocess test runner with structured results |
+| `test_generator.py` | Unit test generation for functions/classes |
+| `bug_localizer.py` | Localize bugs from failing test tracebacks |
+| `patch_validator.py` | Validate patches against the test suite |
+
+### Tests
+- `tests/test_coding_agent.py` and `tests/test_coding_agent2.py` — 23 tests passing
+
+---
+
+## 7.4 Benchmark Harness — Frontier Benchmark Runners
+
+### Purpose
+Solver-driven evaluation harness with append-only history (never overwrites) and improvement graphs.
+
+### Actual Modules (`benchmarks/`)
+| File | Function |
+|------|----------|
+| `base.py` | Benchmark, BenchmarkConfig, BenchmarkResult (pre-existing) |
+| `registry.py` | BenchmarkRegistry (pre-existing) |
+| `harness.py` | BenchmarkHarness, BenchmarkProblem, BenchmarkRun, custom judge |
+| `runners.py` | gsm8k, mmlu, human_eval, mbpp runners + get_runner factory |
+| `history.py` | BenchmarkHistory, HistoricalRun (append-only ledger, best/latest/improvement/timeseries) |
+| `graph.py` | BenchmarkGraph — matplotlib trend plots |
+
+### Tests
+- `tests/test_benchmark_harness.py` — 20 tests passing
+
+---
+
+## 7.5 Additional Implemented Subsystems
+
+These packages were marked missing/stub in the original review and are now implemented.
+
+### `automl/`
+- `nas.py` — Neural Architecture Search
+- `auto_tuner.py` — Hyperparameter tuning
+- `auto_ensemble.py` — Automated ensemble construction
+- Tests: `tests/test_automl.py` — 3 tests
+
+### `mlops/`
+- experiment_tracker, model_registry, deployment, monitoring, drift_detection, feature_store, lineage, artifact_store
+- Tests: `tests/test_mlops.py`
+
+### `compiler/`
+- `graph_optimizer.py`, `operator_fusion.py`, `kernel_generator.py`
+- Tests: `tests/test_compiler.py` — 4 tests
+
+### `memory_cluster/`
+- `base.py`, `redis_backend.py`, `duckdb_backend.py` — ClusterBackend, ClusterRegistry
+- Tests: `tests/test_memory_cluster.py` — 3 tests
+
+### `security/`
+- `sandbox.py`, `permissions.py`, `secret_manager.py`
+- Tests: `tests/test_security.py` — 4 tests
+
+### `plugins/`
+- `marketplace/installer.py`, `marketplace/plugin_registry.py`
+- Tests: `tests/test_plugins.py` — 3 tests
+
+### `robotics/`
+- `robot_interface.py`, `controller.py` — RobotInterface, RobotState, RobotController
+- Tests: `tests/test_robotics.py` — 3 tests
+
+### `ultrone_os/`
+- `kernel.py`, `scheduler.py`, `service_registry.py`
+- Tests: `tests/test_ultrone_os.py` — 6 tests
+
+### `datasets/`
+- registry, downloader, preprocessing, augmentation, validation, synthetic_generator, versioning, metadata
+- Tests: `tests/test_datasets.py`
+
+### `simulation/`
+- `digital_twin.py`, `physics.py`, `environment_generator.py` — DigitalTwin, PhysicsEngine, EnvironmentGenerator
+- Tests: `tests/test_simulation.py` — 4 tests
+
+### `brain/models/` — Model Lifecycle
+- model_manager, quantization, distillation, pruning, exporter, converter, rollback (LoRA/PEFT, int8/fp16/int4, ONNX/TensorRT/GGUF)
+- Tests: `tests/test_model_lifecycle.py` — 18 tests
+
+### `brain/memory/` — Memory Compression
+- memory_index, forgetting, compression, summarization, importance, retrieval_optimizer
+- Tests: `tests/test_memory_compression.py` — 10 tests
+
+### `knowledge_engine/` — Knowledge Engine 2.0
+- knowledge_graph, ontology, semantic_memory, episodic_memory, vector_memory, long_term_memory, working_memory, procedural_memory, project_memory, experiment_memory, research_memory, algorithm_memory, cross_reference, entity_linking, consolidation, citation_db, rag, memory_manager
+- Tests: `tests/test_kg2.py`, `tests/test_knowledge_engine.py`
+
+### `research_division/` — Research Agents
+- research_scout, paper_analyzer, algorithm_extractor, implementation_planner, code_generator, benchmark_agent, experiment_manager, knowledge_graph_builder, citation_manager, memory_manager, quality_reviewer, safety_validator, performance_optimizer, documentation_writer, release_manager, coordinator
+- Tests: `tests/test_research_division.py`
+
+### `self_improvement/`
+- telemetry, hypothesis_generator, literature_search, improvement_loop
+- Tests: `tests/test_self_improvement.py`
+
+### `research_db/`
+- JSON/SQLite-backed store with version history, audit trail (papers, experiments, benchmarks, implementation plans)
+- Tests: `tests/test_research_db.py`
+
+### `brain/perception/situational_awareness/` — Situational Awareness
+- 33 modules implementing the Endsley 3-level model (perception, comprehension, projection)
+- Tests: `tests/test_situational_awareness.py` — 54 tests; `tests/benchmark_situational_awareness.py`
+
+### `brain/learning/world_models/`
+- `dreamer_v3.py` — DreamerV3-style world model
+- Tests: `tests/test_dreamer_v3.py`, `tests/test_learned_world_model.py`
+
+---
+
+## 7.6 Updated Missing Capabilities Matrix
+
+The following originally-listed gaps have now been **addressed** (at least partially):
+
+| Original Capability | Status | Where |
+|---------------------|--------|-------|
+| World Models | Implemented | `brain/learning/world_models/dreamer_v3.py`, `brain/learning/world_model.py`, `cognitive/world_model_layer.py`, `simulation/digital_twin.py` |
+| Multi-Agent RL | Implemented (wrappers + native) | `brain/learning/rl/` (MADDPG, MARL, QMIX, VDN, self_play, maddpg) |
+| Database & Persistence | Implemented | `research_db/` (JSON + SQLite, versioned) |
+| Testing | Significantly expanded | 600+ tests across the suite |
+| Causal AI | Implemented | `brain/reasoning/decision_intelligence/`, `cognitive/reasoning_layer.py` |
+| Uncertainty Estimation | Implemented | `frontier/decision/uncertainty.py`, `brain/xai/confidence_calibration.py` |
+| Curriculum Learning | Implemented | `brain/learning/rl/curriculum.py` |
+| Continual/Meta/Online Learning | Implemented | `brain/learning/meta_learning/` |
+| Federated Learning | Implemented | `brain/learning/distributed/federated.py` |
+| Explainability | Expanded | `brain/xai/`, `cognitive/explainability_layer.py` |
+| Benchmarking | Implemented | `benchmarks/` harness + runners + history |
+| Self-Play | Implemented | `brain/learning/rl/self_play.py` |
+| Generative AI | Implemented | `brain/generative/` (diffusion, flows, transformer, VAE) |
+| LLM Integration (partial) | Present | `brain/learning/llm_commander.py`; provider-agnostic hooks in `frontier/` |
+
+---
+
+## 7.7 Updated Architecture Score (Supplementary)
+
+| Category | Original Score | Updated | Rationale |
+|----------|---------------|---------|-----------|
+| AI Sophistication | 6/10 | 7.5/10 | Added frontier reasoning, cognitive 15-layer, world models, generative AI |
+| Software Architecture | 4/10 | 6/10 | Compiler, distributed, memory cluster, security, plugins, research DB |
+| Research Value | 7/10 | 8/10 | Benchmark harness, reproducibility, experiment tracking, self-improvement loop |
+| Extensibility | 5/10 | 6.5/10 | Plugin SDK, plugin marketplace, provider-agnostic protocols |
+| Testing | (partial) | 7/10 | 600+ tests across 45+ suites |
+| Modularity | 7/10 | 8/10 | Clear package boundaries; cognitive layering; frontier protocols |
+
+**Updated Overall: ~6.5/10** — Transitioning from "algorithm zoo" toward a cohesive autonomous research platform. The codebase now has production-grade research infrastructure, strong modularity, and modern AI capability, though deep integration across all layers and GPU/distributed runtime scaling remain ongoing work.
+
+---
+
+## 7.8 Remaining High-Value Gaps
+
+1. **Deep Integrations** — Wire `frontier/` reasoning strategies into the `cognitive/` loop and `brain/` reward loops for end-to-end behavior.
+2. **Real LLM Providers** — Connect OpenAI/HF/Anthropic into the Solver/Verifier protocols and run real benchmark prompts (GSM8K, HumanEval, MMLU).
+3. **GPU/Distributed Runtime Scaling** — Vectorize simulation, add Ray distributed rollouts, GPU inference.
+4. **Physics Realism** — Move beyond the 2D grid toward continuous/3D physics where mission-critical.
+5. **Consolidated README** — Update the architecture tree to include all the packages documented in this supplementary review.
+
+---
+
+*Supplementary review completed. The original "algorithm zoo" critique is now substantially addressed by a layered cognitive architecture, a provider-agnostic frontier reasoning layer, a full SWE automation stack, and a persistent, append-only benchmark harness.*
