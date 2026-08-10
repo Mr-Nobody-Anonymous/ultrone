@@ -1,6 +1,13 @@
 # Copyright (c) Ultrone Contributors. All rights reserved.
 """Agent modules for all domains."""
 
+# Import factories (they auto-register on import)
+from .air import factory as air_factory
+from .land import factory as land_factory
+from .sea import factory as sea_factory
+from .space import factory as space_factory
+from .cyber import factory as cyber_factory
+
 # Air domain agents
 from .air.drone_agent import DroneAgent
 from .air.fighter_agent import FighterAgent
