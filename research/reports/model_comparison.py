@@ -58,6 +58,25 @@ TRACKED_METRICS = [
     "regression_rate",
 ]
 
+HIGHER_IS_BETTER = {
+    "accuracy",
+    "reasoning_accuracy",
+    "calibration",
+    "retrieval_accuracy",
+    "coding_success",
+    "tool_use_success",
+    "robustness_score",
+}
+
+LOWER_IS_BETTER = {
+    "hallucination_rate",
+    "latency_ms",
+    "memory_usage_gb",
+    "gpu_utilization",
+    "cost_per_1000_tokens",
+    "regression_rate",
+}
+
 
 class ModelComparisonReport:
     """Generates comparison reports between candidate and baseline models."""
@@ -145,7 +164,7 @@ class ModelComparisonReport:
                     status = "Baseline"
             else:
                 status = "Baseline"
-            regression = "—"
+            regression = "-"
             if model is not candidate and len(all_models) > 1:
                 baseline_model = all_models[1] if len(all_models) > 1 else None
                 if baseline_model:
@@ -191,7 +210,7 @@ class ModelComparisonReport:
             if regressions:
                 lines.append("\n**Regressions:**\n")
                 for metric, change in regressions.items():
-                    lines.append(f"- **{metric}**: {change:+.4f} ⚠️")
+                    lines.append(f"- **{metric}**: {change:+.4f} [WARN]")
             else:
                 lines.append("\nNo regressions found.\n")
 
@@ -204,9 +223,9 @@ class ModelComparisonReport:
         final_improvements = self._compute_improvements(candidate.metrics, all_models[1].metrics) if len(all_models) > 1 else {}
         approved = len(final_regressions) == 0 and len(final_improvements) > 0
         if approved:
-            lines.append("**APPROVED** — Candidate shows improvement with no regressions.")
+            lines.append("**APPROVED** - Candidate shows improvement with no regressions.")
         else:
-            lines.append("**REQUIRES REVIEW** — Candidate needs further evaluation before deployment.")
+            lines.append("**REQUIRES REVIEW** - Candidate needs further evaluation before deployment.")
 
         # Metadata
         lines.append("\n## Metadata\n")
@@ -237,19 +256,35 @@ class ModelComparisonReport:
 
     def _compute_improvements(self, candidate: Dict[str, float], baseline: Dict[str, float]) -> Dict[str, float]:
         """Compute metric improvements (candidate - baseline)."""
-        return {
-            m: candidate.get(m, 0) - baseline.get(m, 0)
-            for m in TRACKED_METRICS
-            if m in candidate and m in baseline and candidate[m] > baseline[m]
-        }
+        improvements: Dict[str, float] = {}
+        for metric in TRACKED_METRICS:
+            if metric not in candidate or metric not in baseline:
+                continue
+            cand = candidate[metric]
+            base = baseline[metric]
+            if metric in LOWER_IS_BETTER:
+                if cand < base:
+                    improvements[metric] = base - cand
+            else:
+                if cand > base:
+                    improvements[metric] = cand - base
+        return improvements
 
     def _compute_regressions(self, candidate: Dict[str, float], baseline: Dict[str, float]) -> Dict[str, float]:
         """Compute metric regressions (candidate < baseline)."""
-        return {
-            m: candidate.get(m, 0) - baseline.get(m, 0)
-            for m in TRACKED_METRICS
-            if m in candidate and m in baseline and candidate[m] < baseline[m]
-        }
+        regressions: Dict[str, float] = {}
+        for metric in TRACKED_METRICS:
+            if metric not in candidate or metric not in baseline:
+                continue
+            cand = candidate[metric]
+            base = baseline[metric]
+            if metric in LOWER_IS_BETTER:
+                if cand > base:
+                    regressions[metric] = base - cand
+            else:
+                if cand < base:
+                    regressions[metric] = cand - base
+        return regressions
 
     def list_reports(self) -> List[str]:
         """List all generated report files."""

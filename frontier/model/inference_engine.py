@@ -21,6 +21,8 @@ try:
 except ImportError:  # pragma: no cover
     TORCH_AVAILABLE = False
 
+from runtime import ModelRuntime, Runtime, RuntimeConfig
+
 from .decoding import Decoder, DecodingConfig, DecodingResult
 from .model_config import ModelConfig, QuantizationType
 
@@ -93,6 +95,17 @@ class InferenceEngine:
         self._total_calls = 0
         self._total_tokens = 0
         self._total_latency = 0.0
+        self.runtime = Runtime(
+            RuntimeConfig(
+                device=getattr(config, "device", "auto") or "auto",
+                precision=getattr(config, "torch_dtype", "auto") or "auto",
+                quantization=getattr(config, "quantization", "auto") or "auto",
+                max_batch_size=max(1, getattr(config, "max_batch_size", 8) or 8),
+            )
+        )
+        self.model_runtime = ModelRuntime(self.runtime)
+        self._model_key = getattr(model, "model_id", type(model).__name__)
+        self.model_runtime.load(self._model_key, self.model, warmup=False)
 
     # ------------------------------------------------------------------
     # Decoding
@@ -105,8 +118,13 @@ class InferenceEngine:
 
     def _next_token_logits(self, input_ids: List[int]) -> List[float]:
         """Compute logits for the next token given a sequence."""
-        # Call the model's forward with the full sequence
-        output = self.model(input_ids)
+        # Call the model's forward with the full sequence through the shared runtime
+        output = self.model_runtime.generate(
+            self._model_key,
+            input_ids,
+            model=self.model,
+            batch_size=None,
+        )
         # Output could be logits directly, or (logits, ...) tuple, or
         # an object with a logits attribute.
         if isinstance(output, tuple):
@@ -169,7 +187,10 @@ class InferenceEngine:
 
         # Decode output tokens to text
         output_ids = result.output_ids[len(prompt_ids):]
-        output_text = self.tokenizer.decode(output_ids)
+        try:
+            output_text = self.tokenizer.decode(output_ids)
+        except TypeError:
+            output_text = ""
 
         latency = time.time() - start
         num_tokens = len(output_ids)
@@ -258,6 +279,9 @@ class InferenceEngine:
             "avg_latency": self._total_latency / max(1, self._total_calls),
             "avg_tokens_per_second": self._total_tokens / max(0.001, self._total_latency),
             "batch_size": self._batch_size,
+            "runtime_backend": self.runtime.get_backend(),
+            "runtime_device": self.runtime.get_device(),
+            "runtime_precision": self.runtime._dtype,
             "quantization": self.config.quantization.value,
         }
 
