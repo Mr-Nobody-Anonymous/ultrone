@@ -89,7 +89,8 @@ class AdapterManager:
     def _attach_adapters(self) -> None:
         """Attach adapter modules to target layers."""
         target_names = self.config.adapter_layers or []
-        for name, module in self.model.named_modules():
+        modules = list(self.model.named_modules())
+        for name, module in modules:
             if not target_names or name.split(".")[-1] in target_names:
                 if isinstance(module, (nn.Linear, nn.LayerNorm)):
                     input_dim = module.in_features if hasattr(module, "in_features") else module.normalized_shape[0]

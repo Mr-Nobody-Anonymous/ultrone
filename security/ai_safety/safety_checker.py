@@ -107,9 +107,11 @@ class SafetyChecker:
         self._rate_limit = self.config.get("rate_limit", 100)  # requests per minute
         self._request_timestamps: List[float] = []
         self._violation_history: List[SafetyCheckResult] = []
+        self._total_checks = 0
 
     def check_input(self, text: str, context: Optional[Dict[str, Any]] = None) -> SafetyCheckResult:
         """Check a user input for safety violations."""
+        self._total_checks += 1
         violations: List[SafetyViolation] = []
         warnings: List[str] = []
         context = context or {}
@@ -146,6 +148,7 @@ class SafetyChecker:
 
     def check_output(self, text: str, context: Optional[Dict[str, Any]] = None) -> SafetyCheckResult:
         """Check a model output for safety violations."""
+        self._total_checks += 1
         violations: List[SafetyViolation] = []
         warnings: List[str] = []
 
@@ -184,6 +187,7 @@ class SafetyChecker:
 
         Restricted tools require explicit user approval.
         """
+        self._total_checks += 1
         violations: List[SafetyViolation] = []
         warnings: List[str] = []
 
@@ -203,6 +207,7 @@ class SafetyChecker:
 
     def check_rate_limit(self, user_id: str) -> SafetyCheckResult:
         """Check if the rate limit has been exceeded."""
+        self._total_checks += 1
         now = time.time()
         # Clean old timestamps (older than 60 seconds)
         self._request_timestamps = [
@@ -224,6 +229,7 @@ class SafetyChecker:
 
     def check_provenance(self, source: str, license: str, allowed_sources: Optional[List[str]] = None) -> SafetyCheckResult:
         """Verify that a data source meets provenance requirements."""
+        self._total_checks += 1
         violations: List[SafetyViolation] = []
         warnings: List[str] = []
 
@@ -250,6 +256,7 @@ class SafetyChecker:
         This is the critical safety gate: production models must NEVER be
         modified without going through the full improvement pipeline.
         """
+        self._total_checks += 1
         violations: List[SafetyViolation] = []
         warnings: List[str] = []
 
@@ -284,7 +291,7 @@ class SafetyChecker:
         ]
 
     def get_stats(self) -> Dict[str, Any]:
-        total_checks = len(self._violation_history)
+        total_checks = self._total_checks
         failed_checks = sum(1 for r in self._violation_history if not r.passed)
         return {
             "total_checks": total_checks,

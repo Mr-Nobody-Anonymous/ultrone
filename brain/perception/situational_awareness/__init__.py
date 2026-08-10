@@ -15,6 +15,7 @@ with dependency injection, plugin-ready protocols, and GPU-ready abstractions.
 
 from __future__ import annotations
 
+from ..legacy_situational_awareness import SituationalAwareness
 from .active_perception import ActivePerception, ActivePerceptionConfig, PerceptionAction
 from .anomaly_detector import AnomalyDetector, AnomalyDetectorConfig
 from .attention_manager import AttentionAllocation, AttentionManager, AttentionManagerConfig
@@ -174,6 +175,7 @@ __all__ = [
     "PredictionHorizon",
     "RelationshipType",
     "utc_now",
+    "SituationalAwareness",
     # Events
     "EventBus",
     "EventPriority",

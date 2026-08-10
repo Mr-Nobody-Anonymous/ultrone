@@ -258,17 +258,42 @@ class FeedbackTrainingPipeline:
         """
         improvements = {}
         regressions = []
+        higher_is_better = {
+            "accuracy",
+            "reasoning_accuracy",
+            "calibration",
+            "retrieval_accuracy",
+            "tool_use_success",
+            "robustness_score",
+        }
+        lower_is_better = {
+            "latency_ms",
+            "memory_usage_gb",
+            "cost_per_1000_tokens",
+            "regression_rate",
+        }
         for metric, candidate_val in candidate_metrics.items():
             baseline_val = baseline_metrics.get(metric, 0.0)
-            if candidate_val > baseline_val:
-                improvements[metric] = candidate_val - baseline_val
-            elif candidate_val < baseline_val:
-                regressions.append({
-                    "metric": metric,
-                    "candidate": candidate_val,
-                    "baseline": baseline_val,
-                    "regression": baseline_val - candidate_val,
-                })
+            if metric in lower_is_better:
+                if candidate_val < baseline_val:
+                    improvements[metric] = baseline_val - candidate_val
+                elif candidate_val > baseline_val:
+                    regressions.append({
+                        "metric": metric,
+                        "candidate": candidate_val,
+                        "baseline": baseline_val,
+                        "regression": candidate_val - baseline_val,
+                    })
+            elif metric in higher_is_better or metric not in lower_is_better:
+                if candidate_val > baseline_val:
+                    improvements[metric] = candidate_val - baseline_val
+                elif candidate_val < baseline_val:
+                    regressions.append({
+                        "metric": metric,
+                        "candidate": candidate_val,
+                        "baseline": baseline_val,
+                        "regression": baseline_val - candidate_val,
+                    })
 
         # Require no major regressions and at least one improvement
         approved = len(regressions) == 0 and len(improvements) > 0

@@ -1,0 +1,37 @@
+{
+  "paper_id": "P-85ec2da9bb74",
+  "title": "Mixture of Experts: Training Sparse Networks",
+  "authors": [
+    "Shazeer et al."
+  ],
+  "venue": "arXiv",
+  "publication_date": null,
+  "citations": 0,
+  "abstract": "We propose a mixture of experts layer that activates only a subset of experts.",
+  "summary": "",
+  "algorithms": [],
+  "equations": [],
+  "architectures": [],
+  "datasets": [],
+  "hyperparameters": {},
+  "limitations": [],
+  "future_work": [],
+  "implementation_ideas": [],
+  "related_papers": [],
+  "github_repositories": [],
+  "benchmark_results": {},
+  "confidence_score": 0.6,
+  "knowledge_graph_links": [],
+  "arxiv_id": "arXiv:1701.06538",
+  "doi": "",
+  "url": "",
+  "metadata": {
+    "source": "arxiv_synthetic",
+    "published": "2024-01-01",
+    "license": "arxiv-standard",
+    "synthetic": true
+  },
+  "version": 1,
+  "created_at": 1786356770.3399627,
+  "updated_at": 1786356770.3399627
+}

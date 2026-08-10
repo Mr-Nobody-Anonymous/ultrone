@@ -286,7 +286,7 @@ class PerceptionRouter:
         """Infer modality from input data type/extension."""
         if isinstance(input_data, str):
             # Check file extension
-            ext = input_data.rsplit(".", 1)[-1].lower() if "." in input_data else ""
+            ext = "." + input_data.rsplit(".", 1)[-1].lower() if "." in input_data else ""
             if ext in (".txt", ".md", ".py", ".rs", ".go", ".cpp", ".json"):
                 return Modality.TEXT
             elif ext in (".pdf",):

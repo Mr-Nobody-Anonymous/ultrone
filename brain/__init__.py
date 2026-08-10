@@ -3,8 +3,7 @@
 
 from __future__ import annotations
 
-# Import Orchestrator at module level - safe because it uses late imports internally
-from .orchestrator import Orchestrator
+from typing import Any
 
 __all__ = [
     "Orchestrator",
@@ -31,9 +30,11 @@ __all__ = [
     "StrategicPlanner", "StrategicObjective",
 ]
 
-# Late imports to avoid circular dependencies
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     """Lazy import of brain components to avoid circular imports."""
+    if name == "Orchestrator":
+        from .orchestrator import Orchestrator
+        return Orchestrator
     if name == "Gene":
         from .learning.genome import Gene
         return Gene

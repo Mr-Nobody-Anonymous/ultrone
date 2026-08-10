@@ -42,29 +42,33 @@ class LoRAAdapter(nn.Module):
         self._matched_modules: Dict[str, nn.Linear] = {}
         self._match_linear_modules()
 
+    @staticmethod
+    def _safe_name(name: str) -> str:
+        return name.replace(".", "_") or "root"
+
     def _match_linear_modules(self) -> None:
         for name, module in self.model.named_modules():
             if not isinstance(module, nn.Linear):
                 continue
+            key = self._safe_name(name)
             param_name = name.split(".")[-1] if name else "weight"
             if (not self._target_modules or param_name in self._target_modules
                     or "weight" in self._target_modules):
                 r = self.config.r
-                self.lora_A[name] = nn.Parameter(torch.empty(r, module.in_features))
-                self.lora_B[name] = nn.Parameter(torch.empty(module.out_features, r))
-                nn.init.kaiming_uniform_(self.lora_A[name], a=1.0)
-                nn.init.zeros_(self.lora_B[name])
-                self._matched_modules[name] = module
+                self.lora_A[key] = nn.Parameter(torch.empty(r, module.in_features))
+                self.lora_B[key] = nn.Parameter(torch.empty(module.out_features, r))
+                nn.init.kaiming_uniform_(self.lora_A[key], a=1.0)
+                nn.init.zeros_(self.lora_B[key])
+                self._matched_modules[key] = module
 
     def forward(self, *args, **kwargs):
         return self.model(*args, **kwargs)
 
-    def get_trainable_parameters(self) -> List[str]:
-        trainable = []
-        for name, param in self.named_parameters():
-            if param.requires_grad:
-                trainable.append(name)
-        return trainable
+    def get_trainable_parameters(self) -> List[nn.Parameter]:
+        params = list(self.model.parameters())
+        params.extend(self.lora_A.parameters())
+        params.extend(self.lora_B.parameters())
+        return params
 
     def merge_and_unload(self) -> nn.Module:
         for name, module in self._matched_modules.items():
