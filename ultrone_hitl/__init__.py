@@ -37,6 +37,13 @@ from ultrone_hitl.decision_workflow import (
     UnauthorizedActionError,
     UnknownDecisionError,
 )
+from ultrone_hitl.authentication import (
+    AuthenticationError,
+    Authenticator,
+    DevelopmentAuthenticator,
+    Principal,
+    UnauthenticatedError,
+)
 from ultrone_hitl.pipeline_bridge import HITLBridge, validate_lifecycle_history
 
 __all__ = [
@@ -55,6 +62,11 @@ __all__ = [
     "UnknownDecisionError",
     "HITLBridge",
     "validate_lifecycle_history",
+    "Principal",
+    "AuthenticationError",
+    "UnauthenticatedError",
+    "Authenticator",
+    "DevelopmentAuthenticator",
 ]
 
 # Convenience re-export of the ship-ready FastAPI app (import lazily so that

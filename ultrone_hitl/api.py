@@ -35,6 +35,14 @@ DEFAULT_STORE_PATH = (
     Path(__file__).resolve().parent.parent / "data" / "hitl_audit" / "audit.jsonl"
 )
 
+# Annotation-only import: keeps ``import ultrone_hitl`` working without
+# fastapi installed, while making ``Request`` resolvable to pydantic when
+# routes are registered inside create_app().
+try:  # pragma: no cover - exercised only without fastapi
+    from fastapi import Request  # noqa: F401
+except ImportError:  # pragma: no cover
+    Request = Any  # type: ignore[assignment,misc]
+
 
 # --------------------------------------------------------------------------- #
 # HTTP wire DTOs (marrow wrappers around the canonical decision model)
@@ -85,12 +93,36 @@ def _to_status(exc: Exception) -> int:
 def create_app(
     store: Optional[AuditStore] = None,
     authorizer: Optional[Authorizer] = None,
+    authenticator: Optional[Any] = None,
 ) -> Any:
-    from fastapi import FastAPI, HTTPException
+    from fastapi import FastAPI, HTTPException, Request
 
     store = store or JSONLAuditStore(DEFAULT_STORE_PATH)
     authorizer = authorizer or Authorizer()
-    workflow = DecisionWorkflow(store=store, authorizer=authorizer)
+    workflow = DecisionWorkflow(
+        store=store, authorizer=authorizer, authenticator=authenticator,
+    )
+
+    def _credential(request: Request, req_actor: str) -> str:
+        """Resolve the request credential -- NEVER the body's say-so alone.
+
+        Priority: ``X-ULTRONE-Subject`` header (the authenticated wire
+        credential) > legacy body ``actor`` field. When a header is
+        present and disagrees with the body value, the request is rejected
+        as an identity forgery attempt before any authorization runs.
+        """
+        header_subject = request.headers.get("x-ultrone-subject")
+        if header_subject:
+            if req_actor and header_subject != req_actor:
+                raise HTTPException(
+                    status_code=403,
+                    detail=(
+                        "identity mismatch: body actor does not match "
+                        "authenticated credential"
+                    ),
+                )
+            return header_subject
+        return req_actor
 
     app = FastAPI(
         title="ULTRONE HITL + Decision Control API",
@@ -100,52 +132,69 @@ def create_app(
 
     # -- submit a decision for human review ------------------------------ #
     @app.post("/api/human/decisions")
-    def submit(req: SubmitRequest):
+    def submit(req: SubmitRequest, request: Request):
         try:
             trace = trace_from_dict(req.trace)
             view = workflow.submit(
-                trace, req.actor, scenario_id=req.scenario_id or "",
+                trace, _credential(request, req.actor),
+                scenario_id=req.scenario_id or "",
                 summary=req.summary or "",
             )
             return {"decision": view.to_dict()}
+        except HTTPException:
+            raise
         except Exception as exc:  # noqa: BLE001 - uniform HTTP mapping
             raise HTTPException(status_code=_to_status(exc), detail=str(exc))
 
     # -- approve ---------------------------------------------------------- #
     @app.post("/api/human/decisions/{decision_id}/approve")
-    def approve(decision_id: str, req: ActorActionRequest):
+    def approve(decision_id: str, req: ActorActionRequest, request: Request):
         try:
-            view = workflow.approve(decision_id, req.actor, note=req.note or "")
+            view = workflow.approve(
+                decision_id, _credential(request, req.actor),
+                note=req.note or "",
+            )
             return {"decision": view.to_dict()}
+        except HTTPException:
+            raise
         except Exception as exc:  # noqa: BLE001
             raise HTTPException(status_code=_to_status(exc), detail=str(exc))
 
     # -- reject ----------------------------------------------------------- #
     @app.post("/api/human/decisions/{decision_id}/reject")
-    def reject(decision_id: str, req: RejectRequest):
+    def reject(decision_id: str, req: RejectRequest, request: Request):
         try:
-            view = workflow.reject(decision_id, req.actor, reason=req.reason)
+            view = workflow.reject(
+                decision_id, _credential(request, req.actor), reason=req.reason,
+            )
             return {"decision": view.to_dict()}
+        except HTTPException:
+            raise
         except Exception as exc:  # noqa: BLE001
             raise HTTPException(status_code=_to_status(exc), detail=str(exc))
 
     # -- override / modify ------------------------------------------------ #
     @app.post("/api/human/decisions/{decision_id}/override")
-    def override(decision_id: str, req: OverrideRequest):
+    def override(decision_id: str, req: OverrideRequest, request: Request):
         try:
             parent, child = workflow.override(
-                decision_id, req.actor, req.target, note=req.note or ""
+                decision_id, _credential(request, req.actor), req.target,
+                note=req.note or "",
             )
             return {"parent": parent.to_dict(), "child": child.to_dict()}
+        except HTTPException:
+            raise
         except Exception as exc:  # noqa: BLE001
             raise HTTPException(status_code=_to_status(exc), detail=str(exc))
 
     # -- execute ---------------------------------------------------------- #
     @app.post("/api/human/decisions/{decision_id}/execute")
-    def execute(decision_id: str, req: ActorActionRequest):
+    def execute(decision_id: str, req: ActorActionRequest, request: Request):
         try:
-            view = workflow.execute(decision_id, req.actor)
+            view = workflow.execute(decision_id, _credential(request, req.actor))
             return {"decision": view.to_dict()}
+        except HTTPException:
+            raise
         except Exception as exc:  # noqa: BLE001
             raise HTTPException(status_code=_to_status(exc), detail=str(exc))
 
@@ -186,4 +235,5 @@ def create_app(
     app.state.store = store
     app.state.authorizer = authorizer
     app.state.workflow = workflow
+    app.state.authenticator = workflow.authenticator
     return app

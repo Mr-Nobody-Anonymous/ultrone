@@ -36,13 +36,13 @@
       }
     },
     "human_override": {
-      "fingerprint": "43ed8b05251016a105b2b9fdd251ab3a54a7bfc4f4f9c32b7c3255bf5f60b2e4",
+      "fingerprint": "c8d2fbb12efab88a3c4804f12ddf561bb2246efdade32ef3524c89d979c2cf3d",
       "metrics": {
         "candidates_evaluated": 18,
         "feeds_generated": 18,
         "feeds_received": 16,
         "human_rejections": 0,
-        "n_decisions": 6,
+        "n_decisions": 7,
         "noop_steps": 0,
         "overrides": 1,
         "roe_violations": 0,

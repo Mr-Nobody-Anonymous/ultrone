@@ -54,6 +54,10 @@ logger = logging.getLogger("Ultrone.Core.Pipeline")
 class PendingDecisionError(Exception):
     """A decision referenced for HITL resolution is not pending here."""
 
+
+class OverrideRejectedError(Exception):
+    """The independent SafetyGate refused a supervisor-proposed override."""
+
 # COA phases that map to executable environment actions.
 EXECUTABLE_PHASES = ("strike", "jam", "move", "resupply")
 
@@ -449,6 +453,121 @@ class DecisionPipeline:
             trace=trace, order=order, verdict=verdict,
             reward=reward, done=done, info=info,
         )
+
+    def override_pending(
+        self,
+        decision_id: str,
+        actor: str,
+        target_order: Dict[str, Any],
+        note: str = "",
+    ) -> str:
+        """Supervisor override through the canonical machinery (Sprint C fix).
+
+        The parent becomes terminal-OVERRIDDEN (validated against the
+        allow-list; it can never execute afterwards). The HITL layer spawns
+        and audits a child proposal; that child is materialized here as a
+        first-class pipeline decision -- its trace is taken verbatim from
+        the audit store's child proposal, so the pipeline and the audit log
+        hold byte-identical content. Execution of the child then flows
+        exclusively through :meth:`execute_approved`, the same path as any
+        ordinary approved decision. Returns the child decision id.
+        """
+        if self.hitl_bridge is None:
+            raise RuntimeError("override_pending requires a HITL bridge")
+        if decision_id not in self._pending:
+            raise PendingDecisionError(
+                f"decision {decision_id} is not pending in this pipeline"
+            )
+        from core.lifecycle import DecisionLifecycle, LifecycleState
+
+        # Sprint C: the independent SafetyGate re-certifies the SUPERVISOR's
+        # order before anything is created. The gate -- not the proposer,
+        # human or AI -- decides executability; an override can never relax
+        # a constraint the planner itself was refused under.
+        candidate = ActionOrder(
+            action=str(target_order.get("action", "")),
+            asset_type=str(target_order.get("asset_type", "drones")),
+            target=(
+                tuple(target_order["target"])
+                if target_order.get("target") is not None
+                else None
+            ),
+            source_coa_id=f"override-candidate-{decision_id}",
+        )
+        ws = self._trace_by_id(decision_id).world_state
+        gate_estimate = WorldEstimate(
+            contacts=list(ws.get("contacts") or []),
+            primary_target_position=(
+                tuple(ws["primary_target_position"])
+                if ws.get("primary_target_position") else None
+            ),
+            primary_target_confidence=float(
+                ws.get("primary_target_confidence", 0.0) or 0.0
+            ),
+            n_feeds_generated=int(ws.get("n_feeds_generated", 0) or 0),
+            n_feeds_received=int(ws.get("n_feeds_received", 0) or 0),
+        )
+        gate_verdict = self.safety_gate.evaluate(
+            candidate, gate_estimate, self._asset_snapshot(
+                Observation.from_env(self._obs, self._tick),
+                candidate.asset_type,
+            ),
+        )
+        if not gate_verdict.approved:
+            raise OverrideRejectedError(
+                f"safety gate rejected supervisor override: {gate_verdict.reason}"
+            )
+
+        _, verdict = self._pending[decision_id]
+        parent_trace = self._trace_by_id(decision_id)
+
+        # Validate the lifecycle transition BEFORE touching any state.
+        parent_lc = DecisionLifecycle(decision_id)
+        parent_lc._history = [
+            LifecycleState(s) for s in parent_trace.execution["lifecycle"]
+        ]
+        parent_lc.advance("HUMAN_DECISION")
+        parent_lc.advance("OVERRIDDEN")  # terminal; REJECTED-style dead end
+
+        # Audit-layer transition: parent OVERRIDDEN, audited child proposal.
+        parent_view, child_view = self.hitl_bridge.override(
+            decision_id, actor=actor, target=target_order, note=note,
+        )
+
+        # Seal the parent trace as terminal-OVERRIDDEN.
+        parent_trace.execution["lifecycle"] = parent_lc.as_list()
+        parent_trace.execution["awaiting_approval"] = False
+        parent_trace.execution["superseded_by"] = child_view.decision_id
+        del self._pending[decision_id]
+
+        # Materialize the child from the AUDIT store's own proposal so the
+        # pipeline-side trace matches the persisted record exactly.
+        src = child_view.trace.to_dict()
+        child_trace = DecisionTrace(
+            decision_id=src["decision_id"],
+            episode_id=src["episode_id"],
+            tick=src["tick"],
+            sensing=dict(src.get("sensing") or {}),
+            perception=dict(src.get("perception") or {}),
+            world_state=dict(src.get("world_state") or {}),
+            planning=dict(src.get("planning") or {}),
+            safety=dict(src.get("safety") or {}),
+            execution=dict(src.get("execution") or {}),
+            outcome=dict(src.get("outcome") or {}),
+        )
+        order = ActionOrder(
+            action=str(target_order.get("action", "")),
+            asset_type=str(target_order.get("asset_type", "drones")),
+            target=(
+                tuple(target_order["target"])
+                if target_order.get("target") is not None
+                else None
+            ),
+            source_coa_id=f"override-of-{decision_id}",
+        )
+        self.traces.append(child_trace)
+        self._pending[child_view.decision_id] = (order, verdict)
+        return child_view.decision_id
 
     def reject_pending(self, decision_id: str, actor: str, reason: str) -> DecisionTrace:
         """Terminal refusal: REJECTED decisions can never execute."""

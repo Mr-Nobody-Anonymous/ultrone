@@ -279,6 +279,73 @@ class TestExactlyOneCanonicalTrace:
             assert t["execution"]["lifecycle"][0] == "SENSE"
             assert validate_lifecycle_history(t["execution"]["lifecycle"])
 
+
+class TestOverrideCanonicalPath:
+    """Sprint C-P1: overrides use the exact canonical execution machinery.
+
+    Regression guard for the Sprint B finding where the benchmark executed
+    an overridden child directly against the environment, bypassing
+    ``pipeline._pending`` bookkeeping.
+    """
+
+    TARGET = {"action": "move", "asset_type": "drones", "target": [50, 50]}
+
+    def _setup(self, seed=9):
+        bridge, _ = _make_bridge()
+        bridge.workflow.authorizer.register("sup1", Role.SUPERVISOR)
+        p = _gated_pipeline(bridge, seed=seed)
+        p.reset_episode()
+        for _ in range(10):
+            result = p.step()
+            if result.info.get("deferred_decision"):
+                return bridge, p, result.info["deferred_decision"]
+        raise AssertionError("no deferrable decision found")
+
+    def test_parent_terminal_and_unexecutable(self):
+        bridge, p, parent_id = self._setup()
+        child_id = p.override_pending(parent_id, "sup1", self.TARGET)
+
+        parent_trace = p._trace_by_id(parent_id)
+        assert parent_trace.execution["lifecycle"][-1] == "OVERRIDDEN"
+        assert bridge.state_of(parent_id) == "OVERRIDDEN"
+        assert parent_id not in p._pending
+
+        # Parent can never execute through any path.
+        with pytest.raises(PendingDecisionError):
+            p.execute_approved(parent_id)
+        with pytest.raises(Exception):
+            bridge.record_execution(parent_id, actor="alice")
+        with pytest.raises(InvalidTransitionError):
+            bridge.workflow.execute(parent_id, actor="alice")
+
+        assert child_id != parent_id
+
+    def test_child_is_first_class_pipeline_decision(self):
+        bridge, p, parent_id = self._setup()
+        child_id = p.override_pending(parent_id, "sup1", self.TARGET)
+
+        assert child_id in p._pending                       # pending bookkeeping
+        child_trace = p._trace_by_id(child_id)              # tracked in traces
+        # Byte-identical to the audited child proposal (before execution).
+        stored = bridge.workflow.get(child_id).trace.to_dict()
+        assert child_trace.to_dict() == stored
+        # Child inherits the full pre-review prefix + PENDING.
+        assert child_trace.execution["lifecycle"][-1] == "PENDING"
+        assert child_trace.execution["overridden_from"] == parent_id
+
+    def test_duplicate_override_refused(self):
+        _, p, parent_id = self._setup()
+        p.override_pending(parent_id, "sup1", self.TARGET)
+        with pytest.raises(PendingDecisionError):
+            p.override_pending(parent_id, "sup1", self.TARGET)
+
+    def test_approve_after_override_refused(self):
+        bridge, p, parent_id = self._setup()
+        p.override_pending(parent_id, "sup1", self.TARGET)
+        with pytest.raises(InvalidTransitionError):
+            bridge.approve(parent_id, actor="alice")
+
+
     def test_no_bridge_lifecycle_recorded_but_unreviewed(self):
         p = DecisionPipeline(seed=42)  # no bridge at all: pure Phase 1
         p.reset_episode()
@@ -288,3 +355,88 @@ class TestExactlyOneCanonicalTrace:
             "EXECUTE", "OUTCOME",
         ]
 
+
+    def test_child_executes_via_canonical_machinery(self):
+        bridge, store = _make_bridge()
+        bridge.workflow.authorizer.register("sup1", Role.SUPERVISOR)
+        p = DecisionPipeline(
+            seed=9, hitl_bridge=bridge, require_human_approval=True,
+            scenario_id="override-canonical",
+        )
+        p.reset_episode()
+        parent_id = None
+        for _ in range(10):
+            result = p.step()
+            if result.info.get("deferred_decision"):
+                parent_id = result.info["deferred_decision"]
+                break
+        child_id = p.override_pending(parent_id, "sup1", self.TARGET)
+
+        resolved = p.execute_approved(child_id, actor="bob")  # ordinary path
+        assert resolved.trace.execution["env_action"] is not None
+        history = resolved.trace.execution["lifecycle"]
+        assert history == [
+            "SENSE", "FUSE", "ESTIMATE", "PLAN", "SAFETY_GATE",
+            "PENDING", "HUMAN_DECISION", "EXECUTE", "OUTCOME",
+        ]
+        assert validate_lifecycle_history(history)
+        assert bridge.state_of(child_id) == "EXECUTED"
+        assert store.verify() is True
+
+        events = [e for e in store.replay() if e["decision_id"] == child_id]
+        assert [e["type"] for e in events] == [
+            "submit", "approve", "execute", "outcome",
+        ]
+
+    def test_hitl_layer_never_touches_the_environment(self):
+        """Structural guard: no env execution outside the pipeline."""
+        import inspect
+
+        import ultrone_hitl.audit_store as audit_mod
+        import ultrone_hitl.decision_workflow as wf_mod
+        import ultrone_hitl.pipeline_bridge as bridge_mod
+        import benchmarks.canonical.runner as runner_mod
+
+        hitl_src = "\n".join(
+            inspect.getsource(m)
+            for m in (bridge_mod, wf_mod, audit_mod)
+        )
+        assert ".step(" not in hitl_src
+        assert "BattlefieldEnv" not in hitl_src
+        assert "env" not in inspect.getsource(bridge_mod.HITLBridge.__init__)
+
+        runner_src = inspect.getsource(runner_mod)
+        assert "pipeline.env.step" not in runner_src
+        assert ".env.step(" not in runner_src  # no direct env access at all
+
+    def test_outcome_events_always_follow_execution(self):
+        """Audit invariant: an outcome may only exist post-execution."""
+        bridge, store = _make_bridge()
+        bridge.workflow.authorizer.register("sup1", Role.SUPERVISOR)
+        p = DecisionPipeline(
+            seed=17, hitl_bridge=bridge, require_human_approval=True,
+            scenario_id="invariant-check",
+        )
+        p.reset_episode()
+        overridden = False
+        for _ in range(8):
+            result = p.step()
+            did = result.info.get("deferred_decision")
+            if did is None:
+                continue
+            if not overridden:
+                child = p.override_pending(did, "sup1", self.TARGET)
+                p.execute_approved(child, actor="bob")
+                overridden = True
+            else:
+                p.execute_approved(did, actor="bob")
+
+        executed = set()
+        for ev in store.replay():
+            if ev["type"] == "execute":
+                executed.add(ev["decision_id"])
+            elif ev["type"] == "outcome":
+                assert ev["decision_id"] in executed, (
+                    f"outcome without prior execute for {ev['decision_id']}"
+                )
+        assert store.verify() is True
