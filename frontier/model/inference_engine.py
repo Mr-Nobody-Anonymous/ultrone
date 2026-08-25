@@ -105,6 +105,7 @@ class InferenceEngine:
         )
         self.model_runtime = ModelRuntime(self.runtime)
         self._model_key = getattr(model, "model_id", type(model).__name__)
+        # Load once, reuse via cache (never re-prepare on every call)
         self.model_runtime.load(self._model_key, self.model, warmup=False)
 
     # ------------------------------------------------------------------
@@ -118,11 +119,15 @@ class InferenceEngine:
 
     def _next_token_logits(self, input_ids: List[int]) -> List[float]:
         """Compute logits for the next token given a sequence."""
+        # Use cached model when available to avoid re-preparing via ModelRuntime
+        cached_model = self.model_runtime.get(self._model_key)
+        model = cached_model if cached_model is not None else self.model
+
         # Call the model's forward with the full sequence through the shared runtime
         output = self.model_runtime.generate(
             self._model_key,
             input_ids,
-            model=self.model,
+            model=model,
             batch_size=None,
         )
         # Output could be logits directly, or (logits, ...) tuple, or

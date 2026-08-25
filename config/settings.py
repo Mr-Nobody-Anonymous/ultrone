@@ -169,5 +169,75 @@ class ResearchPlatformConfig:
         }
 
 
+@dataclass
+class PerformanceConfig:
+    """Central performance configuration for the ULTRONE runtime.
+
+    Controls device selection, precision, compilation, quantization,
+    batching, caching, and reasoning scheduling. All fields default to
+    "auto" so the runtime picks safe, hardware-appropriate defaults.
+    """
+
+    device: str = "auto"      # auto, cpu, cuda, mps, rocm
+    precision: str = "auto"   # auto, fp32, fp16, bf16, int8
+    compile: str = "auto"     # off, auto, on
+    quantization: str = "auto"  # none, int8, int4, auto
+    max_batch_size: int = 8
+    inference_timeout: float = 30.0
+    enable_model_cache: bool = True
+    enable_embedding_cache: bool = True
+    enable_reasoning_cache: bool = True
+    enable_async_inference: bool = True
+    enable_xai: bool = False
+    reasoning_interval: int = 5
+    performance_profile: str = "auto"  # ultra_fast, balanced, research, max_quality
+    max_cached_models: int = 8
+    enable_eviction: bool = True
+    warmup_enabled: bool = False
+
+    def to_runtime_config(self):
+        """Convert to a RuntimeConfig for the runtime subsystem."""
+        from runtime import RuntimeConfig
+        return RuntimeConfig(
+            device=self.device,
+            precision=self.precision,
+            compile=self.compile,
+            quantization=self.quantization,
+            max_batch_size=self.max_batch_size,
+            inference_timeout=self.inference_timeout,
+            enable_model_cache=self.enable_model_cache,
+            enable_embedding_cache=self.enable_embedding_cache,
+            enable_reasoning_cache=self.enable_reasoning_cache,
+            enable_async_inference=self.enable_async_inference,
+            enable_xai=self.enable_xai,
+            reasoning_interval=self.reasoning_interval,
+            performance_profile=self.performance_profile,
+            max_cached_models=self.max_cached_models,
+            enable_eviction=self.enable_eviction,
+            warmup_enabled=self.warmup_enabled,
+        )
+
+    def to_dict(self) -> dict:
+        return {
+            "device": self.device,
+            "precision": self.precision,
+            "compile": self.compile,
+            "quantization": self.quantization,
+            "max_batch_size": self.max_batch_size,
+            "inference_timeout": self.inference_timeout,
+            "enable_model_cache": self.enable_model_cache,
+            "enable_embedding_cache": self.enable_embedding_cache,
+            "enable_reasoning_cache": self.enable_reasoning_cache,
+            "enable_async_inference": self.enable_async_inference,
+            "enable_xai": self.enable_xai,
+            "reasoning_interval": self.reasoning_interval,
+            "performance_profile": self.performance_profile,
+            "max_cached_models": self.max_cached_models,
+            "enable_eviction": self.enable_eviction,
+            "warmup_enabled": self.warmup_enabled,
+        }
+
+
 # Default configuration instance
 default_config = MilitaryConfig()
+default_performance_config = PerformanceConfig()

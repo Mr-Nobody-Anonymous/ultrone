@@ -1,0 +1,20 @@
+{
+  "experiment_id": "E-35bdd15c1939",
+  "hypothesis": "H",
+  "research_motivation": "",
+  "implementation": "",
+  "dataset": "D",
+  "training_config": {},
+  "evaluation_metrics": {},
+  "benchmark_comparison": {},
+  "resource_usage": {},
+  "execution_logs": [],
+  "performance_graphs": [],
+  "success_criteria": "",
+  "rollback_strategy": "",
+  "conclusion": "",
+  "recommendation": "adopt",
+  "status": "completed",
+  "created_at": 1786363806.62439,
+  "updated_at": 1786363806.62439
+}

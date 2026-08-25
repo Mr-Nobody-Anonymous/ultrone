@@ -37,7 +37,11 @@ class WorldState:
     Single source of truth for the battlefield simulation.
     
     Maintains all entities, contacts, terrain, and state transitions.
+    Uses spatial partitioning for efficient range queries.
     """
+    
+    # Spatial grid cell size for range queries (in world units)
+    SPATIAL_CELL_SIZE: float = 50.0
     
     def __init__(self, terrain: Optional[Terrain] = None):
         self.terrain = terrain
@@ -49,6 +53,10 @@ class WorldState:
         self.red_force_count = 0
         self.neutral_count = 0
         self.tick_count = 0
+        # Spatial index: cell_key -> set of contact_ids
+        self._contact_spatial: Dict[tuple, set] = {}
+        self._contact_positions: Dict[str, tuple] = {}
+        self._spatial_dirty = False
     
     def add_unit(self, unit: Unit) -> None:
         """Add a unit to the world state."""
@@ -76,11 +84,15 @@ class WorldState:
     def add_contact(self, contact: Contact) -> None:
         """Add a detected contact."""
         self.contacts[contact.contact_id] = contact
+        self._index_contact(contact)
         logger.debug(f"Added contact {contact.contact_id}")
     
     def remove_contact(self, contact_id: str) -> Optional[Contact]:
         """Remove a contact (e.g., after identification)."""
-        return self.contacts.pop(contact_id, None)
+        contact = self.contacts.pop(contact_id, None)
+        if contact is not None:
+            self._unindex_contact(contact_id)
+        return contact
     
     def create_formation(self, formation: Formation) -> None:
         """Register a formation."""
@@ -111,20 +123,84 @@ class WorldState:
         return [u for u in self.units.values() if u.state.value == state.value]
     
     def get_contacts_in_range(self, position, range_meters: float, domain: DomainType = None) -> List[Contact]:
-        """Get all contacts within a certain range."""
+        """Get all contacts within a certain range.
+
+        Uses spatial partitioning to avoid scanning all contacts.
+        Falls back to linear scan for small contact counts.
+        """
+        if len(self.contacts) <= 32:
+            # Small dataset: linear scan is faster than spatial index overhead
+            result = []
+            for contact in self.contacts.values():
+                dx = contact.position[0] - position[0]
+                dy = contact.position[1] - position[1]
+                dz = contact.position[2] - position[2]
+                dist = (dx * dx + dy * dy + dz * dz) ** 0.5
+                if dist <= range_meters:
+                    if domain is None or contact.domain == domain:
+                        result.append(contact)
+            return result
+
+        # Spatial index query
+        cell_size = self.SPATIAL_CELL_SIZE
+        min_cx = int((position[0] - range_meters) // cell_size)
+        max_cx = int((position[0] + range_meters) // cell_size)
+        min_cy = int((position[1] - range_meters) // cell_size)
+        max_cy = int((position[1] + range_meters) // cell_size)
+        min_cz = int((position[2] - range_meters) // cell_size)
+        max_cz = int((position[2] + range_meters) // cell_size)
+
+        candidates: set = set()
+        for cx in range(min_cx, max_cx + 1):
+            for cy in range(min_cy, max_cy + 1):
+                for cz in range(min_cz, max_cz + 1):
+                    cell = self._contact_spatial.get((cx, cy, cz))
+                    if cell:
+                        candidates.update(cell)
+
         result = []
-        for contact in self.contacts.values():
-            # Calculate distance
+        for cid in candidates:
+            contact = self.contacts.get(cid)
+            if contact is None:
+                continue
             dx = contact.position[0] - position[0]
             dy = contact.position[1] - position[1]
             dz = contact.position[2] - position[2]
-            dist = (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
-            
+            dist = (dx * dx + dy * dy + dz * dz) ** 0.5
             if dist <= range_meters:
                 if domain is None or contact.domain == domain:
                     result.append(contact)
         return result
     
+    def _index_contact(self, contact: Contact) -> None:
+        """Add a contact to the spatial index."""
+        pos = contact.position
+        cell = (
+            int(pos[0] // self.SPATIAL_CELL_SIZE),
+            int(pos[1] // self.SPATIAL_CELL_SIZE),
+            int(pos[2] // self.SPATIAL_CELL_SIZE),
+        )
+        if cell not in self._contact_spatial:
+            self._contact_spatial[cell] = set()
+        self._contact_spatial[cell].add(contact.contact_id)
+        self._contact_positions[contact.contact_id] = pos
+
+    def _unindex_contact(self, contact_id: str) -> None:
+        """Remove a contact from the spatial index."""
+        pos = self._contact_positions.pop(contact_id, None)
+        if pos is None:
+            return
+        cell = (
+            int(pos[0] // self.SPATIAL_CELL_SIZE),
+            int(pos[1] // self.SPATIAL_CELL_SIZE),
+            int(pos[2] // self.SPATIAL_CELL_SIZE),
+        )
+        cell_set = self._contact_spatial.get(cell)
+        if cell_set:
+            cell_set.discard(contact_id)
+            if not cell_set:
+                self._contact_spatial.pop(cell, None)
+
     def advance_tick(self) -> None:
         """Advance the world state by one tick."""
         self.tick_count += 1

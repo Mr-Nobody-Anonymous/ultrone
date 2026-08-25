@@ -33,7 +33,7 @@ class VectorDatabase:
 
     Provides:
     - Insert/delete vectors with metadata
-    - k-NN similarity search
+    - k-NN similarity search (vectorized with NumPy)
     - Cosine, Euclidean, dot-product similarity
     - Metadata filtering
     """
@@ -55,6 +55,14 @@ class VectorDatabase:
             self._vectors.pop(0)
             self._items.pop(oldest, None)
 
+    def insert_batch(self, items: List[VectorItem]) -> int:
+        """Insert multiple vector items at once. Returns number inserted."""
+        count = 0
+        for item in items:
+            self.insert(item)
+            count += 1
+        return count
+
     def delete(self, id: str) -> None:
         """Delete a vector by ID."""
         if id in self._items:
@@ -64,25 +72,38 @@ class VectorDatabase:
             del self._items[id]
 
     def search(self, query: np.ndarray, k: int = 10) -> List[Tuple[str, float]]:
-        """Search for k nearest neighbors.
+        """Search for k nearest neighbors using vectorized NumPy operations.
 
         Returns list of (id, similarity_score) sorted by score descending.
         """
         if not self._vectors:
             return []
 
-        scores = []
-        for i, vec in enumerate(self._vectors):
-            if self.config.similarity == "cosine":
-                sim = np.dot(query, vec) / (np.linalg.norm(query) * np.linalg.norm(vec) + 1e-10)
-            elif self.config.similarity == "euclidean":
-                sim = -np.linalg.norm(query - vec)
-            else:  # dot
-                sim = np.dot(query, vec)
-            scores.append((self._ids[i], float(sim)))
+        # Vectorize: stack all vectors into a single matrix
+        matrix = np.stack(self._vectors) if len(self._vectors) > 1 else self._vectors[0][None, :]
+        query_vec = np.asarray(query, dtype=np.float32).reshape(1, -1)
 
-        scores.sort(key=lambda x: x[1], reverse=True)
-        return scores[:k]
+        if self.config.similarity == "cosine":
+            # Normalize once (cache normalization for speed)
+            norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+            norms[norms == 0] = 1e-10
+            matrix_normed = matrix / norms
+            q_norm = np.linalg.norm(query_vec) or 1e-10
+            q_normed = query_vec / q_norm
+            scores = (matrix_normed @ q_normed.T).ravel()
+        elif self.config.similarity == "euclidean":
+            # Negative Euclidean distance (higher = closer)
+            diff = matrix - query_vec
+            scores = -np.linalg.norm(diff, axis=1)
+        else:  # dot
+            scores = (matrix @ query_vec.T).ravel()
+
+        # Get top-k indices
+        k = min(k, len(scores))
+        if k <= 0:
+            return []
+        top_indices = np.argsort(scores)[::-1][:k]
+        return [(self._ids[i], float(scores[i])) for i in top_indices]
 
     def get_item(self, id: str) -> Optional[VectorItem]:
         return self._items.get(id)
