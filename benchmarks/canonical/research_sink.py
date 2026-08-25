@@ -44,7 +44,7 @@ def record_to_benchmark_record(record: Dict[str, Any]):
             "scenario_suite_version": record.get("scenario_suite_version", ""),
         },
         candidate_results={
-            "steps": len(metrics.get("steps", 0)),
+            "steps": metrics.get("steps", 0),
             "failures": list(record.get("failures") or []),
             "constraint_violations": record.get("constraint_violations", 0),
         },

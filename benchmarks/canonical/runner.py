@@ -109,21 +109,23 @@ def _resolve_human(pipeline, bridge, spec: ScenarioSpec, result) -> str:
     if spec.human_policy == "override" and not getattr(
         pipeline, "_bench_override_used", False,
     ):
+        # Sprint C fix: overrides flow through the pipeline's canonical
+        # machinery -- no direct environment access from the runner.
         pipeline._bench_override_used = True
         target = {"action": "move", "asset_type": "drones", "target": [50, 50]}
-        parent, child = bridge.override(decision_id, actor="carol", target=target)
-        bridge.approve(child.decision_id, actor="alice")
-        bridge.record_execution(child.decision_id, actor="alice")
-        env_action = dict(child.trace.execution.get("order") or target)
-        obs, reward, done, info = pipeline.env.step(env_action)
-        bridge.record_outcome(child.decision_id, {
-            "reward": reward, "done": done,
-            "roe_violation": bool(info.get("roe_violation", False)),
-            "red_health": obs.get("red_force", {}).get("health", 0),
-        })
-        result.trace.execution["env_action"] = env_action
-        result.trace.outcome = {"reward": reward, "done": done}
-        return "OVERRIDDEN->CHILD_EXECUTED"
+        child_id = pipeline.override_pending(
+            decision_id, actor="carol", target_order=target,
+            note="benchmark supervisor override",
+        )
+        resolved = pipeline.execute_approved(child_id, actor="bob")
+        # The effective action/outcome of this tick is the child's; the
+        # parent step record references the superseding decision.
+        result.trace.execution["env_action"] = (
+            resolved.trace.execution.get("env_action")
+        )
+        result.trace.outcome = dict(resolved.trace.outcome)
+        result.trace.execution["superseded_by"] = child_id
+        return f"OVERRIDDEN->{child_id}"
 
     pipeline.execute_approved(decision_id, actor="bob")  # approve (also post-override)
     return "APPROVED"

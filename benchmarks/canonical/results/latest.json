@@ -27,8 +27,8 @@
       "system_refusals": 0,
       "overrides": 0,
       "noop_steps": 0,
-      "mean_step_latency_ms": 6.279,
-      "max_step_latency_ms": 9.809,
+      "mean_step_latency_ms": 5.978,
+      "max_step_latency_ms": 9.717,
       "feeds_generated": 18,
       "feeds_received": 16,
       "candidates_evaluated": 18,
@@ -37,7 +37,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-08c66b3ff27f",
+        "decision_id": "DEC-f5f563c82e1e",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -114,12 +114,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-4C3F7E60",
+              "contact_id": "FC-88AB7A85",
               "confidence": 0.758,
               "source_feeds": [
-                "FEED-RADAR-695bb7440cf2",
-                "FEED-VISUAL-ea88321a578e",
-                "FEED-SIGINT-232fa92e2b32"
+                "FEED-RADAR-b67a351dbbab",
+                "FEED-VISUAL-70ee59dae988",
+                "FEED-SIGINT-0a301f8563d6"
               ]
             }
           ],
@@ -218,11 +218,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 3.007
+        "latency_ms": 4.507
       },
       {
         "tick": 2,
-        "decision_id": "DEC-a10be03817e0",
+        "decision_id": "DEC-3641aebc7ac1",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -299,11 +299,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-516E3085",
+              "contact_id": "FC-3C3C1EB8",
               "confidence": 0.586,
               "source_feeds": [
-                "FEED-VISUAL-27b3abb550eb",
-                "FEED-SIGINT-babb0e59e02e"
+                "FEED-VISUAL-5c4e031fee80",
+                "FEED-SIGINT-2856920922e1"
               ]
             }
           ],
@@ -395,11 +395,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 3.273
+        "latency_ms": 4.758
       },
       {
         "tick": 3,
-        "decision_id": "DEC-c7671e5e8be1",
+        "decision_id": "DEC-a5dd774e3c79",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -476,12 +476,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-606BF699",
+              "contact_id": "FC-607372F8",
               "confidence": 0.81,
               "source_feeds": [
-                "FEED-RADAR-81b620fb3092",
-                "FEED-VISUAL-45ce336dd1f3",
-                "FEED-SIGINT-eee6deee4b47"
+                "FEED-RADAR-5625f5aba22d",
+                "FEED-VISUAL-405842a9a4a1",
+                "FEED-SIGINT-50d967195465"
               ]
             }
           ],
@@ -573,11 +573,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 5.86
+        "latency_ms": 4.068
       },
       {
         "tick": 4,
-        "decision_id": "DEC-abc3ce1b6829",
+        "decision_id": "DEC-a0aca2cf0e46",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -654,11 +654,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-D576773C",
+              "contact_id": "FC-74A96F26",
               "confidence": 0.883,
               "source_feeds": [
-                "FEED-RADAR-3069c30ba74f",
-                "FEED-VISUAL-f3becb68d5bb"
+                "FEED-RADAR-cf93b31cf423",
+                "FEED-VISUAL-c11bc7efffad"
               ]
             }
           ],
@@ -757,11 +757,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 6.998
+        "latency_ms": 5.646
       },
       {
         "tick": 5,
-        "decision_id": "DEC-395518ad2986",
+        "decision_id": "DEC-604be9224e03",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -838,12 +838,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-B85320AE",
+              "contact_id": "FC-675513CB",
               "confidence": 0.799,
               "source_feeds": [
-                "FEED-RADAR-15289c3c24ee",
-                "FEED-VISUAL-5a6984c6d4ed",
-                "FEED-SIGINT-92acb80e791c"
+                "FEED-RADAR-5af4fc3a6dcb",
+                "FEED-VISUAL-eac521409aaa",
+                "FEED-SIGINT-3322e6c52578"
               ]
             }
           ],
@@ -928,11 +928,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 8.725
+        "latency_ms": 7.169
       },
       {
         "tick": 6,
-        "decision_id": "DEC-826c4fb9111a",
+        "decision_id": "DEC-3cc150d34ead",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -1009,12 +1009,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-AE1AFE60",
+              "contact_id": "FC-C04F8ED4",
               "confidence": 0.82,
               "source_feeds": [
-                "FEED-RADAR-034fd5453075",
-                "FEED-VISUAL-63ecb16a3c6f",
-                "FEED-SIGINT-4e3197fdf67a"
+                "FEED-RADAR-384a1e7284df",
+                "FEED-VISUAL-7dcda940765a",
+                "FEED-SIGINT-e0e5cabe6788"
               ]
             }
           ],
@@ -1106,7 +1106,7 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 9.809
+        "latency_ms": 9.717
       }
     ],
     "failures": [],
@@ -1148,8 +1148,8 @@
       "system_refusals": 0,
       "overrides": 0,
       "noop_steps": 0,
-      "mean_step_latency_ms": 7.0,
-      "max_step_latency_ms": 9.517,
+      "mean_step_latency_ms": 5.345,
+      "max_step_latency_ms": 8.902,
       "feeds_generated": 18,
       "feeds_received": 10,
       "candidates_evaluated": 18,
@@ -1158,7 +1158,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-8e0afe3739ae",
+        "decision_id": "DEC-42046c80d3de",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -1235,11 +1235,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-E5BEDBF8",
+              "contact_id": "FC-E358532E",
               "confidence": 0.81,
               "source_feeds": [
-                "FEED-RADAR-2bfbe564ffdd",
-                "FEED-VISUAL-03b5130d763e"
+                "FEED-RADAR-4b5cfb781021",
+                "FEED-VISUAL-39aa1ab94421"
               ]
             }
           ],
@@ -1338,11 +1338,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.532
+        "latency_ms": 2.718
       },
       {
         "tick": 2,
-        "decision_id": "DEC-c655e7dcfe51",
+        "decision_id": "DEC-561e7e2cd18d",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -1419,10 +1419,10 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-6139F6A0",
+              "contact_id": "FC-9585C00D",
               "confidence": 0.497,
               "source_feeds": [
-                "FEED-SIGINT-eeba5e24a89f"
+                "FEED-SIGINT-3dfb429ce191"
               ]
             }
           ],
@@ -1514,11 +1514,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 5.431
+        "latency_ms": 3.342
       },
       {
         "tick": 3,
-        "decision_id": "DEC-a6cded351155",
+        "decision_id": "DEC-9308dec6e569",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -1595,11 +1595,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-5B06745D",
+              "contact_id": "FC-1CDD5CEA",
               "confidence": 0.875,
               "source_feeds": [
-                "FEED-RADAR-e96a587bd321",
-                "FEED-VISUAL-70b3cf16d2f0"
+                "FEED-RADAR-5b0b67c9e216",
+                "FEED-VISUAL-d0f38457cf9c"
               ]
             }
           ],
@@ -1691,11 +1691,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 6.029
+        "latency_ms": 4.874
       },
       {
         "tick": 4,
-        "decision_id": "DEC-43e0b2bbd473",
+        "decision_id": "DEC-33091d930b42",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -1772,11 +1772,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-3B58A4EC",
+              "contact_id": "FC-028493BE",
               "confidence": 0.883,
               "source_feeds": [
-                "FEED-RADAR-73a445fa8a0a",
-                "FEED-VISUAL-61fe83aacee0"
+                "FEED-RADAR-519c856c3fe4",
+                "FEED-VISUAL-7b90eba91e7f"
               ]
             }
           ],
@@ -1875,11 +1875,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 7.143
+        "latency_ms": 5.557
       },
       {
         "tick": 5,
-        "decision_id": "DEC-8bb14239a38c",
+        "decision_id": "DEC-63fe3922d9d0",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -1956,10 +1956,10 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-AA14C3D7",
+              "contact_id": "FC-2EDA9B8E",
               "confidence": 0.913,
               "source_feeds": [
-                "FEED-RADAR-5a7bc6df7029"
+                "FEED-RADAR-a99443f014e6"
               ]
             }
           ],
@@ -2044,11 +2044,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 9.347
+        "latency_ms": 6.679
       },
       {
         "tick": 6,
-        "decision_id": "DEC-f6d04baff3b8",
+        "decision_id": "DEC-516175173e70",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -2125,11 +2125,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-42C0A80D",
+              "contact_id": "FC-4FB472D1",
               "confidence": 0.849,
               "source_feeds": [
-                "FEED-RADAR-d86355a42497",
-                "FEED-VISUAL-2fc7ba2fe2ed"
+                "FEED-RADAR-3952a6c60e8f",
+                "FEED-VISUAL-212eaf936e65"
               ]
             }
           ],
@@ -2221,7 +2221,7 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 9.517
+        "latency_ms": 8.902
       }
     ],
     "failures": [],
@@ -2271,8 +2271,8 @@
       "system_refusals": 0,
       "overrides": 0,
       "noop_steps": 0,
-      "mean_step_latency_ms": 7.255,
-      "max_step_latency_ms": 11.216,
+      "mean_step_latency_ms": 6.612,
+      "max_step_latency_ms": 10.166,
       "feeds_generated": 18,
       "feeds_received": 16,
       "candidates_evaluated": 18,
@@ -2281,7 +2281,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-b22a9c4b484e",
+        "decision_id": "DEC-f4da515b3869",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -2358,12 +2358,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-E84D7530",
+              "contact_id": "FC-E3A9756F",
               "confidence": 0.733,
               "source_feeds": [
-                "FEED-RADAR-070f42b0a86d",
-                "FEED-VISUAL-d1853f7a2bd0",
-                "FEED-SIGINT-9a7ea6adf12c"
+                "FEED-RADAR-72ee3ecc7edf",
+                "FEED-VISUAL-1ee2ca3dcbd3",
+                "FEED-SIGINT-f39816ede8c9"
               ]
             }
           ],
@@ -2462,11 +2462,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 3.852
+        "latency_ms": 4.17
       },
       {
         "tick": 2,
-        "decision_id": "DEC-cc72bccf04a4",
+        "decision_id": "DEC-536aa35b029f",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -2543,11 +2543,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-1EFCF73E",
+              "contact_id": "FC-E5049921",
               "confidence": 0.543,
               "source_feeds": [
-                "FEED-VISUAL-6b5cc1816fd4",
-                "FEED-SIGINT-788e6c8fdaed"
+                "FEED-VISUAL-90eed801b4ef",
+                "FEED-SIGINT-e8b8594646a8"
               ]
             }
           ],
@@ -2639,11 +2639,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 5.387
+        "latency_ms": 5.105
       },
       {
         "tick": 3,
-        "decision_id": "DEC-8a5492a8ef56",
+        "decision_id": "DEC-05ab46c25eea",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -2720,12 +2720,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-A7F589B4",
+              "contact_id": "FC-081976F3",
               "confidence": 0.785,
               "source_feeds": [
-                "FEED-RADAR-1a5cf4d19ab3",
-                "FEED-VISUAL-80c321f406ec",
-                "FEED-SIGINT-e2807b67d6cc"
+                "FEED-RADAR-0f9848692c35",
+                "FEED-VISUAL-3f9c2440b76b",
+                "FEED-SIGINT-17e9d7e88d01"
               ]
             }
           ],
@@ -2817,11 +2817,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 6.009
+        "latency_ms": 6.264
       },
       {
         "tick": 4,
-        "decision_id": "DEC-7efcc335d8a3",
+        "decision_id": "DEC-cddf3d94265b",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -2898,11 +2898,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-9E5C30D9",
+              "contact_id": "FC-1942BD09",
               "confidence": 0.883,
               "source_feeds": [
-                "FEED-RADAR-a1b8702c6ca9",
-                "FEED-VISUAL-b6c103fc4d70"
+                "FEED-RADAR-8136c387cb6b",
+                "FEED-VISUAL-896799384848"
               ]
             }
           ],
@@ -3001,11 +3001,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 7.461
+        "latency_ms": 7.566
       },
       {
         "tick": 5,
-        "decision_id": "DEC-0e70183c7bdb",
+        "decision_id": "DEC-f3356fa2440f",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -3082,12 +3082,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-39347002",
+              "contact_id": "FC-6ABABB41",
               "confidence": 0.774,
               "source_feeds": [
-                "FEED-RADAR-3f717f5784c7",
-                "FEED-VISUAL-6031aab964d3",
-                "FEED-SIGINT-e464bb5735fc"
+                "FEED-RADAR-8d827e273d91",
+                "FEED-VISUAL-1fa103ae7f35",
+                "FEED-SIGINT-5a719be1d55b"
               ]
             }
           ],
@@ -3172,11 +3172,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 11.216
+        "latency_ms": 6.401
       },
       {
         "tick": 6,
-        "decision_id": "DEC-f6d40450ee12",
+        "decision_id": "DEC-565c399a869c",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -3253,12 +3253,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-301D4863",
+              "contact_id": "FC-F0B5B735",
               "confidence": 0.795,
               "source_feeds": [
-                "FEED-RADAR-8f2d7d4b9d1f",
-                "FEED-VISUAL-297671e63468",
-                "FEED-SIGINT-142797545a61"
+                "FEED-RADAR-57d5e3ac887b",
+                "FEED-VISUAL-19b07b893193",
+                "FEED-SIGINT-59e34af517d5"
               ]
             }
           ],
@@ -3350,7 +3350,7 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 9.605
+        "latency_ms": 10.166
       }
     ],
     "failures": [],
@@ -3400,8 +3400,8 @@
       "system_refusals": 1,
       "overrides": 0,
       "noop_steps": 1,
-      "mean_step_latency_ms": 6.189,
-      "max_step_latency_ms": 9.281,
+      "mean_step_latency_ms": 6.386,
+      "max_step_latency_ms": 11.743,
       "feeds_generated": 18,
       "feeds_received": 16,
       "candidates_evaluated": 18,
@@ -3410,7 +3410,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-2ed0ef51d013",
+        "decision_id": "DEC-8957b1fd0e79",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -3487,12 +3487,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-FE6ECDC8",
+              "contact_id": "FC-EB070B15",
               "confidence": 0.758,
               "source_feeds": [
-                "FEED-RADAR-b0f8c1739e32",
-                "FEED-VISUAL-38a9b4019894",
-                "FEED-SIGINT-7a796bf383ac"
+                "FEED-RADAR-c424dcbf45f9",
+                "FEED-VISUAL-b4e4ba38f93b",
+                "FEED-SIGINT-8e0c9f33a636"
               ]
             }
           ],
@@ -3591,11 +3591,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 2.956
+        "latency_ms": 4.286
       },
       {
         "tick": 2,
-        "decision_id": "DEC-6c88e2993790",
+        "decision_id": "DEC-2bc1c396b3c1",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -3672,11 +3672,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-34812315",
+              "contact_id": "FC-2FB53504",
               "confidence": 0.586,
               "source_feeds": [
-                "FEED-VISUAL-6509543dcb5b",
-                "FEED-SIGINT-46b2120ac259"
+                "FEED-VISUAL-e4e73342a568",
+                "FEED-SIGINT-2ed62f15fc75"
               ]
             }
           ],
@@ -3768,11 +3768,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 6.365
+        "latency_ms": 4.585
       },
       {
         "tick": 3,
-        "decision_id": "DEC-d6d13edf744d",
+        "decision_id": "DEC-6197537d221f",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -3849,12 +3849,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-ED736A2E",
+              "contact_id": "FC-4E793590",
               "confidence": 0.81,
               "source_feeds": [
-                "FEED-RADAR-11485e9a8d32",
-                "FEED-VISUAL-1f0fda1257c2",
-                "FEED-SIGINT-3b61ad5a32d6"
+                "FEED-RADAR-9d0e8e9a7f9a",
+                "FEED-VISUAL-a40a51055b40",
+                "FEED-SIGINT-43e9c6c86523"
               ]
             }
           ],
@@ -3946,11 +3946,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 6.388
+        "latency_ms": 4.637
       },
       {
         "tick": 4,
-        "decision_id": "DEC-9b8f5b9f1e52",
+        "decision_id": "DEC-830a93e0523c",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -4027,11 +4027,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-50B6A065",
+              "contact_id": "FC-568517A5",
               "confidence": 0.883,
               "source_feeds": [
-                "FEED-RADAR-a1a549f47e0f",
-                "FEED-VISUAL-ee870a2c9c44"
+                "FEED-RADAR-8d2de6c1155d",
+                "FEED-VISUAL-b5f8081e0812"
               ]
             }
           ],
@@ -4092,11 +4092,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.412
+        "latency_ms": 4.448
       },
       {
         "tick": 5,
-        "decision_id": "DEC-18e120f115c3",
+        "decision_id": "DEC-9c81af445b3d",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -4173,12 +4173,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-4322AE41",
+              "contact_id": "FC-7DA43963",
               "confidence": 0.799,
               "source_feeds": [
-                "FEED-RADAR-55d017c9800e",
-                "FEED-VISUAL-b8eab9f3f287",
-                "FEED-SIGINT-c9a968b31b2e"
+                "FEED-RADAR-d8696e261461",
+                "FEED-VISUAL-55a9ebe95c83",
+                "FEED-SIGINT-3610a7da81d7"
               ]
             }
           ],
@@ -4263,11 +4263,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 7.73
+        "latency_ms": 8.614
       },
       {
         "tick": 6,
-        "decision_id": "DEC-863920a2c082",
+        "decision_id": "DEC-d62c7cb010a5",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -4344,12 +4344,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-AB8FED48",
+              "contact_id": "FC-9F11F8DF",
               "confidence": 0.82,
               "source_feeds": [
-                "FEED-RADAR-ceba80825b6a",
-                "FEED-VISUAL-d4f113117d89",
-                "FEED-SIGINT-86447c75d541"
+                "FEED-RADAR-ae19eb1b8210",
+                "FEED-VISUAL-f151cc891e21",
+                "FEED-SIGINT-aede20c47f82"
               ]
             }
           ],
@@ -4441,7 +4441,7 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 9.281
+        "latency_ms": 11.743
       }
     ],
     "failures": [],
@@ -4489,8 +4489,8 @@
       "system_refusals": 6,
       "overrides": 0,
       "noop_steps": 6,
-      "mean_step_latency_ms": 2.846,
-      "max_step_latency_ms": 4.438,
+      "mean_step_latency_ms": 4.575,
+      "max_step_latency_ms": 6.061,
       "feeds_generated": 18,
       "feeds_received": 16,
       "candidates_evaluated": 18,
@@ -4499,7 +4499,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-c62cd95a1059",
+        "decision_id": "DEC-0645f826bd9f",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -4576,12 +4576,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-4C67D042",
+              "contact_id": "FC-7075655B",
               "confidence": 0.758,
               "source_feeds": [
-                "FEED-RADAR-9e41c4727fc1",
-                "FEED-VISUAL-183bc73dfd98",
-                "FEED-SIGINT-f4e7a90ab523"
+                "FEED-RADAR-59a398b1a927",
+                "FEED-VISUAL-bba79e7a462a",
+                "FEED-SIGINT-71e9fcf746b7"
               ]
             }
           ],
@@ -4642,11 +4642,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 1.823
+        "latency_ms": 3.659
       },
       {
         "tick": 2,
-        "decision_id": "DEC-5cf17873aada",
+        "decision_id": "DEC-779fbbd9828e",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -4723,11 +4723,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-709BD2DA",
+              "contact_id": "FC-2BEAEA47",
               "confidence": 0.586,
               "source_feeds": [
-                "FEED-VISUAL-21c0aa4e9b62",
-                "FEED-SIGINT-e4b1f0e593fb"
+                "FEED-VISUAL-3e31cdec00ce",
+                "FEED-SIGINT-89926d6faa46"
               ]
             }
           ],
@@ -4781,11 +4781,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 1.893
+        "latency_ms": 3.695
       },
       {
         "tick": 3,
-        "decision_id": "DEC-ea1046e01102",
+        "decision_id": "DEC-2b1909e69da3",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -4862,12 +4862,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-2F77C732",
+              "contact_id": "FC-8B89511B",
               "confidence": 0.81,
               "source_feeds": [
-                "FEED-RADAR-c6242e7a682f",
-                "FEED-VISUAL-f69928ac588f",
-                "FEED-SIGINT-7b6a62c3fd9e"
+                "FEED-RADAR-6eaa580c289d",
+                "FEED-VISUAL-fd76cd6b7119",
+                "FEED-SIGINT-77fbf14b6d01"
               ]
             }
           ],
@@ -4921,11 +4921,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 2.174
+        "latency_ms": 4.518
       },
       {
         "tick": 4,
-        "decision_id": "DEC-01e563c2d51a",
+        "decision_id": "DEC-f56b5acd3865",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -5002,11 +5002,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-C31331BC",
+              "contact_id": "FC-816ABA29",
               "confidence": 0.883,
               "source_feeds": [
-                "FEED-RADAR-bea4405f2050",
-                "FEED-VISUAL-756c1f3d54e1"
+                "FEED-RADAR-68070beee7c2",
+                "FEED-VISUAL-cc16e52e0a22"
               ]
             }
           ],
@@ -5067,11 +5067,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 2.657
+        "latency_ms": 4.098
       },
       {
         "tick": 5,
-        "decision_id": "DEC-cfd25ca87794",
+        "decision_id": "DEC-2914932884e1",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -5148,12 +5148,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-E019BBA2",
+              "contact_id": "FC-13B87DE2",
               "confidence": 0.799,
               "source_feeds": [
-                "FEED-RADAR-b19b6f4c4dd9",
-                "FEED-VISUAL-28aeb17bb077",
-                "FEED-SIGINT-ed49d99d84f1"
+                "FEED-RADAR-d81cdc145281",
+                "FEED-VISUAL-83dd1e69adf1",
+                "FEED-SIGINT-69eda3f52b49"
               ]
             }
           ],
@@ -5200,11 +5200,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.438
+        "latency_ms": 6.061
       },
       {
         "tick": 6,
-        "decision_id": "DEC-aaf44eda4e27",
+        "decision_id": "DEC-59a617dec47b",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -5281,12 +5281,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-009A8D29",
+              "contact_id": "FC-289FA54B",
               "confidence": 0.82,
               "source_feeds": [
-                "FEED-RADAR-caf28b00d695",
-                "FEED-VISUAL-e4e4bbc68d7a",
-                "FEED-SIGINT-37fc12afbb16"
+                "FEED-RADAR-6daa42da9342",
+                "FEED-VISUAL-948e78d1d4ec",
+                "FEED-SIGINT-349651a8f49e"
               ]
             }
           ],
@@ -5340,7 +5340,7 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.093
+        "latency_ms": 5.419
       }
     ],
     "failures": [],
@@ -5380,8 +5380,8 @@
       "system_refusals": 0,
       "overrides": 0,
       "noop_steps": 6,
-      "mean_step_latency_ms": 3.245,
-      "max_step_latency_ms": 4.957,
+      "mean_step_latency_ms": 4.083,
+      "max_step_latency_ms": 5.251,
       "feeds_generated": 18,
       "feeds_received": 16,
       "candidates_evaluated": 18,
@@ -5390,7 +5390,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-f09b21e51620",
+        "decision_id": "DEC-081de6805970",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -5467,12 +5467,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-300168A7",
+              "contact_id": "FC-7CB63537",
               "confidence": 0.758,
               "source_feeds": [
-                "FEED-RADAR-4292f628c6ca",
-                "FEED-VISUAL-de162cd9658d",
-                "FEED-SIGINT-664ccf38bd37"
+                "FEED-RADAR-9e0136b4b791",
+                "FEED-VISUAL-02b58d85dc3f",
+                "FEED-SIGINT-013a316a6e28"
               ]
             }
           ],
@@ -5565,11 +5565,11 @@
           "HUMAN_DECISION",
           "REJECTED"
         ],
-        "latency_ms": 2.081
+        "latency_ms": 3.674
       },
       {
         "tick": 2,
-        "decision_id": "DEC-6f9fac7bc176",
+        "decision_id": "DEC-6375818fac36",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -5646,11 +5646,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-CF5236C4",
+              "contact_id": "FC-A60C1D9E",
               "confidence": 0.586,
               "source_feeds": [
-                "FEED-VISUAL-b2c26c9c23ac",
-                "FEED-SIGINT-cc118a044e74"
+                "FEED-VISUAL-cb3a7dce3206",
+                "FEED-SIGINT-8e9b4ddc9f46"
               ]
             }
           ],
@@ -5736,11 +5736,11 @@
           "HUMAN_DECISION",
           "REJECTED"
         ],
-        "latency_ms": 2.629
+        "latency_ms": 3.201
       },
       {
         "tick": 3,
-        "decision_id": "DEC-a11f1321495f",
+        "decision_id": "DEC-689fb20cd211",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -5817,12 +5817,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-A4CFAB2E",
+              "contact_id": "FC-C69745F3",
               "confidence": 0.81,
               "source_feeds": [
-                "FEED-RADAR-69cec69ee722",
-                "FEED-VISUAL-c84dfe4fa63d",
-                "FEED-SIGINT-0f6453f7b037"
+                "FEED-RADAR-554029d3c691",
+                "FEED-VISUAL-b3b80fb65b98",
+                "FEED-SIGINT-f7a3df71be17"
               ]
             }
           ],
@@ -5915,11 +5915,11 @@
           "HUMAN_DECISION",
           "REJECTED"
         ],
-        "latency_ms": 2.813
+        "latency_ms": 3.012
       },
       {
         "tick": 4,
-        "decision_id": "DEC-1064ecd63340",
+        "decision_id": "DEC-17f256224d2e",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -5996,11 +5996,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-002A6552",
+              "contact_id": "FC-7C5844C0",
               "confidence": 0.883,
               "source_feeds": [
-                "FEED-RADAR-e7fc8c9b844f",
-                "FEED-VISUAL-0f224a0cb492"
+                "FEED-RADAR-b4774304d3fe",
+                "FEED-VISUAL-4e7a8d80c38a"
               ]
             }
           ],
@@ -6093,11 +6093,11 @@
           "HUMAN_DECISION",
           "REJECTED"
         ],
-        "latency_ms": 3.185
+        "latency_ms": 4.217
       },
       {
         "tick": 5,
-        "decision_id": "DEC-06125906e93b",
+        "decision_id": "DEC-997225e6b04e",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -6174,12 +6174,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-38986AB2",
+              "contact_id": "FC-2208F1B2",
               "confidence": 0.799,
               "source_feeds": [
-                "FEED-RADAR-5b961de0075c",
-                "FEED-VISUAL-71ff71a53cfa",
-                "FEED-SIGINT-d0f77d647085"
+                "FEED-RADAR-5e8ce97c6633",
+                "FEED-VISUAL-0743eee034a4",
+                "FEED-SIGINT-f9e6d4b1368b"
               ]
             }
           ],
@@ -6272,11 +6272,11 @@
           "HUMAN_DECISION",
           "REJECTED"
         ],
-        "latency_ms": 3.807
+        "latency_ms": 5.251
       },
       {
         "tick": 6,
-        "decision_id": "DEC-f6794afbb17b",
+        "decision_id": "DEC-43b00f8f1ada",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -6353,12 +6353,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-171AA113",
+              "contact_id": "FC-00C16C7B",
               "confidence": 0.82,
               "source_feeds": [
-                "FEED-RADAR-a96d2d955929",
-                "FEED-VISUAL-e9990bdcf31c",
-                "FEED-SIGINT-965568115d60"
+                "FEED-RADAR-3211aae04ecb",
+                "FEED-VISUAL-483ae773bdd4",
+                "FEED-SIGINT-64e55e249443"
               ]
             }
           ],
@@ -6444,7 +6444,7 @@
           "HUMAN_DECISION",
           "REJECTED"
         ],
-        "latency_ms": 4.957
+        "latency_ms": 5.145
       }
     ],
     "failures": [],
@@ -6478,14 +6478,14 @@
     "metrics": {
       "total_reward": 19.0,
       "steps": 6,
-      "n_decisions": 6,
+      "n_decisions": 7,
       "safety_rejections": 0,
       "human_rejections": 0,
       "system_refusals": 0,
       "overrides": 1,
       "noop_steps": 0,
-      "mean_step_latency_ms": 8.856,
-      "max_step_latency_ms": 12.078,
+      "mean_step_latency_ms": 10.712,
+      "max_step_latency_ms": 15.673,
       "feeds_generated": 18,
       "feeds_received": 16,
       "candidates_evaluated": 18,
@@ -6494,7 +6494,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-47593e9d631d",
+        "decision_id": "DEC-b321d363716a",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -6571,12 +6571,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-BA07980E",
+              "contact_id": "FC-553EEAF7",
               "confidence": 0.758,
               "source_feeds": [
-                "FEED-RADAR-1f15fc65092f",
-                "FEED-VISUAL-2adac34eea00",
-                "FEED-SIGINT-704e0d966a60"
+                "FEED-RADAR-e60bb1655a0d",
+                "FEED-VISUAL-4d7d9c199ddf",
+                "FEED-SIGINT-4c4d2349c22e"
               ]
             }
           ],
@@ -6672,25 +6672,27 @@
           "ESTIMATE",
           "PLAN",
           "SAFETY_GATE",
-          "PENDING"
+          "PENDING",
+          "HUMAN_DECISION",
+          "OVERRIDDEN"
         ],
-        "latency_ms": 9.493
+        "latency_ms": 8.437
       },
       {
         "tick": 2,
-        "decision_id": "DEC-75c091f2d722",
+        "decision_id": "DEC-cb40eb021906",
         "observation": {
           "tick": 2,
           "red_force": {
             "position": [
-              24,
-              13
+              25,
+              16
             ],
             "speed": 3,
             "type": "armor",
             "health": 100,
             "heading": 80.3558657335762,
-            "fuel": 1.0,
+            "fuel": 0.99,
             "linked_supply": "red_supply"
           },
           "blue_assets": {
@@ -6755,17 +6757,17 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-8EC9C421",
+              "contact_id": "FC-46A47196",
               "confidence": 0.586,
               "source_feeds": [
-                "FEED-VISUAL-81d1e426b30e",
-                "FEED-SIGINT-3ee08f5b9e2e"
+                "FEED-VISUAL-72dd0e6ac8c9",
+                "FEED-SIGINT-0ddc50ab5441"
               ]
             }
           ],
           "primary_target_position": [
-            21.987612119775648,
-            11.152481025512568
+            22.987612119775644,
+            14.15248102551257
           ],
           "primary_target_confidence": 0.5855714285714286,
           "uncertainty": 0.41442857142857137,
@@ -6782,8 +6784,8 @@
             "action": "jam",
             "asset_type": "jammers",
             "target": [
-              21.987612119775648,
-              11.152481025512568
+              22.987612119775644,
+              14.15248102551257
             ]
           },
           null,
@@ -6791,8 +6793,8 @@
             "action": "jam",
             "asset_type": "jammers",
             "target": [
-              21.987612119775648,
-              11.152481025512568
+              22.987612119775644,
+              14.15248102551257
             ]
           }
         ],
@@ -6837,8 +6839,8 @@
           "action": "jam",
           "asset_type": "jammers",
           "target": [
-            21.987612119775648,
-            11.152481025512568
+            22.987612119775644,
+            14.15248102551257
           ]
         },
         "reward": -1.0,
@@ -6853,11 +6855,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 5.87
+        "latency_ms": 8.764
       },
       {
         "tick": 3,
-        "decision_id": "DEC-3e288c457d8b",
+        "decision_id": "DEC-5d98214a57b5",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -6934,12 +6936,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-C59D52F1",
+              "contact_id": "FC-AB97E0E7",
               "confidence": 0.81,
               "source_feeds": [
-                "FEED-RADAR-9a79a10a8038",
-                "FEED-VISUAL-7edb21e6f459",
-                "FEED-SIGINT-309af7ecc68b"
+                "FEED-RADAR-5c9c0f4bf53e",
+                "FEED-VISUAL-ab1feaf8b8d4",
+                "FEED-SIGINT-d22aba080624"
               ]
             }
           ],
@@ -7033,11 +7035,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 6.958
+        "latency_ms": 9.919
       },
       {
         "tick": 4,
-        "decision_id": "DEC-0f522b669efe",
+        "decision_id": "DEC-2475d5980d56",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -7114,11 +7116,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-AB0F1F03",
+              "contact_id": "FC-60E2CE46",
               "confidence": 0.883,
               "source_feeds": [
-                "FEED-RADAR-1645d0c79b12",
-                "FEED-VISUAL-60a51017580d"
+                "FEED-RADAR-d343cb1f2ed0",
+                "FEED-VISUAL-8895784e24f2"
               ]
             }
           ],
@@ -7219,11 +7221,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 8.866
+        "latency_ms": 8.257
       },
       {
         "tick": 5,
-        "decision_id": "DEC-9240f6847a96",
+        "decision_id": "DEC-2c3a89d1d5d2",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -7300,12 +7302,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-550764A6",
+              "contact_id": "FC-753A7270",
               "confidence": 0.799,
               "source_feeds": [
-                "FEED-RADAR-5c7bf76ea382",
-                "FEED-VISUAL-c23c84fbcf2e",
-                "FEED-SIGINT-b0e8876f5138"
+                "FEED-RADAR-173da93bab7c",
+                "FEED-VISUAL-fce921c9d349",
+                "FEED-SIGINT-3e480cbef916"
               ]
             }
           ],
@@ -7392,11 +7394,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 9.873
+        "latency_ms": 13.219
       },
       {
         "tick": 6,
-        "decision_id": "DEC-6d7ac3479b18",
+        "decision_id": "DEC-a0bf2b77d541",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -7473,12 +7475,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-394DF120",
+              "contact_id": "FC-FDE80036",
               "confidence": 0.82,
               "source_feeds": [
-                "FEED-RADAR-b13fcda9e0d0",
-                "FEED-VISUAL-60bc3e934c22",
-                "FEED-SIGINT-26f8b9001d73"
+                "FEED-RADAR-8a8a9e47f0bd",
+                "FEED-VISUAL-c07b9b0b7795",
+                "FEED-SIGINT-c17483369d9b"
               ]
             }
           ],
@@ -7572,12 +7574,12 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 12.078
+        "latency_ms": 15.673
       }
     ],
     "failures": [],
     "constraint_violations": 0,
-    "fingerprint": "43ed8b05251016a105b2b9fdd251ab3a54a7bfc4f4f9c32b7c3255bf5f60b2e4",
+    "fingerprint": "c8d2fbb12efab88a3c4804f12ddf561bb2246efdade32ef3524c89d979c2cf3d",
     "audit_events": {
       "submit": 7,
       "override": 1,
@@ -7615,8 +7617,8 @@
       "system_refusals": 0,
       "overrides": 0,
       "noop_steps": 0,
-      "mean_step_latency_ms": 7.596,
-      "max_step_latency_ms": 12.535,
+      "mean_step_latency_ms": 23.74,
+      "max_step_latency_ms": 114.717,
       "feeds_generated": 18,
       "feeds_received": 18,
       "candidates_evaluated": 18,
@@ -7625,7 +7627,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-fbd26033b17d",
+        "decision_id": "DEC-047b406e2dc0",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -7702,12 +7704,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-6BF58FB9",
+              "contact_id": "FC-4BCEE142",
               "confidence": 0.84,
               "source_feeds": [
-                "FEED-RADAR-64ff6f54a24f",
-                "FEED-VISUAL-748bbbb4c0ae",
-                "FEED-SIGINT-4567f5c228ef"
+                "FEED-RADAR-34b90d7fbd09",
+                "FEED-VISUAL-0289cc6c9caa",
+                "FEED-SIGINT-c9f99c71510c"
               ]
             }
           ],
@@ -7806,11 +7808,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.143
+        "latency_ms": 3.532
       },
       {
         "tick": 2,
-        "decision_id": "DEC-fb6795c87195",
+        "decision_id": "DEC-143d75670e8a",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -7887,12 +7889,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-B7F452BB",
+              "contact_id": "FC-71788181",
               "confidence": 0.83,
               "source_feeds": [
-                "FEED-RADAR-1f8bc314aac8",
-                "FEED-VISUAL-20a9159d0106",
-                "FEED-SIGINT-c822c047ec14"
+                "FEED-RADAR-c2c19ca60ccf",
+                "FEED-VISUAL-4b40e542daa0",
+                "FEED-SIGINT-92b229315c46"
               ]
             }
           ],
@@ -7991,11 +7993,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 5.485
+        "latency_ms": 3.607
       },
       {
         "tick": 3,
-        "decision_id": "DEC-d86b822e999f",
+        "decision_id": "DEC-7727094547f7",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -8072,12 +8074,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-A1BBE13E",
+              "contact_id": "FC-D335EF15",
               "confidence": 0.843,
               "source_feeds": [
-                "FEED-RADAR-4e29f3c395ef",
-                "FEED-VISUAL-50426aaf09b6",
-                "FEED-SIGINT-79bf65ba11ba"
+                "FEED-RADAR-75c441689aa2",
+                "FEED-VISUAL-6e4c5fc25c47",
+                "FEED-SIGINT-4d56ada5b7aa"
               ]
             }
           ],
@@ -8176,11 +8178,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 6.763
+        "latency_ms": 4.182
       },
       {
         "tick": 4,
-        "decision_id": "DEC-826a33b2cde1",
+        "decision_id": "DEC-087cea801d41",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -8257,12 +8259,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-3363ACFF",
+              "contact_id": "FC-F35CF87A",
               "confidence": 0.79,
               "source_feeds": [
-                "FEED-RADAR-cc1ade15c5b8",
-                "FEED-VISUAL-9749d1538721",
-                "FEED-SIGINT-3ffd0b5e67b0"
+                "FEED-RADAR-877a961f4683",
+                "FEED-VISUAL-0ceb53a91b8f",
+                "FEED-SIGINT-42b478a82304"
               ]
             }
           ],
@@ -8361,11 +8363,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 6.887
+        "latency_ms": 7.036
       },
       {
         "tick": 5,
-        "decision_id": "DEC-e5dc4e469da9",
+        "decision_id": "DEC-bfc7ae6be93d",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -8442,12 +8444,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-0853F326",
+              "contact_id": "FC-D8F89019",
               "confidence": 0.865,
               "source_feeds": [
-                "FEED-RADAR-ef4046166e5c",
-                "FEED-VISUAL-f6ae5657cc3f",
-                "FEED-SIGINT-a8396827e621"
+                "FEED-RADAR-6cb0a83ec721",
+                "FEED-VISUAL-027d54097346",
+                "FEED-SIGINT-769c3036276d"
               ]
             }
           ],
@@ -8546,11 +8548,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 9.761
+        "latency_ms": 9.365
       },
       {
         "tick": 6,
-        "decision_id": "DEC-1e6efe6ed074",
+        "decision_id": "DEC-ab0668e11aef",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -8627,12 +8629,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-A5118497",
+              "contact_id": "FC-C6779EBE",
               "confidence": 0.856,
               "source_feeds": [
-                "FEED-RADAR-6b7232ceb50a",
-                "FEED-VISUAL-e1fd7ff43aae",
-                "FEED-SIGINT-659aed2b7ec3"
+                "FEED-RADAR-7a99bcd7e3b8",
+                "FEED-VISUAL-db52cbd08667",
+                "FEED-SIGINT-70d8453f3b3e"
               ]
             }
           ],
@@ -8731,7 +8733,7 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 12.535
+        "latency_ms": 114.717
       }
     ],
     "failures": [],

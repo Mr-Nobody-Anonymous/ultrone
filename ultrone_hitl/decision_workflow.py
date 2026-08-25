@@ -184,9 +184,46 @@ class DecisionWorkflow:
     EXECUTE_ROLES = (Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN)
     SUBMIT_ROLES = (Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN)
 
-    def __init__(self, store: Any, authorizer: Optional[Authorizer] = None) -> None:
+    def __init__(
+        self,
+        store: Any,
+        authorizer: Optional[Authorizer] = None,
+        authenticator: Optional[Any] = None,
+    ) -> None:
         self.store = store
         self.authorizer = authorizer or Authorizer()
+        if authenticator is None:
+            # Default provider: the in-process registry re-expressed as an
+            # Authenticator. Production swaps this -- nothing else changes.
+            from ultrone_hitl.authentication import DevelopmentAuthenticator
+
+            authenticator = DevelopmentAuthenticator(self.authorizer)
+        self.authenticator = authenticator
+
+    # -- authentication / authorization ------------------------------------ #
+    def _authorize(
+        self, credential: Any, allowed_roles: Tuple[Role, ...],
+    ):
+        """Authenticate the credential, then check its effective role.
+
+        Fail-closed: unknown credentials raise UnauthenticatedError (a
+        legacy-compatible UnauthorizedActionError). Returns the
+        authenticated Principal for audit recording.
+        """
+        principal = self.authenticator.authenticate(credential)
+        if principal.role not in allowed_roles:
+            raise UnauthorizedActionError(
+                principal.subject,
+                "/".join(r.value for r in allowed_roles),
+            )
+        return principal
+
+    @staticmethod
+    def _with_principal(payload: Dict[str, Any], principal) -> Dict[str, Any]:
+        """Embed the authenticated identity into an audit payload."""
+        if principal is not None:
+            payload["principal"] = principal.to_dict()
+        return payload
 
     # -- read helpers ----------------------------------------------------- #
     def _require_state(self, decision_id: str) -> DecisionState:
@@ -251,33 +288,42 @@ class DecisionWorkflow:
         summary: str = "",
     ) -> Decision:
         """Record a proposed decision and place it in PENDING review."""
-        self.authorizer.require(actor, *self.SUBMIT_ROLES)
+        principal = self._authorize(actor, self.SUBMIT_ROLES)
         decision_id = trace.decision_id
         self.store.append_event(
             "submit", decision_id, DecisionState.PENDING.value, actor,
-            {"trace": trace.to_dict(), "scenario_id": scenario_id, "summary": summary},
+            self._with_principal(
+                {
+                    "trace": trace.to_dict(),
+                    "scenario_id": scenario_id,
+                    "summary": summary,
+                },
+                principal,
+            ),
         )
         return self._decision_view(decision_id)
 
     def approve(self, decision_id: str, actor: str, note: str = "") -> Decision:
         """PENDING -> APPROVED (operator+)."""
+        principal = self._authorize(actor, self.APPROVE_ROLES)  # fail-closed first
         state = self._require_state(decision_id)
         if state != DecisionState.PENDING:
             raise InvalidTransitionError(decision_id, state.value, "approve")
-        self.authorizer.require(actor, *self.APPROVE_ROLES)
         self.store.append_event(
-            "approve", decision_id, DecisionState.APPROVED.value, actor, {"note": note}
+            "approve", decision_id, DecisionState.APPROVED.value, actor,
+            self._with_principal({"note": note}, principal),
         )
         return self._decision_view(decision_id)
 
     def reject(self, decision_id: str, actor: str, reason: str) -> Decision:
         """PENDING -> REJECTED (terminal; cannot be re-approved)."""
+        principal = self._authorize(actor, self.REJECT_ROLES)  # fail-closed first
         state = self._require_state(decision_id)
         if state != DecisionState.PENDING:
             raise InvalidTransitionError(decision_id, state.value, "reject")
-        self.authorizer.require(actor, *self.REJECT_ROLES)
         self.store.append_event(
-            "reject", decision_id, DecisionState.REJECTED.value, actor, {"reason": reason}
+            "reject", decision_id, DecisionState.REJECTED.value, actor,
+            self._with_principal({"reason": reason}, principal),
         )
         return self._decision_view(decision_id)
 
@@ -293,16 +339,17 @@ class DecisionWorkflow:
         The child reuses the original proposal verbatim but carries the
         supervisor-entered modified order. The parent stays untouched.
         """
+        principal = self._authorize(actor, self.OVERRIDE_ROLES)  # fail-closed
+
         state = self._require_state(decision_id)
         if state != DecisionState.PENDING:
             raise InvalidTransitionError(decision_id, state.value, "override")
-        self.authorizer.require(actor, *self.OVERRIDE_ROLES)
 
         parent = self._decision_view(decision_id)
         original = parent.trace.to_dict()
         self.store.append_event(
             "override", decision_id, DecisionState.OVERRIDDEN.value, actor,
-            {"note": note, "by": actor},
+            self._with_principal({"note": note, "by": actor}, principal),
         )
 
         child_trace = trace_from_dict(original)
@@ -315,23 +362,27 @@ class DecisionWorkflow:
         child_id = child_trace.decision_id
         self.store.append_event(
             "submit", child_id, DecisionState.PENDING.value, actor,
-            {
-                "trace": child_trace.to_dict(),
-                "scenario_id": parent.scenario_id,
-                "summary": parent.summary,
-                "override_of": decision_id,
-            },
+            self._with_principal(
+                {
+                    "trace": child_trace.to_dict(),
+                    "scenario_id": parent.scenario_id,
+                    "summary": parent.summary,
+                    "override_of": decision_id,
+                },
+                principal,
+            ),
         )
         return self._decision_view(decision_id), self._decision_view(child_id)
 
     def execute(self, decision_id: str, actor: str) -> Decision:
         """APPROVED -> EXECUTED."""
+        principal = self._authorize(actor, self.EXECUTE_ROLES)  # fail-closed first
         state = self._require_state(decision_id)
         if state != DecisionState.APPROVED:
             raise InvalidTransitionError(decision_id, state.value, "execute")
-        self.authorizer.require(actor, *self.EXECUTE_ROLES)
         self.store.append_event(
-            "execute", decision_id, DecisionState.EXECUTED.value, actor, {"note": ""}
+            "execute", decision_id, DecisionState.EXECUTED.value, actor,
+            self._with_principal({"note": ""}, principal),
         )
         return self._decision_view(decision_id)
 
