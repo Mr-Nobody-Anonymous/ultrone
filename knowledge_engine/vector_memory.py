@@ -160,15 +160,45 @@ class VectorMemory:
         """Search for entries most similar to query.
 
         Returns list of (entry_id, similarity_score) tuples sorted by score.
+        Uses vectorized NumPy operations when available for speed.
         """
         query_vec = self._embed_text(query)
-        results: List[Tuple[str, float]] = []
-        for entry_id, vec in self._vectors.items():
-            score = self.cosine_similarity(query_vec, vec)
-            if score >= min_score:
-                results.append((entry_id, score))
-        results.sort(key=lambda x: x[1], reverse=True)
-        return results[:limit]
+        if not self._vectors:
+            return []
+
+        try:
+            import numpy as np
+
+            # Vectorized search
+            ids = list(self._vectors.keys())
+            matrix = np.array([self._vectors[eid] for eid in ids], dtype=np.float32)
+            q = np.array(query_vec, dtype=np.float32).reshape(1, -1)
+
+            # Cosine similarity via matrix multiplication
+            norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+            norms[norms == 0] = 1e-10
+            matrix_normed = matrix / norms
+            q_norm = np.linalg.norm(q) or 1e-10
+            q_normed = q / q_norm
+            scores = (matrix_normed @ q_normed.T).ravel()
+
+            # Filter by min_score
+            mask = scores >= min_score
+            filtered_ids = [ids[i] for i in range(len(ids)) if mask[i]]
+            filtered_scores = scores[mask]
+
+            # Sort by score descending
+            order = np.argsort(filtered_scores)[::-1][:limit]
+            return [(filtered_ids[i], float(filtered_scores[i])) for i in order]
+        except ImportError:
+            # Fallback to pure-Python
+            results: List[Tuple[str, float]] = []
+            for entry_id, vec in self._vectors.items():
+                score = self.cosine_similarity(query_vec, vec)
+                if score >= min_score:
+                    results.append((entry_id, score))
+            results.sort(key=lambda x: x[1], reverse=True)
+            return results[:limit]
 
     def search_with_entries(
         self,

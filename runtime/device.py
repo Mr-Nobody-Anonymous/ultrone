@@ -76,19 +76,42 @@ def detect_hardware_profile() -> HardwareProfile:
                 ram_bytes=ram_bytes,
             )
 
-        if hasattr(torch.version, "hip") or (hasattr(torch, "version") and getattr(torch.version, "hip", None) is not None):
-            return HardwareProfile(
-                device_type=DeviceType.ROCM.value,
-                device_name="AMD ROCm",
-                total_memory=0,
-                available_memory=0,
-                supports_fp16=True,
-                supports_bf16=False,
-                supports_int8=True,
-                supports_compile=False,
-                cpu_count=cpu_count,
-                ram_bytes=ram_bytes,
-            )
+        # ROCm detection: verify an actual device is available, not just a HIP build
+        is_rocm_build = bool(
+            hasattr(torch.version, "hip")
+            and getattr(torch.version, "hip", None) is not None
+        )
+        if is_rocm_build:
+            # Check if a ROCm device is actually accessible
+            rocm_available = False
+            try:
+                # On ROCm builds, torch.cuda.is_available() returns True when a GPU is present
+                rocm_available = bool(torch.cuda.is_available())
+            except Exception:
+                rocm_available = False
+            if rocm_available:
+                try:
+                    device = torch.device("cuda")
+                    props = torch.cuda.get_device_properties(device)
+                    total_memory = int(getattr(props, "total_memory", 0) or 0)
+                    available_memory = max(total_memory, int(torch.cuda.mem_get_info()[0]))
+                    return HardwareProfile(
+                        device_type=DeviceType.ROCM.value,
+                        device_name=getattr(props, "name", "AMD GPU"),
+                        total_memory=total_memory,
+                        available_memory=available_memory,
+                        compute_capability=getattr(props, "major", None) and f"{props.major}.{props.minor}",
+                        supports_fp16=True,
+                        supports_bf16=False,
+                        supports_int8=True,
+                        supports_compile=hasattr(torch, "compile"),
+                        cpu_count=cpu_count,
+                        ram_bytes=ram_bytes,
+                    )
+                except Exception:
+                    pass
+            # ROCm build but no device available — fall through to CPU
+            logger.debug("ROCm build detected but no GPU device available; falling back to CPU")
 
     return HardwareProfile(
         device_type=DeviceType.CPU.value,

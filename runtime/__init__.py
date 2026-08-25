@@ -1,10 +1,23 @@
 """Central runtime helpers for hardware-aware execution."""
 
-from .device import DeviceType, HardwareProfile, detect_hardware_profile
-from .precision import PrecisionMode, PrecisionPolicy, select_precision
-from .compilation import CompilationManager, compile_model
+from .backend import BackendInfo, BackendManager, detect_backends
 from .batching import batch_inference, recommended_batch_size
-from .inference import ModelCache, ModelRuntime, Runtime, RuntimeConfig, benchmark_hardware
+from .capabilities import Capabilities, detect_capabilities
+from .compilation import CompilationManager, compile_model
+from .device import DeviceType, HardwareProfile, detect_hardware_profile
+from .inference import (
+    InferenceScheduler,
+    ModelCache,
+    ModelRuntime,
+    ModelState,
+    Priority,
+    Runtime,
+    RuntimeConfig,
+    benchmark_hardware,
+)
+from .memory import LRUCache, MemoryMonitor, ModelEvictionManager
+from .policy import ChangeDetector, DecisionCache, FastSlowPolicy, PolicyConfig, ReasoningScheduler
+from .precision import PrecisionMode, PrecisionPolicy, select_precision
 
 __all__ = [
     "DeviceType",
@@ -19,7 +32,23 @@ __all__ = [
     "recommended_batch_size",
     "ModelCache",
     "ModelRuntime",
+    "ModelState",
+    "Priority",
     "Runtime",
     "RuntimeConfig",
     "benchmark_hardware",
+    "BackendInfo",
+    "BackendManager",
+    "detect_backends",
+    "Capabilities",
+    "detect_capabilities",
+    "LRUCache",
+    "MemoryMonitor",
+    "ModelEvictionManager",
+    "InferenceScheduler",
+    "ChangeDetector",
+    "DecisionCache",
+    "FastSlowPolicy",
+    "PolicyConfig",
+    "ReasoningScheduler",
 ]

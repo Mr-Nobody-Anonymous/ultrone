@@ -29,19 +29,45 @@ def main(argv: List[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Ultrone CLI")
     parser.add_argument("command", nargs="?", default="train", choices=["train", "benchmark"], help="Command to run")
     parser.add_argument("--benchmark", default="hardware", help="Benchmark target")
+    parser.add_argument("--profile", default="auto",
+                        choices=["auto", "ultra_fast", "balanced", "research", "max_quality"],
+                        help="Performance profile")
+    parser.add_argument("--device", default="auto",
+                        choices=["auto", "cpu", "cuda", "mps", "rocm"],
+                        help="Execution device")
+    parser.add_argument("--precision", default="auto",
+                        choices=["auto", "fp32", "fp16", "bf16", "int8"],
+                        help="Precision mode")
     args = parser.parse_args(argv)
+
+    # Apply performance profile via environment
+    if args.profile != "auto":
+        import os
+        os.environ["ULTRONE_PERFORMANCE_PROFILE"] = args.profile
+    if args.device != "auto":
+        import os
+        os.environ["ULTRONE_DEVICE"] = args.device
+    if args.precision != "auto":
+        import os
+        os.environ["ULTRONE_PRECISION"] = args.precision
 
     if args.command == "benchmark":
         from runtime import benchmark_hardware
 
         report = benchmark_hardware()
-        logger.info("ULTRONE Hardware Report")
-        logger.info("-----------------------")
+        logger.info("=" * 70)
+        logger.info("ULTRONE HARDWARE REPORT")
+        logger.info("=" * 70)
         logger.info(f"Device: {report['device']}")
         logger.info(f"Backend: {report['backend']}")
         logger.info(f"Precision: {report['precision']}")
-        logger.info(f"Latency: {report['latency_seconds']:.6f}s")
+        logger.info(f"Backend description: {report.get('backend_description', 'N/A')}")
+        logger.info(f"CPU count: {report.get('cpu_count', 'N/A')}")
+        logger.info(f"RAM: {report.get('ram_bytes', 0) / (1024**3):.1f} GB")
+        logger.info(f"Matmul latency: {report.get('matmul_latency_ms', 0):.3f} ms")
+        logger.info(f"Inference latency: {report['latency_seconds']:.6f}s")
         logger.info(f"Cached models: {report['cached_models']}")
+        logger.info("=" * 70)
         return
 
     logger.info("=" * 70)
