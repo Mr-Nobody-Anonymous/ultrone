@@ -33,5 +33,12 @@ Thumbs.db
 
 # Data (large files)
 data/skills.json
+data/hitl_audit/
+
+# Accidentally committed generated artifacts (kept locally, not tracked)
+images.jfif
+final_test_output.txt
+full_test_output.txt
+tests/test_artifacts/*.bin
 
 scripts/

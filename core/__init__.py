@@ -26,7 +26,15 @@ from core.contracts import (
     WorldEstimate,
     new_id,
 )
-from core.pipeline import DecisionPipeline, SensorSuite
+from core.lifecycle import (
+    ALLOWED_TRANSITIONS,
+    DecisionLifecycle,
+    IllegalTransitionError,
+    LifecycleState,
+    TERMINAL_STATES,
+    validate_transition,
+)
+from core.pipeline import DecisionPipeline, PendingDecisionError, SensorSuite
 from core.safety_gate import SafetyConfig, SafetyGate
 
 __all__ = [
@@ -44,7 +52,15 @@ __all__ = [
     # Pipeline
     "SensorSuite",
     "DecisionPipeline",
+    "PendingDecisionError",
     # Safety
     "SafetyConfig",
     "SafetyGate",
+    # Lifecycle
+    "LifecycleState",
+    "ALLOWED_TRANSITIONS",
+    "TERMINAL_STATES",
+    "DecisionLifecycle",
+    "IllegalTransitionError",
+    "validate_transition",
 ]

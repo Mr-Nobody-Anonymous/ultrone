@@ -547,7 +547,6 @@ print(sat.analyze({'formation': 'tanks'}, {}))
 ### Science
 
 #### 2024.07.03 - On Large Language Models in National Security Applications
-*Source: [Link](https://www.example.com)*
 
 This article examines the integration of large language models (LLMs) like GPT-4 into national security operations, highlighting both opportunities and challenges. LLMs offer substantial benefits for national security organizations, including automating information processing, enhancing data analysis, and improving decision-making efficiency. When coupled with decision-theoretic principles and Bayesian reasoning, these models can facilitate the transition from data to actionable decisions with reduced manpower requirements.
 
@@ -558,7 +557,6 @@ However, significant risks accompany these benefits. The article identifies hall
 The broader implications extend to international relations and geopolitics, with adversarial nations potentially leveraging LLMs for disinformation campaigns and cyber operations. Recent developments, such as China's reported use of LLMs for military purposes (noted in the 2024 DoD China Report), underscore the geopolitical stakes involved.
 
 #### 2024.02.01 - COA-GPT: Generative Pre-trained Transformers for Accelerated Course of Action Development in Military Operations
-*Source: [Link](https://www.example.com)*
 
 This research introduces COA-GPT, an innovative algorithm that uses Large Language Models (LLMs) to generate military Courses of Action (COAs) rapidly and efficiently. The system addresses the traditionally time-consuming nature of military planning by incorporating military doctrine and expertise into LLMs through in-context learning.
 
@@ -567,14 +565,12 @@ COA-GPT allows commanders to input mission information in both text and image fo
 The study evaluated COA-GPT in a militarized version of StarCraft II, comparing it against reinforcement learning algorithms. Results demonstrated that COA-GPT generated more strategically sound plans more quickly than alternative approaches.
 
 #### 2024.10.26 - Fine-Tuning and Evaluating Open-Source Large Language Models for the Army Domain
-*Source: [Link](https://www.example.com)*
 
 This study explores the development of **TRACLM**, a family of open-source LLMs fine-tuned specifically for US Army applications. The research addresses the challenge of adapting general-purpose LLMs to military contexts by incorporating Army-specific terminology, doctrine, and operational data.
 
 TRACLM was evaluated on tasks such as intelligence analysis, report generation, and operational planning, demonstrating improved performance over unmodified models in understanding domain-specific language and context. The authors highlight TRACLM's potential to support Army personnel in processing complex datasets and generating actionable insights, particularly in resource-constrained environments.
 
 #### 2024.01.29 - Escalation Risks from Language Models in Military and Diplomatic Decision-Making
-*Source: [Link](https://www.example.com)*
 
 This paper investigates the risks of deploying LLMs in military and diplomatic decision-making, focusing on their potential to escalate conflicts unintentionally. Through wargaming simulations, the study found that LLMs, including models like Grok and GPT-4, exhibited bellicose tendencies, often recommending aggressive actions over diplomatic solutions.
 
@@ -585,7 +581,6 @@ The authors attribute this behavior to biases in training data and the models' l
 ### Media
 
 #### 2024.11.24 - Meta AI is Ready for War
-*Source: [Link](https://www.example.com)*
 
 Meta announced it's now allowing US government agencies and military contractors to use its open-source Llama AI model for national security applications, reversing previous restrictions in its acceptable use policy against using Llama 3 for "military, warfare, nuclear industries or applications, espionage."
 
@@ -596,7 +591,6 @@ Some partners have already begun implementing the technology — Oracle is using
 This policy shift comes after reports that Chinese researchers used Meta's earlier Llama 2 model to build an AI system for China's military. Meta emphasized the importance of the US leading in the AI race, stating it's in "both America and the wider democratic world's interest for American open-source models to excel and succeed over models from China and elsewhere."
 
 #### 2025.07.10 - Department of the Air Force Launches NIPRGPT
-*Source: [Link](https://www.example.com)*
 
 The Department of the Air Force has launched **NIPRGPT**, an experimental AI chatbot that allows personnel to use Generative AI on the Non-classified Internet Protocol Router Network. This CAC-enabled tool is part of the DAF's broader initiative to provide Airmen, Guardians, civilian employees, and contractors with access to AI technology while maintaining appropriate security measures.
 
@@ -605,7 +599,6 @@ NIPRGPT enables users to have human-like conversations for completing various ta
 Venice Goodwine, DAF chief information officer, emphasized that now is the time to provide personnel with tools to develop AI skills, while Chandra Donelson, acting chief data and AI officer, noted that "technology is learned by doing."
 
 #### 2025.03.06 - Revealed: Israeli Military Creating ChatGPT-like Tool Using Palestinian Surveillance Data
-*Source: [The Guardian](https://www.example.com)*
 
 The Guardian has revealed that Israel's military intelligence agency, Unit 8200, is developing a ChatGPT-like AI tool using a vast database of intercepted Palestinian communications. This elite eavesdropping unit trained their large language model on approximately 100 billion words from intercepted Arabic conversations to understand colloquial dialects rather than formal written Arabic.
 
@@ -614,14 +607,12 @@ Development of this system accelerated after October 2023 when the Gaza war bega
 Human rights organizations warn these AI systems can amplify biases and produce errors, with critics arguing the model violates Palestinians' privacy rights. The technology demonstrates how military organizations are adapting commercial AI advances for surveillance purposes, raising important questions about privacy, surveillance ethics, and the potential for consequential errors in military AI applications.
 
 #### 2024.11.04 - Scale AI Unveils 'Defense Llama' Large Language Model for National Security Users
-*Source: [Link](https://www.example.com)*
 
 Scale AI has introduced **"Defense Llama,"** a specialized LLM designed for national security applications, building on Meta's open-source Llama model. Tailored for deployment on classified networks, this model aims to support the US military in tasks such as combat scenario planning, intelligence analysis, and operational data processing.
 
 The unveiling follows Scale AI's collaboration with the US Department of Defense, with early adoption by agencies for real-time decision-making support. Defense Llama incorporates domain-specific fine-tuning to handle sensitive military data, offering enhanced security features to meet stringent government requirements.
 
 #### 2024.02.20 - Pentagon Explores Military Uses of Emerging AI Technologies
-*Source: [The Washington Post](https://www.example.com)*
 
 The Washington Post reports that the Pentagon is actively exploring LLMs for military applications, including intelligence summarization and training simulations. At a 2024 conference, defense officials discussed integrating models like those from OpenAI and Anthropic to enhance operational efficiency.
 
