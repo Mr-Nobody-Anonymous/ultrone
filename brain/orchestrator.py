@@ -135,6 +135,7 @@ class Orchestrator:
         initial_mutation_rate: float = 0.15,
         use_coevolution: bool = True,
         success_rate_window: int = 10,
+        seed: Optional[int] = None,
     ):
         self.config = config or MilitaryConfig()
 
@@ -143,6 +144,7 @@ class Orchestrator:
         self.current_mutation_rate = initial_mutation_rate
         self.use_coevolution = use_coevolution
         self.success_rate_window = success_rate_window
+        self.seed = seed
 
         self.episode_rewards: List[float] = []
         self.episode_successes: List[bool] = []
@@ -162,6 +164,8 @@ class Orchestrator:
 
         self._intervention_manager: Optional[Any] = None
         self._api_server: Optional[Any] = None
+        self._hard_blacklist: set = set()
+        self._safety_stats = {"proposed": 0, "blocked": 0, "fleet_blocked": 0}
 
         self.evolution_lab = EvolutionLab()
         self.evolution_lab.initialize(agent_id="orchestrator")
@@ -336,6 +340,82 @@ class Orchestrator:
         except Exception as e:
             logger.debug(f"Telemetry dashboard update skipped: {e}")
 
+    def _gate_action(self, blue_action, obs):
+        """Independent pre-execution safety enforcement.
+
+        Audit P0 fix: previously ROE/constraint violations only produced
+        negative reward AFTER execution. The core SafetyGate now blocks
+        violating orders BEFORE they reach the environment. This gate is
+        independent of the proposing genome (it reads asset state directly
+        from the observation), so the planner cannot certify its own order.
+        """
+        if blue_action is None:
+            return None
+        try:
+            from core.contracts import ActionOrder, AssetSnapshot, WorldEstimate
+            from core.safety_gate import SafetyConfig, SafetyGate
+        except Exception as e:  # graceful degradation if core unavailable
+            logger.debug(f"Safety gate unavailable: {e}")
+            return blue_action
+
+        gate = SafetyGate(SafetyConfig(blacklisted_actions=self._hard_blacklist))
+
+        def _snapshot(asset_type):
+            assets = (obs.get("blue_assets") or {}).get(asset_type) or [{}]
+            asset = assets[0]
+            pos = asset.get("position")
+            return AssetSnapshot(
+                asset_type=asset_type,
+                position=tuple(pos) if pos else None,
+                fuel=float(asset.get("fuel", 1.0)),
+                ammo=int(asset.get("ammo", 0)),
+                range=float(asset.get("range", 9999.0)),
+            )
+
+        # Environment observations expose ground truth; belief confidence
+        # for engagement-confidence rules is therefore maximal here.
+        estimate = WorldEstimate(
+            contacts=[], primary_target_position=blue_action.get("target"),
+            primary_target_confidence=1.0,
+            n_feeds_generated=0, n_feeds_received=0,
+        )
+
+        # Swarm hierarchical COA: gate each fleet entry individually.
+        if blue_action.get("type") == "swarm":
+            filtered = []
+            for entry in blue_action.get("swarm_fleet", []):
+                order = ActionOrder(
+                    action=entry.get("action", "observe"),
+                    asset_type=entry.get("asset_type", "drone"),
+                    target=entry.get("target"),
+                    source_coa_id="swarm",
+                )
+                verdict = gate.evaluate(order, estimate, _snapshot(order.asset_type))
+                self._safety_stats["proposed"] += 1
+                if verdict.approved:
+                    filtered.append(entry)
+                else:
+                    self._safety_stats["blocked"] += 1
+                    self._safety_stats["fleet_blocked"] += 1
+                    logger.warning(f"Safety gate blocked fleet order: {verdict.reason}")
+            blue_action["swarm_fleet"] = filtered
+            return blue_action
+
+        # Legacy single-order COA.
+        order = ActionOrder(
+            action=str(blue_action.get("action", "")),
+            asset_type=str(blue_action.get("asset_type", "drones")),
+            target=blue_action.get("target"),
+            source_coa_id="legacy",
+        )
+        verdict = gate.evaluate(order, estimate, _snapshot(order.asset_type))
+        self._safety_stats["proposed"] += 1
+        if not verdict.approved:
+            self._safety_stats["blocked"] += 1
+            logger.warning(f"Safety gate blocked order: {verdict.reason}")
+            return None
+        return blue_action
+
     def _run_analysis(self, obs: Dict[str, Any]) -> Dict[str, Any]:
         """Run battlefield analysis & 3D scene generation on an observation."""
         try:
@@ -354,6 +434,11 @@ class Orchestrator:
 
     def run(self) -> Dict[str, Any]:
         logger.info(f"Starting ULTRONE training: {self.num_episodes} episodes")
+        if self.seed is not None:
+            import numpy as np
+            random.seed(self.seed)
+            np.random.seed(self.seed % (2 ** 32))
+            logger.info(f"Reproducibility: seeded global RNGs with seed={self.seed}")
         elite = self._load_elite_genome()
         env = BattlefieldEnv()
         self._current_env = env
@@ -509,6 +594,20 @@ class Orchestrator:
                                 "asset_type": asset_type,
                                 "target": obs.get("red_force", {}).get("position", (50, 50)),
                             }
+
+                # ---- Independent pre-execution safety enforcement ----
+                if self._intervention_manager is not None:
+                    constraints = self._intervention_manager.get_constraints()
+                    blacklisted = constraints.get("blacklist_action")
+                    if blacklisted:
+                        self._hard_blacklist.add(str(blacklisted).lower())
+
+                gated = self._gate_action(blue_action, obs)
+                if blue_action is not None and gated is None:
+                    logger.info(
+                        f"Episode {episode}: order blocked by safety gate at step {step}"
+                    )
+                blue_action = gated
 
                 # ---- Determine Red Force action from evolved genome ----
                 red_action = None

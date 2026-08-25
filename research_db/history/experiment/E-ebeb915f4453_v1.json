@@ -1,0 +1,20 @@
+{
+  "experiment_id": "E-ebeb915f4453",
+  "hypothesis": "Test hypothesis",
+  "research_motivation": "",
+  "implementation": "",
+  "dataset": "",
+  "training_config": {},
+  "evaluation_metrics": {},
+  "benchmark_comparison": {},
+  "resource_usage": {},
+  "execution_logs": [],
+  "performance_graphs": [],
+  "success_criteria": "",
+  "rollback_strategy": "",
+  "conclusion": "",
+  "recommendation": "",
+  "status": "running",
+  "created_at": 1787645862.0043852,
+  "updated_at": 1787645862.0184934
+}

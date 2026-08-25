@@ -1,0 +1,141 @@
+{
+  "scenario_suite_version": "canonical-scenarios-v1",
+  "scenarios": {
+    "conflicting_sensor_observations": {
+      "fingerprint": "ac8dba822e6062ea1b0d387cbbc4cb47aaea0d7475ea29d1ee318b907b90dfbf",
+      "metrics": {
+        "candidates_evaluated": 18,
+        "feeds_generated": 18,
+        "feeds_received": 16,
+        "human_rejections": 0,
+        "n_decisions": 6,
+        "noop_steps": 0,
+        "overrides": 0,
+        "roe_violations": 0,
+        "safety_rejections": 0,
+        "steps": 6,
+        "system_refusals": 0,
+        "total_reward": 19.0
+      }
+    },
+    "deterministic_replay": {
+      "fingerprint": "2fd7478c8530464b94f74d6c7b3ed68840a8c001378f023458caca2dc301e393",
+      "metrics": {
+        "candidates_evaluated": 18,
+        "feeds_generated": 18,
+        "feeds_received": 18,
+        "human_rejections": 0,
+        "n_decisions": 6,
+        "noop_steps": 0,
+        "overrides": 0,
+        "roe_violations": 0,
+        "safety_rejections": 0,
+        "steps": 6,
+        "system_refusals": 0,
+        "total_reward": -6.0
+      }
+    },
+    "human_override": {
+      "fingerprint": "43ed8b05251016a105b2b9fdd251ab3a54a7bfc4f4f9c32b7c3255bf5f60b2e4",
+      "metrics": {
+        "candidates_evaluated": 18,
+        "feeds_generated": 18,
+        "feeds_received": 16,
+        "human_rejections": 0,
+        "n_decisions": 6,
+        "noop_steps": 0,
+        "overrides": 1,
+        "roe_violations": 0,
+        "safety_rejections": 0,
+        "steps": 6,
+        "system_refusals": 0,
+        "total_reward": 19.0
+      }
+    },
+    "human_rejection": {
+      "fingerprint": "239ace7a7e39bff2fabcfbf48d8f6f8bcbe84473e234e5b232d165815d4be574",
+      "metrics": {
+        "candidates_evaluated": 18,
+        "feeds_generated": 18,
+        "feeds_received": 16,
+        "human_rejections": 6,
+        "n_decisions": 6,
+        "noop_steps": 6,
+        "overrides": 0,
+        "roe_violations": 0,
+        "safety_rejections": 0,
+        "steps": 6,
+        "system_refusals": 0,
+        "total_reward": 0.0
+      }
+    },
+    "low_resource_condition": {
+      "fingerprint": "8b9c8ddafc3d83bff6d89cfbecdc107f5ea2c599179c50b1a2709f8fcd7a522e",
+      "metrics": {
+        "candidates_evaluated": 18,
+        "feeds_generated": 18,
+        "feeds_received": 16,
+        "human_rejections": 0,
+        "n_decisions": 6,
+        "noop_steps": 1,
+        "overrides": 0,
+        "roe_violations": 0,
+        "safety_rejections": 1,
+        "steps": 6,
+        "system_refusals": 1,
+        "total_reward": -6.0
+      }
+    },
+    "normal_operation": {
+      "fingerprint": "5521c0e836f210ae0799d519f9adecd0dd170a9307e3aad874ccbac15f060d40",
+      "metrics": {
+        "candidates_evaluated": 18,
+        "feeds_generated": 18,
+        "feeds_received": 16,
+        "human_rejections": 0,
+        "n_decisions": 6,
+        "noop_steps": 0,
+        "overrides": 0,
+        "roe_violations": 0,
+        "safety_rejections": 0,
+        "steps": 6,
+        "system_refusals": 0,
+        "total_reward": 19.0
+      }
+    },
+    "partial_observation_dropout": {
+      "fingerprint": "cb3fa11d95e651bf3852508cdf32c80353b6c1e98101ece92257789cda855dbb",
+      "metrics": {
+        "candidates_evaluated": 18,
+        "feeds_generated": 18,
+        "feeds_received": 10,
+        "human_rejections": 0,
+        "n_decisions": 6,
+        "noop_steps": 0,
+        "overrides": 0,
+        "roe_violations": 0,
+        "safety_rejections": 0,
+        "steps": 6,
+        "system_refusals": 0,
+        "total_reward": 19.0
+      }
+    },
+    "safety_gate_rejection": {
+      "fingerprint": "350c2af469759533b51f5a7c352c60bb60d35f1874713046ca8983bbbee76942",
+      "metrics": {
+        "candidates_evaluated": 18,
+        "feeds_generated": 18,
+        "feeds_received": 16,
+        "human_rejections": 0,
+        "n_decisions": 6,
+        "noop_steps": 6,
+        "overrides": 0,
+        "roe_violations": 0,
+        "safety_rejections": 6,
+        "steps": 6,
+        "system_refusals": 6,
+        "total_reward": -6.0
+      }
+    }
+  }
+}

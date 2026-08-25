@@ -50,6 +50,10 @@ from core.safety_gate import SafetyConfig, SafetyGate  # noqa: E402
 
 logger = logging.getLogger("Ultrone.Core.Pipeline")
 
+
+class PendingDecisionError(Exception):
+    """A decision referenced for HITL resolution is not pending here."""
+
 # COA phases that map to executable environment actions.
 EXECUTABLE_PHASES = ("strike", "jam", "move", "resupply")
 
@@ -141,6 +145,10 @@ class DecisionPipeline:
         safety_gate: Optional[SafetyGate] = None,
         seed: int = 42,
         n_candidates: int = 3,
+        hitl_bridge: Optional[Any] = None,
+        require_human_approval: bool = False,
+        scenario_id: str = "",
+        sensor_suite: Optional[SensorSuite] = None,
     ) -> None:
         self.env = env if env is not None else BattlefieldEnv()
         self.coa_generator = (
@@ -151,11 +159,22 @@ class DecisionPipeline:
         self.n_candidates = max(1, n_candidates)
         self.seed = seed
         self._rng = random.Random(seed)
-        self.sensor_suite = SensorSuite(self._rng)
+        self.sensor_suite = sensor_suite if sensor_suite is not None else SensorSuite(self._rng)
         self.episode_id: str = new_id("EP")
         self.traces: List[DecisionTrace] = []
         self._obs: Dict[str, Any] = {}
         self._tick = 0
+        # Sprint B-A: close the decision loop through the HITL/audit layer.
+        # When a bridge is attached every finalized trace is automatically
+        # persisted (exactly one proposal per decision). When human approval
+        # is additionally required, execution of approved orders is deferred
+        # until execute_approved() resolves them. With no bridge, behavior is
+        # byte-for-byte the Phase 1 autonomous pipeline.
+        self.hitl_bridge = hitl_bridge
+        self.require_human_approval = require_human_approval
+        self.scenario_id = scenario_id
+        self._pending: Dict[str, Tuple[ActionOrder, SafetyVerdict]] = {}
+
 
     # ------------------------------------------------------------------ #
     # Episode control                                                     #
@@ -246,9 +265,19 @@ class DecisionPipeline:
     # One full decision cycle                                             #
     # ------------------------------------------------------------------ #
     def step(self) -> StepResult:
-        """Run observe -> fuse -> plan -> gate -> execute -> trace once."""
+        """Run observe -> fuse -> plan -> gate -> execute -> trace once.
+
+        With a HITL bridge attached and ``require_human_approval=True``,
+        an approved order is NOT executed here: the decision enters PENDING
+        and must be resolved via :meth:`execute_approved` /
+        :meth:`reject_pending`.
+        """
+        from core.lifecycle import DecisionLifecycle
+
+        lc = DecisionLifecycle()
         self._tick += 1
         obs = Observation.from_env(self._obs, self._tick)
+        lc.advance("SENSE")
         trace = DecisionTrace(
             decision_id=new_id("DEC"),
             episode_id=self.episode_id,
@@ -258,7 +287,9 @@ class DecisionPipeline:
 
         # 1-2. Sensing + perception (partial observability).
         records = self.sensor_suite.generate(obs)
+        lc.advance("FUSE")
         estimate, perception_summary = self._fuse_world_estimate(records)
+        lc.advance("ESTIMATE")
         trace.perception = perception_summary
         trace.world_state = estimate.to_dict()
 
@@ -274,6 +305,7 @@ class DecisionPipeline:
             coa = self.coa_generator.generate_evolved_coa(target_info, context)
             candidates.append(coa)
             orders.append(self._order_from_coa(coa, estimate))
+        lc.advance("PLAN")
         trace.planning = {
             "n_candidates": len(candidates),
             "candidate_ids": [
@@ -302,15 +334,29 @@ class DecisionPipeline:
                 reason=f"all {len(rejection_log)} candidate orders rejected",
             )
 
+        lc.advance("SAFETY_GATE")
         trace.safety = {
             "verdict": verdict.to_dict(),
             "rejections": rejection_log,
             "fallback_noop": selected is None,
         }
 
-        # 5. Execution (no-op advance when nothing approved).
-        env_action = selected.to_env_action() if selected else None
-        self._obs, reward, done, info = self.env.step(env_action)
+        # 5. Execution -- deferred when human approval is required for an
+        # approved order. Rejected-by-safety orders always no-op regardless.
+        deferred = (
+            self.hitl_bridge is not None
+            and self.require_human_approval
+            and selected is not None
+        )
+        if deferred:
+            lc.advance("PENDING")
+            env_action = None
+            reward, done, info = 0.0, False, {}
+            self._pending[trace.decision_id] = (selected, verdict)
+            trace.execution["awaiting_approval"] = True
+        else:
+            env_action = selected.to_env_action() if selected else None
+            self._obs, reward, done, info = self.env.step(env_action)
         trace.execution["env_action"] = env_action
 
         # 6. Outcome + provenance seal.
@@ -320,13 +366,109 @@ class DecisionPipeline:
             "roe_violation": info.get("roe_violation", False),
             "red_health": obs.red_force.get("health", 0),
         }
+        if not deferred:
+            lc.advance("EXECUTE")
+            lc.advance("OUTCOME")
+        trace.execution["lifecycle"] = lc.as_list()
         trace.finalize(selected)
         self.traces.append(trace)
 
+        # Sprint B-A: automatically persist the canonical trace into the
+        # HITL/audit layer (exactly one proposal per decision id). In
+        # autonomous mode the execution/outcome are also audited.
+        if self.hitl_bridge is not None:
+            self.hitl_bridge.submit_trace(
+                trace, scenario_id=self.scenario_id or "",
+            )
+            if not deferred:
+                if selected is not None:
+                    self.hitl_bridge.record_autonomous_execution(
+                        trace.decision_id,
+                    )
+                    self.hitl_bridge.record_outcome(
+                        trace.decision_id, dict(trace.outcome),
+                    )
+                else:
+                    # Nothing executed; close the loop as an audited refusal.
+                    self.hitl_bridge.record_refusal(
+                        trace.decision_id, reason=str(verdict.reason),
+                    )
+
         return StepResult(
             trace=trace, order=selected, verdict=verdict,
+            reward=reward, done=done, info={
+                **info,
+                **({"deferred_decision": trace.decision_id} if deferred else {}),
+            },
+        )
+
+    # ------------------------------------------------------------------ #
+    # HITL resolution of deferred decisions                               #
+    # ------------------------------------------------------------------ #
+    def _trace_by_id(self, decision_id: str) -> DecisionTrace:
+        for t in self.traces:
+            if t.decision_id == decision_id:
+                return t
+        raise KeyError(decision_id)
+
+    def execute_approved(self, decision_id: str, actor: str = "bob") -> StepResult:
+        """Resolve a PENDING decision: HUMAN_DECISION -> EXECUTE -> OUTCOME."""
+        if self.hitl_bridge is None:
+            raise RuntimeError("execute_approved requires a HITL bridge")
+        if decision_id not in self._pending:
+            raise PendingDecisionError(
+                f"decision {decision_id} is not pending in this pipeline"
+            )
+        from core.lifecycle import DecisionLifecycle, LifecycleState
+
+        order, verdict = self._pending[decision_id]
+        trace = self._trace_by_id(decision_id)
+        lc = DecisionLifecycle(decision_id)
+        # Replay the sealed prefix so every further transition is validated.
+        lc._history = [LifecycleState(s) for s in trace.execution["lifecycle"]]
+        lc.advance("HUMAN_DECISION")
+        self.hitl_bridge.approve(decision_id, actor)
+        lc.advance("EXECUTE")
+        self.hitl_bridge.record_execution(decision_id, actor)
+        env_action = order.to_env_action()
+        self._obs, reward, done, info = self.env.step(env_action)
+        lc.advance("OUTCOME")
+        trace.execution["env_action"] = env_action
+        trace.execution["awaiting_approval"] = False
+        trace.execution["lifecycle"] = lc.as_list()
+        outcome = {
+            "reward": reward,
+            "done": done,
+            "roe_violation": info.get("roe_violation", False),
+            "red_health": self._obs.get("red_force", {}).get("health", 0),
+        }
+        trace.outcome = outcome
+        self.hitl_bridge.record_outcome(decision_id, dict(outcome))
+        del self._pending[decision_id]
+        return StepResult(
+            trace=trace, order=order, verdict=verdict,
             reward=reward, done=done, info=info,
         )
+
+    def reject_pending(self, decision_id: str, actor: str, reason: str) -> DecisionTrace:
+        """Terminal refusal: REJECTED decisions can never execute."""
+        if self.hitl_bridge is None:
+            raise RuntimeError("reject_pending requires a HITL bridge")
+        if decision_id not in self._pending:
+            raise PendingDecisionError(
+                f"decision {decision_id} is not pending in this pipeline"
+            )
+        from core.lifecycle import DecisionLifecycle, LifecycleState
+
+        trace = self._trace_by_id(decision_id)
+        lc = DecisionLifecycle(decision_id)
+        lc._history = [LifecycleState(s) for s in trace.execution["lifecycle"]]
+        lc.advance("HUMAN_DECISION")
+        lc.advance("REJECTED")  # terminal: no outgoing edge to EXECUTE exists
+        self.hitl_bridge.reject(decision_id, actor, reason)
+        trace.execution["lifecycle"] = lc.as_list()
+        del self._pending[decision_id]
+        return trace
 
     # ------------------------------------------------------------------ #
     # Full episodes                                                       #

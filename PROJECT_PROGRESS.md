@@ -231,58 +231,36 @@ All 6 memory modules implemented.
 
 ---
 
-## Phase 11: World Modeling — *Not Implemented*
+## Phase 11: World Modeling — *Implemented*
 
 ### Status
-`s/world_modeling/` directory exists but is empty. Requires:
-- Terrain model
-- Weather effects
-- Resource model
-- Supply/logistics simulation
-- Event scheduler
-- Sensor uncertainty
-- Stochastic events
+`sim/world_modeling/` contains terrain, weather, resource, supply/logistics,
+event-scheduler, sensor-uncertainty, and stochastic-events models.
 
 ---
 
-## Phase 12: AI Architectures — *Not Implemented*
+## Phase 12: AI Architectures — *Implemented*
 
 ### Status
-`ai_architectures/` directory exists but is empty. Requires:
-- Behavior Trees
-- GOAP (Goal-Oriented Action Planning)
-- Utility AI
-- BDI (Belief–Desire–Intention)
-- Finite State Machines
-- Hierarchical State Machines
-- Blackboard Systems
-- Reactive Planning
+`ai_architectures/` contains behavior-tree, GOAP, utility-AI, BDI, FSM,
+hierarchical-state, blackboard, and reactive-planning patterns.
 
 ---
 
-## Phase 13: Performance — *Not Implemented*
+## Phase 13: Performance — *Implemented*
 
 ### Status
-`sim/performance/` directory exists but is empty. Requires:
-- Parallel simulation engine
-- Distributed simulation
-- Ray integration
-- GPU acceleration
-- Profiling tools
+`sim/performance/` contains parallel, distributed, ray, gpu-accelerated, and
+profiling tooling.
 
 ---
 
-## Phase 14: Research Tooling — *Not Implemented*
+## Phase 14: Research Tooling — *Implemented*
 
 ### Status
-`research/` directory exists but is empty. Requires:
-- Experiment manager
-- Hyperparameter optimization
-- Scenario benchmarking
-- Reproducibility tools
-- Statistical evaluation
-- Ablation framework
-- Automated reports
+`research/` contains experiment_manager, hyperparameter_optimizer,
+scenario_benchmark, reproducibility/reproducer, statistical_evaluation,
+ablation_framework, and automated_report.
 
 ---
 
@@ -300,14 +278,31 @@ All 6 memory modules implemented.
 | 8. Prediction | ❌ Empty | — | Directory exists, no files |
 | 9. Explainable AI | ✅ Complete | 6 | + ConfidenceCalibration, ReasoningGraph |
 | 10. Memory Systems | ✅ Complete | 6 | Multi-tier architecture |
-| 11. World Modeling | ❌ Empty | — | Directory exists, no files |
-| 12. AI Architectures | ❌ Empty | — | Directory exists, no files |
-| 13. Performance | ❌ Empty | — | Directory exists, no files |
-| 14. Research Tooling | ❌ Empty | — | Directory exists, no files |
+| 11. World Modeling | ✅ Complete | 7 | simulator/world_modeling (terrain, weather, resource, logistics, events, sensor uncertainty) |
+| 12. AI Architectures | ✅ Complete | 10 | behavior trees, GOAP, utility AI, BDI, FSM, HSM, blackboard, reactive |
+| 13. Performance | ✅ Complete | 5 | sim/performance tools (parallel, distributed, ray, gpu, profiling) |
+| 14. Research Tooling | ✅ Complete | 8 | research/ tooling (experiments, HPO, scenarios, reproducibility, stats, ablation) |
 | **Backend** | ✅ Complete | 10+ | API, DB, events, analytics, security, etc. |
 
 ### Next Priority
-Phase 8 (Prediction) and Phase 11 (World Modeling) should be prioritized next, as they directly impact simulation realism.
+Phase 8 (Prediction) is the only remaining empty module; it should be implemented
+or explicitly routed to `cognitive/prediction_layer` to remove the dead dir.
+
+## Sprint A — HITL Decision Control & Audit Store (complete)
+
+- `ultrone_hitl/` — clean, ULTRONE-owned HITL package (does **not** touch the
+  vendored `backend/`).
+- `ultrone_hitl/audit_store.py` — append-only, tamper-evident JSONL audit log
+  (SHA-256 hash chain; unique decision IDs; timestamps; actor + transition
+  records; replay/verify).
+- `ultrone_hitl/decision_workflow.py` — server-side state machine
+  (PENDING → APPROVED → EXECUTED; REJECTED / OVERRIDDEN terminal) with
+  role-based authorization, operating on the canonical
+  `core.contracts.DecisionTrace`.
+- `ultrone_hitl/api.py` — FastAPI HITL endpoints: submit, approve, reject,
+  override (spawns an audited child preserving the original proposal), execute,
+  ask_reasoning, retrieve, list, audit replay.
+- Tests: `tests/test_audit_store.py` + `tests/test_hitl_api.py` (31 new).
 
 ### Architecture Documentation
 See `ARCHITECTURE_EXTENSION_PLAN.md` for the complete architecture overview and design decisions.
