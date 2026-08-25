@@ -88,32 +88,37 @@ class SensorFusion:
         return fused_contacts
     
     def _group_by_position(self, feeds: List[SensorFeed], tolerance_meters: float = 500) -> List[List[SensorFeed]]:
-        """Group feeds that are near each other."""
+        """Group feeds that are near each other.
+
+        Uses index-based tracking because SensorFeed instances define
+        __eq__ without __hash__, making them unhashable.
+        """
         groups = []
-        used = set()
-        
-        for feed in feeds:
-            if feed in used:
+        used = set()  # indices of already-grouped feeds
+
+        for i, feed in enumerate(feeds):
+            if i in used:
                 continue
-            
+
             group = [feed]
-            used.add(feed)
-            
-            for other in feeds:
-                if other in used:
+            used.add(i)
+
+            for j, other in enumerate(feeds):
+                if j in used:
                     continue
-                
+
                 dx = other.position[0] - feed.position[0]
                 dy = other.position[1] - feed.position[1]
                 dz = other.position[2] - feed.position[2]
-                
+
                 if (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5 < tolerance_meters:
                     group.append(other)
-                    used.add(other)
-            
+                    used.add(j)
+
             groups.append(group)
-        
+
         return groups
+
     
     def _fuse_group(self, feeds: List[SensorFeed], weights: Dict[str, float]) -> Optional[FusedContact]:
         """Fuse a group of feeds into a single contact."""
