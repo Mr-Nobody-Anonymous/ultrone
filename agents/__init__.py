@@ -7,6 +7,13 @@ from .land import factory as land_factory
 from .sea import factory as sea_factory
 from .space import factory as space_factory
 from .cyber import factory as cyber_factory
+from .robotics import factory as robotics_factory
+from .infrastructure import factory as infrastructure_factory
+
+# Subsystem-level platform control
+from .platform_agent import SubsystemControlledAgent
+from .state import PlatformStateView
+from .telemetry import TelemetryRecorder
 
 # Air domain agents
 from .air.drone_agent import DroneAgent
@@ -39,6 +46,9 @@ from .base_agent import BaseAgent
 __all__ = [
     # Base
     "BaseAgent",
+    "SubsystemControlledAgent",
+    "PlatformStateView",
+    "TelemetryRecorder",
     # Air
     "DroneAgent", "FighterAgent", "MissileAgent",
     # Land

@@ -7,13 +7,20 @@ import logging
 from typing import Dict, List, Any
 
 from agents.base_agent import BaseAgent
+from agents.platform_agent import SubsystemControlledAgent
+from agents.subsystems.naval import BallastSubsystem, SonarSubsystem
 from data.entities import DomainType, AgentState, Contact
 
 logger = logging.getLogger("Ultrone.Agents.Sea.Submarine")
 
 
-class SubmarineAgent(BaseAgent):
-    """Submarine agent specializing in underwater warfare, ASW, and stealth operations."""
+class SubmarineAgent(SubsystemControlledAgent):
+    """Submarine agent specializing in underwater warfare, ASW, and stealth operations.
+
+    Composed on the SEA subsystem default set plus naval extras: a
+    :class:`BallastSubsystem` for depth control and a :class:`SonarSubsystem`
+    for passive/active acoustic sensing -- all driven through ``execute``.
+    """
 
     def __init__(
         self,
@@ -33,6 +40,13 @@ class SubmarineAgent(BaseAgent):
         self.depth: float = 50.0  # Current depth in meters
         self.is_silent_running: bool = False
         self.torpedo_count: int = 12
+
+        # Naval-specific subsystems layered onto the domain default set.
+        self.ballast = BallastSubsystem(max_depth_m=300.0,
+                                        initial_depth_m=self.depth)
+        self.sonar = SonarSubsystem()
+        self.register_subsystem(self.ballast)
+        self.register_subsystem(self.sonar)
 
     def take_turn(self, world_state: Any, messages: List[Any]) -> List[Any]:
         """Execute submarine tactical behavior."""

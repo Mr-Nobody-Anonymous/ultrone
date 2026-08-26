@@ -7,12 +7,13 @@ import logging
 from typing import Dict, List, Any
 
 from agents.base_agent import BaseAgent
+from agents.platform_agent import SubsystemControlledAgent
 from data.entities import DomainType, Contact
 
 logger = logging.getLogger("Ultrone.Agents.Cyber.Recon")
 
 
-class ReconAgent(BaseAgent):
+class ReconAgent(SubsystemControlledAgent):
     """Cyber reconnaissance agent for network scanning and surveillance operations."""
 
     def __init__(

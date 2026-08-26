@@ -775,3 +775,398 @@ class LogisticsDrone:
                 "battery_pct": round(self.battery_pct, 2),
                 "payload_kg": self.payload_kg}
 
+
+class PowerMicrogrid:
+    """Solar + battery + backup-generator microgrid dispatch.
+
+    Solar output follows a deterministic daylight curve; the interlock
+    enforces battery depth-of-discharge (a brownout is a hard violation)
+    and blocks generator starts without fuel.
+    """
+
+    KIND = "microgrid"
+    CAPACITY_KWH = 100.0
+    BATTERY_FLOOR_PCT = 20.0
+    GENERATOR_OUTPUT_KW = 12.0
+    MAX_DEMAND_KW = 30.0
+
+    def __init__(self, machine_id: str, lock: SafetyInterlock,
+                 fuel_pct: float = 100.0) -> None:
+        self.machine_id = machine_id
+        self.lock = lock
+        self.battery_pct = 60.0
+        self.demand_kw = 10.0
+        self.generator_on = False
+        self.fuel_pct = fuel_pct
+        self.brownouts = 0
+        self._in_brownout = False
+        self.last_tick = 0
+
+    @staticmethod
+    def solar_kw(tick: int) -> float:
+        """Deterministic daylight curve peaking mid-day."""
+        phase = (tick % 24) / 24.0
+        return round(max(0.0, 18.0 * math.sin(math.pi * phase)), 2)
+
+    def command_load(self, demand_kw: float, tick: int) -> bool:
+        if not 0.0 <= demand_kw <= self.MAX_DEMAND_KW:
+            return self.lock.reject(tick, self.machine_id, "load",
+                                    f"demand {demand_kw} outside "
+                                    f"[0, {self.MAX_DEMAND_KW}]")
+        self.demand_kw = demand_kw
+        return True
+
+    def command_generator(self, on: bool, tick: int) -> bool:
+        if on and self.fuel_pct <= 0.0:
+            return self.lock.reject(tick, self.machine_id, "generator",
+                                    "no fuel remaining")
+        self.generator_on = bool(on)
+        return True
+
+    def step(self, tick: int) -> None:
+        self.last_tick = tick
+        supply = self.solar_kw(tick)
+        if self.generator_on:
+            supply += self.GENERATOR_OUTPUT_KW
+            self.fuel_pct = max(0.0, self.fuel_pct - 0.4)
+        delta_pct = (supply - self.demand_kw) / self.CAPACITY_KWH * 100.0
+        self.battery_pct = min(100.0, self.battery_pct + delta_pct)
+        if self.battery_pct < self.BATTERY_FLOOR_PCT:
+            if not self._in_brownout:
+                self.lock.violation(self.machine_id,
+                                    "battery below depth-of-discharge floor")
+                self.brownouts += 1
+                self._in_brownout = True
+            self.battery_pct = self.BATTERY_FLOOR_PCT   # load shed
+        elif self._in_brownout and self.battery_pct > \
+                self.BATTERY_FLOOR_PCT + 5.0:
+            self._in_brownout = False
+
+    def telemetry(self) -> Dict[str, object]:
+        return {"kind": self.KIND,
+                "solar_kw": self.solar_kw(self.last_tick),
+                "demand_kw": self.demand_kw,
+                "battery_pct": round(self.battery_pct, 2),
+                "generator_on": self.generator_on,
+                "fuel_pct": round(self.fuel_pct, 2),
+                "brownouts": self.brownouts}
+
+
+class PumpStation:
+    """Two-reservoir water transfer station with concurrent pump limits."""
+
+    KIND = "water_pumps"
+    SOURCE_CAPACITY = 200.0
+    CLEARWELL_CAPACITY = 80.0
+    PUMP_RATE = 3.0                  # units/tick per running pump
+    MAX_CONCURRENT = 2
+
+    def __init__(self, machine_id: str, lock: SafetyInterlock) -> None:
+        self.machine_id = machine_id
+        self.lock = lock
+        self.source_level = 150.0
+        self.clearwell_level = 20.0
+        self.pump_states: Dict[str, bool] = {
+            "pump_a": False, "pump_b": False, "pump_c": False}
+
+    def _running_count(self) -> int:
+        return sum(1 for on in self.pump_states.values() if on)
+
+    def command_pump(self, pump_id: str, on: bool, tick: int) -> bool:
+        if pump_id not in self.pump_states:
+            return self.lock.reject(tick, self.machine_id, "pump",
+                                    f"unknown pump '{pump_id}'")
+        if on and self.source_level < self.PUMP_RATE:
+            return self.lock.reject(tick, self.machine_id, "pump",
+                                    "source reservoir nearly dry")
+        if on and not self.pump_states[pump_id] \
+                and self._running_count() >= self.MAX_CONCURRENT:
+            return self.lock.reject(
+                tick, self.machine_id, "pump",
+                f"at most {self.MAX_CONCURRENT} pumps may run concurrently")
+        self.pump_states[pump_id] = bool(on)
+        return True
+
+    def step(self, tick: int) -> None:
+        running = self._running_count()
+        if running == 0 or self.source_level < self.PUMP_RATE * running:
+            # Dry-source protection: pumps auto-stop, never cavitate.
+            for pid in self.pump_states:
+                self.pump_states[pid] = False
+            return
+        moved = self.PUMP_RATE * running
+        self.source_level -= moved
+        self.clearwell_level += moved
+        if self.clearwell_level > self.CLEARWELL_CAPACITY:
+            self.lock.violation(self.machine_id, "clearwell overflow")
+            self.clearwell_level = self.CLEARWELL_CAPACITY
+
+    def telemetry(self) -> Dict[str, object]:
+        return {"kind": self.KIND,
+                "source_level": round(self.source_level, 2),
+                "clearwell_level": round(self.clearwell_level, 2),
+                "pumps_running": self._running_count()}
+
+
+class ResearchVessel:
+    """Civilian survey vessel: station-keeping and sample collection."""
+
+    KIND = "research_vessel"
+    MAX_SPEED = 1.5
+    FUEL_CAPACITY = 100.0
+    FUEL_PER_SPEED_TICK = 0.8
+
+    def __init__(self, machine_id: str, lock: SafetyInterlock) -> None:
+        self.machine_id = machine_id
+        self.lock = lock
+        self.x = self.y = 0.0
+        self.heading = 0.0
+        self.fuel = self.FUEL_CAPACITY
+        self.samples_collected = 0
+        self._linear = 0.0
+
+    def command_velocity(self, linear: float, tick: int) -> bool:
+        if self.lock.e_stopped:
+            return self.lock.reject(tick, self.machine_id, "velocity", "e-stop")
+        if abs(linear) > self.MAX_SPEED:
+            return self.lock.reject(tick, self.machine_id, "velocity",
+                                    f"speed {linear} exceeds "
+                                    f"{self.MAX_SPEED}")
+        if self.fuel <= 0 and linear != 0:
+            return self.lock.reject(tick, self.machine_id, "velocity",
+                                    "out of fuel -- refuel required")
+        self._linear = linear
+        return True
+
+    def command_refuel(self, tick: int) -> bool:
+        if self._linear != 0:
+            return self.lock.reject(tick, self.machine_id, "refuel",
+                                    "can only refuel while stationary")
+        self.fuel = self.FUEL_CAPACITY
+        return True
+
+    def collect_sample(self, tick: int) -> bool:
+        if self._linear != 0:
+            return self.lock.reject(tick, self.machine_id, "sample",
+                                    "station-keeping required to sample")
+        self.samples_collected += 1
+        return True
+
+    def step(self, tick: int) -> None:
+        self.x += math.cos(self.heading) * self._linear
+        self.y += math.sin(self.heading) * self._linear
+        self.fuel = max(0.0, self.fuel - abs(self._linear)
+                        * self.FUEL_PER_SPEED_TICK)
+        if self.fuel <= 0:
+            self._linear = 0.0
+
+    def telemetry(self) -> Dict[str, object]:
+        return {"kind": self.KIND, "x": round(self.x, 3),
+                "y": round(self.y, 3), "heading": round(self.heading, 3),
+                "fuel": round(self.fuel, 2),
+                "samples_collected": self.samples_collected}
+
+
+class FreightRailcar:
+    """Land freight car on a fixed track with overspeed protection."""
+
+    KIND = "railcar"
+    TRACK_LENGTH = 100.0
+    SPEED_LIMIT = 3.0
+
+    def __init__(self, machine_id: str, lock: SafetyInterlock) -> None:
+        self.machine_id = machine_id
+        self.lock = lock
+        self.position = 0.0
+        self.speed = 0.0
+        self.cargo_units = 0
+        self.doors_closed = True
+
+    def command_throttle(self, speed: float, tick: int) -> bool:
+        if self.lock.e_stopped and speed != 0:
+            return self.lock.reject(tick, self.machine_id, "throttle", "e-stop")
+        if not self.doors_closed:
+            return self.lock.reject(tick, self.machine_id, "throttle",
+                                    "doors open -- close before moving")
+        if abs(speed) > self.SPEED_LIMIT:
+            return self.lock.reject(tick, self.machine_id, "throttle",
+                                    f"speed {speed} exceeds limit "
+                                    f"{self.SPEED_LIMIT}")
+        self.speed = speed
+        return True
+
+    def command_doors(self, open_: bool, tick: int) -> bool:
+        if open_ and self.speed != 0:
+            return self.lock.reject(tick, self.machine_id, "doors",
+                                    "cannot open doors while moving")
+        self.doors_closed = not open_
+        return True
+
+    def command_load(self, units: int, tick: int) -> bool:
+        if self.speed != 0:
+            return self.lock.reject(tick, self.machine_id, "load",
+                                    "stop before loading")
+        self.cargo_units += units
+        return True
+
+    def command_unload(self, tick: int) -> int:
+        if self.speed != 0:
+            self.lock.reject(tick, self.machine_id, "unload",
+                             "stop before unloading")
+            return 0
+        moved = self.cargo_units
+        self.cargo_units = 0
+        return moved
+
+    def step(self, tick: int) -> None:
+        self.position += self.speed
+        if self.position >= self.TRACK_LENGTH:
+            self.position = float(self.TRACK_LENGTH)
+            self.speed = 0.0                     # terminus: automatic stop
+        if self.position < 0.0:
+            self.position = 0.0
+            self.speed = 0.0
+
+    def telemetry(self) -> Dict[str, object]:
+        return {"kind": self.KIND, "position": round(self.position, 3),
+                "speed": round(self.speed, 3),
+                "cargo_units": self.cargo_units,
+                "doors_closed": self.doors_closed}
+
+
+class EarthObservationSatellite:
+    """Civilian imaging satellite: orbital phase, eclipse battery cycle.
+
+    Imaging a ground target is only possible while the target is within
+    the sensor window (a deterministic slice of the orbit) and the
+    battery has margin; eclipses drain, sunlight charges.
+    """
+
+    KIND = "eo_satellite"
+    ORBIT_PERIOD = 40                   # ticks per full orbit
+    BATTERY_MIN_FOR_IMAGING = 25.0
+
+    def __init__(self, machine_id: str, lock: SafetyInterlock) -> None:
+        self.machine_id = machine_id
+        self.lock = lock
+        self.phase_deg = 0.0            # 0..360 along the orbit
+        self.battery_pct = 80.0
+        self.images: List[Dict[str, Any]] = []
+        self.downlinked = 0
+
+    def _advance(self) -> None:
+        self.phase_deg = (self.phase_deg + 360.0 / self.ORBIT_PERIOD) % 360.0
+
+    @property
+    def in_sunlight(self) -> bool:
+        return self.phase_deg < 180.0
+
+    def target_visible(self) -> bool:
+        """Ground targets are visible for the first quarter of each orbit."""
+        return self.phase_deg < 90.0
+
+    def command_image(self, target_id: str, tick: int) -> bool:
+        if self.lock.e_stopped:
+            return self.lock.reject(tick, self.machine_id, "image", "e-stop")
+        if not self.target_visible():
+            return self.lock.reject(tick, self.machine_id, "image",
+                                    f"target not in sensor window "
+                                    f"(phase {self.phase_deg:.1f})")
+        if self.battery_pct < self.BATTERY_MIN_FOR_IMAGING:
+            return self.lock.reject(tick, self.machine_id, "image",
+                                    "insufficient battery margin")
+        self.battery_pct -= 10.0
+        self.images.append({"target": target_id,
+                            "phase_deg": round(self.phase_deg, 2),
+                            "tick": tick})
+        return True
+
+    def command_downlink(self, tick: int) -> int:
+        moved = len(self.images)
+        self.downlinked += moved
+        self.images.clear()
+        return moved
+
+    def step(self, tick: int) -> None:
+        self._advance()
+        if self.in_sunlight:
+            self.battery_pct = min(100.0, self.battery_pct + 3.0)
+        else:
+            self.battery_pct = max(0.0, self.battery_pct - 2.0)
+
+    def telemetry(self) -> Dict[str, object]:
+        return {"kind": self.KIND,
+                "phase_deg": round(self.phase_deg, 2),
+                "in_sunlight": self.in_sunlight,
+                "battery_pct": round(self.battery_pct, 2),
+                "buffered_images": len(self.images),
+                "downlinked_total": self.downlinked}
+
+
+class NetworkSensor:
+    """Passive network-analysis sensor. OBSERVE-ONLY BY DESIGN.
+
+    The public API deliberately contains no method that sends traffic,
+    modifies hosts, or exploits anything: scan (read counters), learn a
+    baseline, and flag deviations. This is the cyber-analysis capability,
+    and it cannot be turned into an offensive tool through this class.
+    """
+
+    KIND = "network_sensor"
+
+    def __init__(self, machine_id: str, lock: SafetyInterlock,
+                 seed: int = 0,
+                 hosts: Optional[List[str]] = None) -> None:
+        self.machine_id = machine_id
+        self.lock = lock
+        self.rng = random.Random(seed)
+        self.hosts: List[str] = list(hosts or
+                                     ["web-1", "db-1", "auth-1"])
+        self.baseline: Dict[str, float] = {}
+        self.alert_threshold = 2.0          # deviation multiple to alert
+        self.scans: List[Dict[str, Any]] = []
+
+    def register_hosts(self, hosts: List[str]) -> None:
+        self.hosts = list(hosts)
+
+    def command_scan(self, tick: int) -> Dict[str, Any]:
+        """Read current simulated traffic levels for all known hosts."""
+        readings = {h: round(10.0 + self.rng.random() * 5.0, 2)
+                    for h in self.hosts}
+        self.scans.append({"tick": tick, "readings": readings})
+        return {"tick": tick, "readings": readings}
+
+    def learn_baseline(self, last_n_scans: int = 5) -> Dict[str, float]:
+        recent = self.scans[-last_n_scans:]
+        baseline: Dict[str, float] = {}
+        for host in self.hosts:
+            values = [s["readings"].get(host, 0.0) for s in recent]
+            baseline[host] = round(
+                sum(values) / max(1, len(values)), 3)
+        self.baseline = baseline
+        return dict(baseline)
+
+    def analyze(self) -> List[Dict[str, Any]]:
+        """Flag hosts whose latest reading deviates beyond threshold."""
+        if not self.scans or not self.baseline:
+            return []
+        latest = self.scans[-1]["readings"]
+        alerts = []
+        for host, expected in sorted(self.baseline.items()):
+            actual = latest.get(host, expected)
+            if expected > 0 and abs(actual - expected) \
+                    > self.alert_threshold * expected:
+                alerts.append({
+                    "host": host, "expected": expected, "actual": actual,
+                    "ratio": round(actual / expected, 3),
+                })
+        return alerts
+
+    def telemetry(self) -> Dict[str, object]:
+        return {"kind": self.KIND, "hosts": list(self.hosts),
+                "scans_taken": len(self.scans),
+                "baseline_hosts": len(self.baseline)}
+
+    def step(self, tick: int) -> None:
+        pass                                  # passive sensor: nothing to do
+

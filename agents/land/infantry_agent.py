@@ -2,9 +2,10 @@
 """Infantry agent - land domain."""
 
 from agents.base_agent import BaseAgent, AgentCapability
+from agents.platform_agent import SubsystemControlledAgent
 from data.entities import DomainType
 
-class InfantryAgent(BaseAgent):
+class InfantryAgent(SubsystemControlledAgent):
     """Squad: MOVING/COVER/ASSAULT/DEFEND/CALLING_FIRE states."""
     def __init__(self, unit_id, position, team="blue"):
         super().__init__(unit_id, DomainType.LAND, "infantry_squad", position, team,

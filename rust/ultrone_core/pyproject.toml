@@ -1,0 +1,13 @@
+[build-system]
+requires = ["maturin>=1.5,<2"]
+build-backend = "maturin"
+
+[project]
+name = "ultrone-core"
+version = "0.1.0"
+description = "ULTRONE high-performance runtime kernels"
+requires-python = ">=3.9"
+
+[tool.maturin]
+# Expose the compiled extension as top-level `import ultrone_core`.
+bindings = "pyo3"

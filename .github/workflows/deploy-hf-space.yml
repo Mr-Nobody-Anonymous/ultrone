@@ -1,0 +1,81 @@
+# Deploy the ULTRONE Research Space (simulation-only public demo).
+#
+# Stages ONLY the demo app plus the light simulation packages it needs
+# (agents/ sandbox/ data/ comms/ -- all stdlib-pure Python) and uploads
+# them to a Hugging Face Space. The heavy research stack (torch,
+# transformers, ...) is deliberately NOT mirrored publicly.
+#
+# One-time setup:
+#   1. Create an access token on huggingface.co (write scope).
+#   2. Add it as a GitHub secret named HF_TOKEN.
+#   3. Add a GitHub variable SPACE_REPO_ID, e.g. yourname/ultrone-research.
+#      (The Space itself is created automatically on first deploy.)
+# Every push to main then updates the Space automatically.
+
+name: Deploy ULTRONE Research Space
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "deploy/hf_space/**"
+      - "agents/**"
+      - "sandbox/**"
+      - "data/**"
+      - "comms/**"
+  workflow_dispatch:
+
+concurrency:
+  group: hf-space-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stage Space payload (demo + simulation packages only)
+        run: |
+          mkdir -p stage
+          cp deploy/hf_space/app.py deploy/hf_space/README.md \
+             deploy/hf_space/requirements.txt stage/
+          cp -r agents sandbox data comms stage/
+          find stage -name '__pycache__' -type d -prune -exec rm -rf {} +
+          echo "Staged files:" && du -sh stage && find stage -maxdepth 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install hub client
+        run: python -m pip install "huggingface_hub>=0.24"
+
+      - name: Upload to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          SPACE_REPO_ID: ${{ vars.SPACE_REPO_ID }}
+        run: |
+          if [ -z "$SPACE_REPO_ID" ]; then
+            echo "::error::Set repository variable SPACE_REPO_ID (e.g. yourname/ultrone-research)"
+            exit 1
+          fi
+          python - <<'PY'
+          import os
+          from huggingface_hub import HfApi
+
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          api.upload_folder(
+              folder_path="stage",
+              repo_id=os.environ["SPACE_REPO_ID"],
+              repo_type="space",
+              commit_message="Deploy ULTRONE Research demo (simulation-only)",
+              create_repo=True,
+              space_sdk="gradio",
+              private=False,
+          )
+          print("Deployed to https://huggingface.co/spaces/"
+                + os.environ["SPACE_REPO_ID"])
+          PY

@@ -6,13 +6,14 @@ import random
 from typing import Dict, List, Any, Tuple
 
 from agents.base_agent import BaseAgent, AgentCapability
+from agents.platform_agent import SubsystemControlledAgent
 from data.entities import DomainType, AgentState
 from comms.protocol import Message, MessageType
 
 logger = logging.getLogger("Ultrone.Agents.Land.Tank")
 
 
-class TankAgent(BaseAgent):
+class TankAgent(SubsystemControlledAgent):
     """Tank: HULL_DOWN/MOVING/FIRING/SUPPRESSING/RETREATING states."""
     
     class TankState:

@@ -6,13 +6,14 @@ import random
 from typing import Dict, List, Any, Tuple
 
 from agents.base_agent import BaseAgent, AgentCapability
+from agents.platform_agent import SubsystemControlledAgent
 from data.entities import DomainType, AgentState
 from comms.protocol import Message
 
 logger = logging.getLogger("Ultrone.Agents.Air.Missile")
 
 
-class MissileAgent(BaseAgent):
+class MissileAgent(SubsystemControlledAgent):
     """Missile: LAUNCHED/MIDCOURSE/TERMINAL/IMPACT/MISS states."""
     
     class MissileState:
