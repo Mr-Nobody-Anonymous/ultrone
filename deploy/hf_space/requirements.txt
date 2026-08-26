@@ -1,0 +1,5 @@
+# Slim Space runtime: the demo itself is stdlib-pure Python.
+# (The full research repo keeps its own heavier requirements.txt.)
+gradio>=4.44,<5
+# gradio 4.x still imports HfFolder, removed in newer hub releases.
+huggingface_hub>=0.23,<0.27

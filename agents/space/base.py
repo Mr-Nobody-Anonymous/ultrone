@@ -7,13 +7,14 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 from agents.base_agent import BaseAgent, AgentCapability
+from agents.platform_agent import SubsystemControlledAgent
 from agents.config import SpaceAgentConfig
 from data.entities import DomainType, Contact
 
 logger = logging.getLogger("Ultrone.Agents.Space.Base")
 
 
-class SpaceAgent(BaseAgent):
+class SpaceAgent(SubsystemControlledAgent):
     """
     Base class for all space domain agents.
     

@@ -634,3 +634,13 @@ This document does not represent the official position of any government, milita
 
 > **⚠️ FOR EDUCATIONAL AND SIMULATION PURPOSES ONLY**  
 > This is a wargaming AI framework. Not for real-world weapons systems.
+
+---
+
+## Deployment (free)
+
+See **[DEPLOYMENT.md](DEPLOYMENT.md)**: GitHub Actions runs the test
+suite and benchmarks; a slim **simulation-only** Hugging Face Space demo
+(`deploy/hf_space/`) syncs automatically on push. Setup steps, verified
+ZeroGPU quotas, and the public-safety scoping are documented there.
+

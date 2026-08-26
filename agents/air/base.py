@@ -7,13 +7,14 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 from agents.base_agent import BaseAgent, AgentCapability
+from agents.platform_agent import SubsystemControlledAgent
 from agents.config import AirAgentConfig
 from data.entities import DomainType, Contact
 
 logger = logging.getLogger("Ultrone.Agents.Air.Base")
 
 
-class AirAgent(BaseAgent):
+class AirAgent(SubsystemControlledAgent):
     """
     Base class for all air domain agents.
     

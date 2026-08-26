@@ -8,8 +8,21 @@ from typing import Optional
 
 from agents.civilian.crane_operator import CraneOperatorAgent
 from agents.civilian.drone_logistics import DeliveryDroneAgent
+from agents.civilian.domain_operators import (
+    NetworkAnalystAgent,
+    RailOperatorAgent,
+    SatelliteOpsAgent,
+    VesselOperatorAgent,
+)
+from agents.civilian.energy_operator import EnergyOperatorAgent
+from agents.civilian.facility_coordinator import FacilityCoordinatorAgent
 from agents.civilian.inspection_robot import InspectionRobotAgent
 from agents.civilian.machinist import MachiningAgent
+from agents.civilian.subsystem_platforms import (
+    DeliveryTruckAgent,
+    SurveyAircraftAgent,
+)
+from agents.civilian.water_operator import WaterOperatorAgent
 from agents.civilian.process_operator import ProcessOperatorAgent
 from agents.civilian.warehouse_arm import WarehouseArmAgent
 from agents.civilian.universal_operator import UniversalOperatorAgent
@@ -42,6 +55,35 @@ _CIVILIAN_TYPES = (
      "Kind-agnostic simulated operator that discovers capabilities at "
      "runtime and drives ANY registered machine through the interlocked "
      "dispatch interface (civilian automation; non-weaponized)"),
+    ("energy_operator", EnergyOperatorAgent,
+     "Simulated microgrid dispatch: solar/battery/generator coordination "
+     "(civilian energy; non-weaponized)"),
+    ("water_operator", WaterOperatorAgent,
+     "Simulated pump-station operator under concurrent-pump limits "
+     "(civilian water systems; non-weaponized)"),
+    ("facility_coordinator", FacilityCoordinatorAgent,
+     "Multi-machine orchestration: production, material flow, and climate "
+     "managed concurrently (civilian facility automation; non-weaponized)"),
+    ("vessel_operator", VesselOperatorAgent,
+     "Simulated research-vessel operator: survey stations and sampling "
+     "(civilian marine science; non-weaponized)"),
+    ("rail_operator", RailOperatorAgent,
+     "Simulated freight-rail operator with overspeed protection "
+     "(civilian land logistics; non-weaponized)"),
+    ("satellite_operator", SatelliteOpsAgent,
+     "Simulated earth-observation imaging campaigns within orbital windows "
+     "(civilian space analysis; non-weaponized)"),
+    ("network_analyst", NetworkAnalystAgent,
+     "Passive network baseline and deviation ANALYSIS ONLY -- the bound "
+     "sensor exposes no way to send, modify, or exploit anything "
+     "(defensive monitoring; non-weaponized)"),
+    ("survey_aircraft", SurveyAircraftAgent,
+     "Subsystem-composed aerial survey aircraft: propulsion/navigation/"
+     "sensors/power/health subsystems driven via structured commands "
+     "(civilian aerial survey; non-weaponized)"),
+    ("delivery_truck", DeliveryTruckAgent,
+     "Subsystem-composed electric delivery truck: payload/power/navigation/"
+     "autonomy subsystems (civilian land logistics; non-weaponized)"),
 )
 
 

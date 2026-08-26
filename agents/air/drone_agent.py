@@ -7,13 +7,14 @@ from typing import Dict, List, Any, Tuple, Optional
 import math
 
 from agents.base_agent import BaseAgent, AgentCapability
+from agents.platform_agent import SubsystemControlledAgent
 from data.entities import DomainType, Contact, AgentState, ThreatLevel
 from comms.protocol import Message, MessageType, Priority
 
 logger = logging.getLogger("Ultrone.Agents.Air.Drone")
 
 
-class DroneAgent(BaseAgent):
+class DroneAgent(SubsystemControlledAgent):
     """
     UAV agent: LOITER/ORBIT/STRIKE/RTB states.
     ISR+strike capabilities.

@@ -1,9 +1,10 @@
 # Copyright (c) Ultrone Contributors. All rights reserved.
 """Mobile SAM agent - land domain."""
 from agents.base_agent import BaseAgent, AgentCapability
+from agents.platform_agent import SubsystemControlledAgent
 from data.entities import DomainType
 
-class MobileMissileAgent(BaseAgent):
+class MobileMissileAgent(SubsystemControlledAgent):
     """SAM: RECON/LAUNCH/RELOCATE/RELOAD/HIDE states."""
     def __init__(self, unit_id, position, team="blue"):
         super().__init__(unit_id, DomainType.LAND, "mobile_sam", position, team,

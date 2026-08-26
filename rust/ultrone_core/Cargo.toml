@@ -1,0 +1,13 @@
+[package]
+name = "ultrone-core"
+version = "0.1.0"
+edition = "2021"
+description = "ULTRONE high-performance runtime kernels (simulation, world state, scheduling, spatial queries, command routing, memory indexing, tensor ops, batch evaluation)"
+license = "MIT"
+
+[lib]
+name = "ultrone_core"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pyo3 = { version = "0.21", features = ["extension-module"] }

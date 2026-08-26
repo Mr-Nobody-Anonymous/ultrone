@@ -8,27 +8,91 @@ The `agents/` package provides a production-quality, research-grade, modular age
 
 ```
 BaseAgent (abstract base)
-  ├── AirAgent
-  │   ├── DroneAgent
-  │   ├── FighterAgent
-  │   └── MissileAgent
-  ├── LandAgent
-  │   ├── TankAgent
-  │   ├── InfantryAgent
-  │   └── MobileMissileAgent
-  ├── SeaAgent
-  │   ├── VesselAgent
-  │   ├── SubmarineAgent
-  │   └── NavalAirAgent
-  ├── SpaceAgent
-  │   ├── SatelliteAgent
-  │   ├── OrbitalAgent
-  │   └── SpaceWeaponAgent
-  └── CyberAgent
-      ├── ReconAgent
-      ├── ExploitAgent
-      └── DefendAgent
+  └── SubsystemControlledAgent (CommandBus + composed subsystems)
+        ├── AirAgent
+        │   ├── DroneAgent            # propulsion/flight_control/nav/sensors/
+        │   ├── FighterAgent          # comms/power/payload/health/environment/
+        │   └── MissileAgent          # autonomy
+        ├── LandAgent
+        │   ├── TankAgent             # propulsion/mobility/nav/sensors/comms/
+        │   ├── InfantryAgent         # power/health/autonomy
+        │   └── MobileMissileAgent
+        ├── SeaAgent
+        │   ├── VesselAgent           # + BallastSubsystem & SonarSubsystem
+        │   ├── SubmarineAgent        #   on submarines
+        │   └── NavalAirAgent
+        ├── SpaceAgent                # power/thermal/attitude/orbital_navigation/
+        │   ├── SatelliteAgent        # nav/sensors/comms/payload/health/autonomy
+        │   ├── OrbitalAgent
+        │   └── SpaceWeaponAgent
+        ├── CyberAgent                # compute/storage/network/services/auth/
+        │   ├── ReconAgent            # monitoring/configuration/defensive_controls
+        │   ├── ExploitAgent
+        │   └── DefendAgent
+        ├── RoboticPlatformAgent      # GENERAL domain (simulation-only)
+        │   ├── GroundRobotAgent / AerialRobotAgent /
+        │   └── UnderwaterRobotAgent / IndustrialRobotAgent
+        └── InfrastructureNodeAgent   # GENERAL domain (simulation-only)
+            ├── PowerGridAgent / CommsInfrastructureAgent /
+            └── IndustrialPlantAgent / TransitNetworkAgent
 ```
+
+## Subsystem-Level Control
+
+Every platform is a composition of subsystem objects behind a structured
+command bus (`agents.commands`). Higher-level AI operates machines through
+one uniform interface regardless of platform kind:
+
+```python
+from agents.commands import Command
+
+agent.execute(Command("propulsion", "set_throttle", {"value": 0.65}))
+agent.execute(Command("navigation", "set_destination",
+                      {"position": [10.0, 5.0]}))
+
+agent.available_capabilities()     # pruned hierarchical capability tree
+agent.platform_state.get()         # unified snapshot across all subsystems
+agent.tick_platform(tick)          # deterministic dynamics step
+agent.telemetry_recorder.export()  # command log + snapshot history
+```
+
+Key modules:
+- `agents/platform_agent.py` -- SubsystemControlledAgent base + per-domain default compositions
+- `agents/state.py` -- PlatformStateView read model over the bus
+- `agents/telemetry.py` -- bounded telemetry recorder
+- `agents/subsystems/` -- the subsystem library, one concern per module:
+  core set in `propulsion`-shaped `platform_subsystems.py`; canonical
+  homes for `thermal.py`, `attitude.py`, `environment.py`,
+  `resource.py`, `locomotion.py` (+ legacy re-export shims); domain
+  extensions in `flight.py`, `naval.py` (ballast/sonar), `orbital.py`;
+  computing-node surfaces in `computing.py`; and the cross-cutting
+  primitives `life_support.py`, `diagnostics.py`, `safety.py`
+- `agents/platform_control.py` -- unified PlatformState builder
+  (`get_platform_state(agent | controller | bus)`) and the UCL bridge
+
+### One command path
+
+For bus-driven platforms there is exactly ONE actuation mechanism::
+
+    UCL verb -> structured Command -> CommandBus -> subsystems -> state
+
+`sandbox.ucl.PlatformController.execute_command` / `manage_system` /
+`move` / `communicate` all terminate in the same CommandBus (`manage_system`
+accepts a structured Command or its `{subsystem, action, parameters}`
+dict form; adapter fallback exists only for legacy bus-less machines).
+Safety enforcement lives IN the bus: an engaged
+`SafetyInterlockSubsystem` ("safety") blocks every non-safety command
+from every caller until released -- one gate because one path.
+Fault injection (`agents.subsystems.faults.FaultInjector`) covers engine
+failure, sensor blindness, communication blackout, power depletion,
+navigation failure, overheating, degradation, fuel leaks, conflicting
+and invalid commands -- all surfaced through the unified state's
+`active_faults`.
+
+Simulation boundary: the command system models detailed operation of
+sandboxed simulated platforms only. There is intentionally no interface --
+and no path -- toward operating real-world weapons, vehicles,
+infrastructure, or computer systems.
 
 ## Agent Lifecycle
 

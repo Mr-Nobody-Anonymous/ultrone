@@ -35,13 +35,21 @@ class TestRegistration:
 class TestGovernance:
     def _all_classes(self):
         from agents.civilian import (
+            CraneOperatorAgent,
+            DeliveryDroneAgent,
+            EnergyOperatorAgent,
+            FacilityCoordinatorAgent,
             InspectionRobotAgent,
+            MachiningAgent,
             ProcessOperatorAgent,
+            WaterOperatorAgent,
             WarehouseArmAgent,
         )
 
-        return [InspectionRobotAgent, WarehouseArmAgent,
-                ProcessOperatorAgent]
+        return [InspectionRobotAgent, WarehouseArmAgent, ProcessOperatorAgent,
+                CraneOperatorAgent, MachiningAgent, DeliveryDroneAgent,
+                EnergyOperatorAgent, WaterOperatorAgent,
+                FacilityCoordinatorAgent]
 
     def test_no_engage_capability_anywhere(self):
         from agents.base_agent import AgentCapability
@@ -328,3 +336,202 @@ class TestDeliveryDrone:
         assert drone.command_velocity(1.0, 0.0, 0.0, tick=1) is False
         drone.z = 0.0                             # landed: may recharge
         assert drone.command_recharge(tick=2) is True
+
+
+class TestEnergyOperator:
+    @pytest.fixture()
+    def setup(self):
+        from agents.civilian import EnergyOperatorAgent
+        from sandbox.machines import MachineController, PowerMicrogrid
+
+        ctrl = MachineController(seed=0)
+        agent = EnergyOperatorAgent("grid-op", controller=ctrl)
+        grid = PowerMicrogrid("grid-civ", ctrl.interlock)
+        agent.attach_microgrid(grid)
+        return agent, grid, ctrl
+
+    def test_serves_demand_without_brownouts(self, setup):
+        agent, _grid, _ctrl = setup
+        result = agent.execute_mission(
+            {"type": "serve_load", "demand": 8.0, "duration": 48})
+        assert result["success"]
+        assert result["brownouts"] == 0
+
+    def test_high_night_demand_requires_generator(self, setup):
+        from agents.civilian import EnergyOperatorAgent
+        from sandbox.machines import PowerMicrogrid
+
+        agent = EnergyOperatorAgent("grid-op2")
+        grid = PowerMicrogrid("g2", agent.controller.interlock)
+        agent.attach_microgrid(grid)
+        # Night-time heavy load: solar is zero, so the generator must run.
+        result = agent.execute_mission(
+            {"type": "serve_load", "demand": 20.0, "duration": 30})
+        assert result["success"]
+        assert grid.fuel_pct < 100.0              # generator actually burned
+        assert result["brownouts"] == 0
+
+    def test_solar_curve_is_deterministic(self):
+        from sandbox.machines import PowerMicrogrid
+
+        assert PowerMicrogrid.solar_kw(6) == PowerMicrogrid.solar_kw(6)
+        assert PowerMicrogrid.solar_kw(12) >= PowerMicrogrid.solar_kw(2)
+
+
+class TestWaterOperator:
+    def test_meets_transfer_quota_cleanly(self):
+        from agents.civilian import WaterOperatorAgent
+        from sandbox.machines import MachineController, PumpStation
+
+        ctrl = MachineController(seed=0)
+        agent = WaterOperatorAgent("water-op", controller=ctrl)
+        station = PumpStation("pump-civ", ctrl.interlock)
+        agent.attach_station(station)
+        result = agent.execute_mission({"type": "transfer", "quantity": 25})
+        assert result["success"], result
+        assert result["clean"]
+
+    def test_concurrent_pump_limit_enforced(self):
+        from sandbox.machines import PumpStation, SafetyInterlock
+
+        station = PumpStation("p", SafetyInterlock())
+        assert station.command_pump("pump_a", True, tick=1) is True
+        assert station.command_pump("pump_b", True, tick=1) is True
+        assert station.command_pump("pump_c", True, tick=1) is False  # cap=2
+        assert station.command_pump("pump_z", True, tick=1) is False  # unknown
+
+    def test_overflow_recorded_as_violation(self):
+        from sandbox.machines import PumpStation, SafetyInterlock
+
+        ctrl = SafetyInterlock()
+        station = PumpStation("p2", ctrl)
+        station.clearwell_level = station.CLEARWELL_CAPACITY - 1.0
+        station.command_pump("pump_a", True, tick=0)
+        for t in range(1, 5):
+            station.step(t)
+        assert ctrl.hard_violations >= 1
+        assert station.clearwell_level == station.CLEARWELL_CAPACITY
+
+
+class TestFacilityCoordinator:
+    @pytest.fixture()
+    def coordinator(self):
+        from agents.civilian import FacilityCoordinatorAgent
+        from sandbox.machines import (
+            CNCMachine,
+            ClimateUnit,
+            ConveyorLine,
+            MachineController,
+        )
+
+        ctrl = MachineController(seed=0)
+        op = FacilityCoordinatorAgent("coord-1", controller=ctrl)
+        op.attach_cnc(CNCMachine("cnc-f", ctrl.interlock))
+        op.attach_conveyor(ConveyorLine("conv-f", ctrl.interlock))
+        op.attach_climate(ClimateUnit("hvac-f", ctrl.interlock))
+        return op
+
+    def test_concurrent_production_and_climate(self, coordinator):
+        result = coordinator.execute_mission({
+            "type": "fulfill_order", "parts": 15, "climate_target": 21.0,
+        })
+        assert result["success"], result
+        assert result["parts_produced"] >= 15
+        assert result["clean"]
+        assert result["climate_ticks_in_band"] >= 10
+
+    def test_estop_halts_everything_safely(self, coordinator):
+        coordinator.controller.interlock.trigger_estop()
+        result = coordinator.execute_mission({"type": "fulfill_order",
+                                              "parts": 5})
+        assert not result["success"]
+
+
+class TestDomainCoverageOperators:
+    """Sea / land / space / cyber civilian analysis operators."""
+
+    def test_vessel_survey_samples_all_stations(self):
+        from agents.civilian import VesselOperatorAgent
+        from sandbox.machines import MachineController, ResearchVessel
+
+        ctrl = MachineController(seed=0)
+        agent = VesselOperatorAgent("sea-op", controller=ctrl)
+        vessel = ResearchVessel("vessel-civ", ctrl.interlock)
+        agent.attach_vessel(vessel)
+        result = agent.execute_mission({
+            "type": "survey",
+            "stations": [(6, 3), (12, 8), (18, 2)],
+        })
+        assert result["success"], result
+        assert result["samples_collected"] == 3
+
+    def test_railcar_overspeed_never_commanded_or_breached(self):
+        from agents.civilian import RailOperatorAgent
+        from sandbox.machines import FreightRailcar, MachineController
+
+        ctrl = MachineController(seed=0)
+        agent = RailOperatorAgent("rail-op", controller=ctrl)
+        car = FreightRailcar("rail-civ", ctrl.interlock)
+        agent.attach_railcar(car)
+        result = agent.execute_mission({"type": "freight_run", "cargo": 12})
+        assert result["success"]
+        assert result["delivered_units"] == 12
+        # The throttle policy never exceeds the machine's speed limit.
+        assert car.SPEED_LIMIT == 3.0 and car.speed <= car.SPEED_LIMIT
+
+    def test_satellite_imaging_waits_for_sensor_window(self):
+        from agents.civilian import SatelliteOpsAgent
+        from sandbox.machines import (
+            EarthObservationSatellite,
+            MachineController,
+            SafetyInterlock,
+        )
+
+        ctrl = MachineController(seed=0)
+        agent = SatelliteOpsAgent("sat-op", controller=ctrl)
+        sat = EarthObservationSatellite("sat-civ", ctrl.interlock)
+        sat.phase_deg = 200.0                    # start out of window
+        agent.attach_satellite(sat)
+        result = agent.execute_mission({
+            "type": "imaging_campaign",
+            "targets": ["estuary", "port", "rail_hub"],
+        })
+        assert result["success"], result
+        assert all(v >= 1 for v in result["images_captured"].values())
+        assert sat.downlinked >= 3               # everything downlinked
+
+    def test_network_analyst_detects_deviations(self):
+        from agents.civilian import NetworkAnalystAgent
+        from sandbox.machines import MachineController, NetworkSensor
+
+        ctrl = MachineController(seed=0)
+        agent = NetworkAnalystAgent("net-op", controller=ctrl)
+        sensor = NetworkSensor("net-civ", ctrl.interlock, seed=4)
+        agent.attach_sensor(sensor)
+        mission = {"type": "baseline_analyze",
+                   "hosts": ["web-1", "db-1", "auth-1"]}
+        result = agent.execute_mission(mission)
+        assert result["success"]
+        assert set(result["baseline"]) == set(mission["hosts"])
+        # Structural: the sensor API is observe-only.
+        for forbidden in ("send", "exploit", "inject", "modify"):
+            assert not any(
+                name.startswith(forbidden)
+                for name in dir(sensor) if callable(getattr(sensor, name))
+            ), f"sensor exposes offensive-capability method: {forbidden}"
+
+    def test_governance_covers_domain_operators(self):
+        from agents.base_agent import AgentCapability
+        from agents.civilian.domain_operators import (
+            NetworkAnalystAgent,
+            RailOperatorAgent,
+            SatelliteOpsAgent,
+            VesselOperatorAgent,
+        )
+
+        for cls in (VesselOperatorAgent, RailOperatorAgent,
+                    SatelliteOpsAgent, NetworkAnalystAgent):
+            agent = cls(unit_id=f"dom-{cls.MACHINE_KIND}")
+            assert not agent.can_perform(AgentCapability.ENGAGE)
+            assert set(agent.capabilities) == {
+                AgentCapability.SENSE, AgentCapability.COMMUNICATE}

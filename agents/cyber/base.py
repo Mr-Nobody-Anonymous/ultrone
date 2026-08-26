@@ -8,13 +8,14 @@ import random
 from typing import Any, Dict, List, Optional, Tuple
 
 from agents.base_agent import BaseAgent, AgentCapability
+from agents.platform_agent import SubsystemControlledAgent
 from agents.config import CyberAgentConfig
 from data.entities import DomainType, Contact
 
 logger = logging.getLogger("Ultrone.Agents.Cyber.Base")
 
 
-class CyberAgent(BaseAgent):
+class CyberAgent(SubsystemControlledAgent):
     """
     Base class for all cyber domain agents.
     

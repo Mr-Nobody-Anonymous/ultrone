@@ -7,12 +7,13 @@ import logging
 from typing import Dict, List, Any
 
 from agents.base_agent import BaseAgent
+from agents.platform_agent import SubsystemControlledAgent
 from data.entities import DomainType, Contact
 
 logger = logging.getLogger("Ultrone.Agents.Space.Satellite")
 
 
-class SatelliteAgent(BaseAgent):
+class SatelliteAgent(SubsystemControlledAgent):
     """Satellite agent for orbital intelligence, surveillance, and reconnaissance."""
 
     def __init__(
