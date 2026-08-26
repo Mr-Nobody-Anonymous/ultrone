@@ -388,6 +388,118 @@ class TestOverrideCanonicalPath:
             "submit", "approve", "execute", "outcome",
         ]
 
+
+class TestTerminalityHardening:
+    """Sprint B follow-up: terminal decisions are inert *forever*."""
+
+    def _pipeline_with_rejected_decision(self):
+        bridge, store = _make_bridge()
+        p = DecisionPipeline(
+            seed=5, hitl_bridge=bridge, require_human_approval=True,
+            scenario_id="terminality-hardening",
+        )
+        p.reset_episode()
+        for _ in range(12):
+            result = p.step()
+            did = result.info.get("deferred_decision")
+            if did:
+                trace = p.reject_pending(did, actor="alice", reason="not authorized")
+                return p, bridge, store, did, trace
+        pytest.fail("no pending decision was produced in 12 steps")
+
+    def test_double_reject_refused(self):
+        p, _bridge, _store, did, _t = self._pipeline_with_rejected_decision()
+        with pytest.raises(PendingDecisionError):
+            p.reject_pending(did, actor="mallory", reason="second try")
+
+    def test_rejected_cannot_execute_through_pipeline(self):
+        p, _bridge, _store, did, _t = self._pipeline_with_rejected_decision()
+        with pytest.raises(PendingDecisionError):
+            p.execute_approved(did, actor="bob")
+
+    def test_rejected_cannot_execute_through_audit_layer(self):
+        from ultrone_hitl.pipeline_bridge import IllegalTransitionError
+
+        p, bridge, _store, did, _t = self._pipeline_with_rejected_decision()
+        assert bridge.state_of(did) == "REJECTED"
+        with pytest.raises(IllegalTransitionError):
+            bridge.record_execution(did, actor="bob")
+
+    def test_safety_refused_override_leaves_decision_intact(self):
+        """A supervisor override that fails re-certification changes nothing."""
+        from core.pipeline import OverrideRejectedError
+        from core.safety_gate import SafetyConfig, SafetyGate
+
+        bridge, store = _make_bridge()
+        bridge.workflow.authorizer.register("sup1", Role.SUPERVISOR)
+        p = DecisionPipeline(
+            seed=23, hitl_bridge=bridge, require_human_approval=True,
+            scenario_id="refused-override",
+        )
+        p.reset_episode()
+        parent_id = None
+        for _ in range(12):
+            result = p.step()
+            parent_id = result.info.get("deferred_decision")
+            if parent_id:
+                break
+        assert parent_id is not None
+
+        strict_gate = SafetyGate(SafetyConfig(min_engagement_confidence=1.01))
+        original_gate = p.safety_gate
+        p.safety_gate = strict_gate
+        try:
+            with pytest.raises(OverrideRejectedError):
+                p.override_pending(
+                    parent_id, actor="sup1",
+                    target_order={
+                        "action": "strike", "asset_type": "missiles",
+                        "target": [10, 10],
+                    },
+                )
+        finally:
+            p.safety_gate = original_gate
+
+        # The decision was untouched by the refused override and can still
+        # resolve through the ordinary approval path.
+        resolved = p.execute_approved(parent_id, actor="bob")
+        history = resolved.trace.execution["lifecycle"]
+        assert validate_lifecycle_history(history)
+        assert bridge.state_of(parent_id) == "EXECUTED"
+        assert store.verify() is True
+
+    def test_trace_submission_is_idempotent(self):
+        from core.contracts import DecisionTrace
+
+        bridge, store = _make_bridge()
+        trace = DecisionTrace(decision_id="DEC-idep", episode_id="EP-i", tick=1)
+        bridge.submit_trace(trace, scenario_id="idem")
+        bridge.submit_trace(trace, scenario_id="idem")  # duplicate no-op
+        submits = [e for e in store.replay() if e["type"] == "submit"]
+        assert len(submits) == 1
+        assert store.verify() is True
+
+    def test_new_fault_scenarios_stay_within_lifecycle_law(self):
+        """The three new fault scenarios must produce lawful lifecycles only."""
+        from benchmarks.canonical.scenarios import SCENARIOS
+        from benchmarks.canonical.runner import run_scenario
+
+        for sid in ("stale_observations", "actuator_failure", "comms_blackout"):
+            rec = run_scenario(SCENARIOS[sid])
+            assert rec["failures"] == [], sid
+            assert rec["audit_chain_verified"] is True
+            for step in rec["steps"]:
+                assert validate_lifecycle_history(step["lifecycle"]), (
+                    f"{sid} tick {step['tick']}: unlawful lifecycle "
+                    f"{step['lifecycle']}"
+                )
+
+
+class TestStructuralInvariants:
+    """Structural guards that need a supervisor override target."""
+
+    TARGET = {"action": "move", "asset_type": "drones", "target": [50, 50]}
+
     def test_hitl_layer_never_touches_the_environment(self):
         """Structural guard: no env execution outside the pipeline."""
         import inspect

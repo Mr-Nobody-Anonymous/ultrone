@@ -1,6 +1,40 @@
 {
   "scenario_suite_version": "canonical-scenarios-v1",
   "scenarios": {
+    "actuator_failure": {
+      "fingerprint": "5521c0e836f210ae0799d519f9adecd0dd170a9307e3aad874ccbac15f060d40",
+      "metrics": {
+        "candidates_evaluated": 18,
+        "feeds_generated": 18,
+        "feeds_received": 16,
+        "human_rejections": 0,
+        "n_decisions": 6,
+        "noop_steps": 0,
+        "overrides": 0,
+        "roe_violations": 0,
+        "safety_rejections": 0,
+        "steps": 6,
+        "system_refusals": 0,
+        "total_reward": 19.0
+      }
+    },
+    "comms_blackout": {
+      "fingerprint": "01e90fb8afdf23de2cb779d64babaca5c161f47f98caa6b531ce130749f699c4",
+      "metrics": {
+        "candidates_evaluated": 18,
+        "feeds_generated": 18,
+        "feeds_received": 0,
+        "human_rejections": 0,
+        "n_decisions": 6,
+        "noop_steps": 6,
+        "overrides": 0,
+        "roe_violations": 0,
+        "safety_rejections": 6,
+        "steps": 6,
+        "system_refusals": 6,
+        "total_reward": -6.0
+      }
+    },
     "conflicting_sensor_observations": {
       "fingerprint": "ac8dba822e6062ea1b0d387cbbc4cb47aaea0d7475ea29d1ee318b907b90dfbf",
       "metrics": {
@@ -135,6 +169,23 @@
         "steps": 6,
         "system_refusals": 6,
         "total_reward": -6.0
+      }
+    },
+    "stale_observations": {
+      "fingerprint": "e5985f2bb693ff431ebcb3e0e12407a9d6b01c3a166398c7758b1b69b1471975",
+      "metrics": {
+        "candidates_evaluated": 18,
+        "feeds_generated": 18,
+        "feeds_received": 16,
+        "human_rejections": 0,
+        "n_decisions": 6,
+        "noop_steps": 0,
+        "overrides": 0,
+        "roe_violations": 0,
+        "safety_rejections": 0,
+        "steps": 6,
+        "system_refusals": 0,
+        "total_reward": 19.0
       }
     }
   }

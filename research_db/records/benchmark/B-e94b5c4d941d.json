@@ -1,0 +1,31 @@
+{
+  "benchmark_id": "B-e94b5c4d941d",
+  "name": "Benchmark: Benchmark Plan",
+  "description": "Benchmark for implementation plan IP-c57b1fab4849",
+  "task_type": "implementation",
+  "dataset": "standard",
+  "metrics": {
+    "accuracy": 0.85,
+    "f1": 0.82,
+    "latency_ms": 12.5
+  },
+  "baseline_results": {
+    "accuracy": 0.8,
+    "f1": 0.78,
+    "latency_ms": 15.0
+  },
+  "candidate_results": {
+    "accuracy": 0.85,
+    "f1": 0.82,
+    "latency_ms": 12.5
+  },
+  "improvement": 0.0625,
+  "environment": {
+    "gpu": "A100",
+    "framework": "pytorch",
+    "python": "3.11"
+  },
+  "status": "completed",
+  "created_at": 1787693395.8449216,
+  "updated_at": 1787693395.8449216
+}

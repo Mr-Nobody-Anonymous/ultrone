@@ -27,8 +27,8 @@
       "system_refusals": 0,
       "overrides": 0,
       "noop_steps": 0,
-      "mean_step_latency_ms": 5.978,
-      "max_step_latency_ms": 9.717,
+      "mean_step_latency_ms": 16.33,
+      "max_step_latency_ms": 20.689,
       "feeds_generated": 18,
       "feeds_received": 16,
       "candidates_evaluated": 18,
@@ -37,7 +37,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-f5f563c82e1e",
+        "decision_id": "DEC-1e7842ca7ed0",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -114,12 +114,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-88AB7A85",
+              "contact_id": "FC-A962A79B",
               "confidence": 0.758,
               "source_feeds": [
-                "FEED-RADAR-b67a351dbbab",
-                "FEED-VISUAL-70ee59dae988",
-                "FEED-SIGINT-0a301f8563d6"
+                "FEED-RADAR-20953bdbc15c",
+                "FEED-VISUAL-5357e2081e6f",
+                "FEED-SIGINT-b9fb9279feb9"
               ]
             }
           ],
@@ -218,11 +218,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.507
+        "latency_ms": 10.21
       },
       {
         "tick": 2,
-        "decision_id": "DEC-3641aebc7ac1",
+        "decision_id": "DEC-d9bc458219f1",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -299,11 +299,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-3C3C1EB8",
+              "contact_id": "FC-95AE8D4C",
               "confidence": 0.586,
               "source_feeds": [
-                "FEED-VISUAL-5c4e031fee80",
-                "FEED-SIGINT-2856920922e1"
+                "FEED-VISUAL-6c8c0b381973",
+                "FEED-SIGINT-657d7cb5b084"
               ]
             }
           ],
@@ -395,11 +395,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.758
+        "latency_ms": 11.311
       },
       {
         "tick": 3,
-        "decision_id": "DEC-a5dd774e3c79",
+        "decision_id": "DEC-9233e67b76a6",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -476,12 +476,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-607372F8",
+              "contact_id": "FC-9B50A530",
               "confidence": 0.81,
               "source_feeds": [
-                "FEED-RADAR-5625f5aba22d",
-                "FEED-VISUAL-405842a9a4a1",
-                "FEED-SIGINT-50d967195465"
+                "FEED-RADAR-f7f5b47d0b2b",
+                "FEED-VISUAL-cf8dce9793ef",
+                "FEED-SIGINT-7d1816bafc1c"
               ]
             }
           ],
@@ -573,11 +573,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.068
+        "latency_ms": 16.276
       },
       {
         "tick": 4,
-        "decision_id": "DEC-a0aca2cf0e46",
+        "decision_id": "DEC-2fc07bad1dd9",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -654,11 +654,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-74A96F26",
+              "contact_id": "FC-81C548EB",
               "confidence": 0.883,
               "source_feeds": [
-                "FEED-RADAR-cf93b31cf423",
-                "FEED-VISUAL-c11bc7efffad"
+                "FEED-RADAR-eb014779da57",
+                "FEED-VISUAL-8ed243158bbc"
               ]
             }
           ],
@@ -757,11 +757,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 5.646
+        "latency_ms": 20.689
       },
       {
         "tick": 5,
-        "decision_id": "DEC-604be9224e03",
+        "decision_id": "DEC-69260ae1997c",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -838,12 +838,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-675513CB",
+              "contact_id": "FC-F4AAD1BF",
               "confidence": 0.799,
               "source_feeds": [
-                "FEED-RADAR-5af4fc3a6dcb",
-                "FEED-VISUAL-eac521409aaa",
-                "FEED-SIGINT-3322e6c52578"
+                "FEED-RADAR-35e1366a9f47",
+                "FEED-VISUAL-b7d62a16d8d6",
+                "FEED-SIGINT-d0ab2da3f6db"
               ]
             }
           ],
@@ -928,11 +928,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 7.169
+        "latency_ms": 19.18
       },
       {
         "tick": 6,
-        "decision_id": "DEC-3cc150d34ead",
+        "decision_id": "DEC-9569f98cbac8",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -1009,12 +1009,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-C04F8ED4",
+              "contact_id": "FC-6C7B3EAF",
               "confidence": 0.82,
               "source_feeds": [
-                "FEED-RADAR-384a1e7284df",
-                "FEED-VISUAL-7dcda940765a",
-                "FEED-SIGINT-e0e5cabe6788"
+                "FEED-RADAR-ffbc74eef826",
+                "FEED-VISUAL-fc86efa9c4cc",
+                "FEED-SIGINT-c9d7da5d08a5"
               ]
             }
           ],
@@ -1106,7 +1106,7 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 9.717
+        "latency_ms": 20.314
       }
     ],
     "failures": [],
@@ -1148,8 +1148,8 @@
       "system_refusals": 0,
       "overrides": 0,
       "noop_steps": 0,
-      "mean_step_latency_ms": 5.345,
-      "max_step_latency_ms": 8.902,
+      "mean_step_latency_ms": 16.071,
+      "max_step_latency_ms": 25.185,
       "feeds_generated": 18,
       "feeds_received": 10,
       "candidates_evaluated": 18,
@@ -1158,7 +1158,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-42046c80d3de",
+        "decision_id": "DEC-5385254f06ad",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -1235,11 +1235,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-E358532E",
+              "contact_id": "FC-5B274A61",
               "confidence": 0.81,
               "source_feeds": [
-                "FEED-RADAR-4b5cfb781021",
-                "FEED-VISUAL-39aa1ab94421"
+                "FEED-RADAR-915f1fd696f8",
+                "FEED-VISUAL-9372751725bf"
               ]
             }
           ],
@@ -1338,11 +1338,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 2.718
+        "latency_ms": 9.562
       },
       {
         "tick": 2,
-        "decision_id": "DEC-561e7e2cd18d",
+        "decision_id": "DEC-505665059874",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -1419,10 +1419,10 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-9585C00D",
+              "contact_id": "FC-F87875E2",
               "confidence": 0.497,
               "source_feeds": [
-                "FEED-SIGINT-3dfb429ce191"
+                "FEED-SIGINT-bd407ea2291c"
               ]
             }
           ],
@@ -1514,11 +1514,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 3.342
+        "latency_ms": 11.415
       },
       {
         "tick": 3,
-        "decision_id": "DEC-9308dec6e569",
+        "decision_id": "DEC-8c050eb5f03f",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -1595,11 +1595,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-1CDD5CEA",
+              "contact_id": "FC-C2320B1D",
               "confidence": 0.875,
               "source_feeds": [
-                "FEED-RADAR-5b0b67c9e216",
-                "FEED-VISUAL-d0f38457cf9c"
+                "FEED-RADAR-da64dc46b89b",
+                "FEED-VISUAL-1066d0f75d2e"
               ]
             }
           ],
@@ -1691,11 +1691,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.874
+        "latency_ms": 13.218
       },
       {
         "tick": 4,
-        "decision_id": "DEC-33091d930b42",
+        "decision_id": "DEC-cc2cc265c067",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -1772,11 +1772,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-028493BE",
+              "contact_id": "FC-F7297CD9",
               "confidence": 0.883,
               "source_feeds": [
-                "FEED-RADAR-519c856c3fe4",
-                "FEED-VISUAL-7b90eba91e7f"
+                "FEED-RADAR-120da7e3fd05",
+                "FEED-VISUAL-393a74af63b3"
               ]
             }
           ],
@@ -1875,11 +1875,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 5.557
+        "latency_ms": 14.438
       },
       {
         "tick": 5,
-        "decision_id": "DEC-63fe3922d9d0",
+        "decision_id": "DEC-455cd93ab234",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -1956,10 +1956,10 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-2EDA9B8E",
+              "contact_id": "FC-3D946B7A",
               "confidence": 0.913,
               "source_feeds": [
-                "FEED-RADAR-a99443f014e6"
+                "FEED-RADAR-2d2768410248"
               ]
             }
           ],
@@ -2044,11 +2044,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 6.679
+        "latency_ms": 22.606
       },
       {
         "tick": 6,
-        "decision_id": "DEC-516175173e70",
+        "decision_id": "DEC-f0e9f099ae6a",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -2125,11 +2125,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-4FB472D1",
+              "contact_id": "FC-B63EA575",
               "confidence": 0.849,
               "source_feeds": [
-                "FEED-RADAR-3952a6c60e8f",
-                "FEED-VISUAL-212eaf936e65"
+                "FEED-RADAR-7d868a653776",
+                "FEED-VISUAL-b583caab5bd7"
               ]
             }
           ],
@@ -2221,7 +2221,7 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 8.902
+        "latency_ms": 25.185
       }
     ],
     "failures": [],
@@ -2271,8 +2271,8 @@
       "system_refusals": 0,
       "overrides": 0,
       "noop_steps": 0,
-      "mean_step_latency_ms": 6.612,
-      "max_step_latency_ms": 10.166,
+      "mean_step_latency_ms": 17.781,
+      "max_step_latency_ms": 30.614,
       "feeds_generated": 18,
       "feeds_received": 16,
       "candidates_evaluated": 18,
@@ -2281,7 +2281,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-f4da515b3869",
+        "decision_id": "DEC-e0e9e45e8e39",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -2358,12 +2358,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-E3A9756F",
+              "contact_id": "FC-CD5656FB",
               "confidence": 0.733,
               "source_feeds": [
-                "FEED-RADAR-72ee3ecc7edf",
-                "FEED-VISUAL-1ee2ca3dcbd3",
-                "FEED-SIGINT-f39816ede8c9"
+                "FEED-RADAR-745234f7c7ef",
+                "FEED-VISUAL-eabf7233c2c0",
+                "FEED-SIGINT-5e7c277c4ce7"
               ]
             }
           ],
@@ -2462,11 +2462,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.17
+        "latency_ms": 10.149
       },
       {
         "tick": 2,
-        "decision_id": "DEC-536aa35b029f",
+        "decision_id": "DEC-721f838e85b3",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -2543,11 +2543,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-E5049921",
+              "contact_id": "FC-74AB560F",
               "confidence": 0.543,
               "source_feeds": [
-                "FEED-VISUAL-90eed801b4ef",
-                "FEED-SIGINT-e8b8594646a8"
+                "FEED-VISUAL-251d860f2769",
+                "FEED-SIGINT-00d71404f961"
               ]
             }
           ],
@@ -2639,11 +2639,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 5.105
+        "latency_ms": 10.443
       },
       {
         "tick": 3,
-        "decision_id": "DEC-05ab46c25eea",
+        "decision_id": "DEC-342484262915",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -2720,12 +2720,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-081976F3",
+              "contact_id": "FC-BDE6480F",
               "confidence": 0.785,
               "source_feeds": [
-                "FEED-RADAR-0f9848692c35",
-                "FEED-VISUAL-3f9c2440b76b",
-                "FEED-SIGINT-17e9d7e88d01"
+                "FEED-RADAR-1a0f1dd08909",
+                "FEED-VISUAL-393f9dc5333b",
+                "FEED-SIGINT-ada151e7e737"
               ]
             }
           ],
@@ -2817,11 +2817,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 6.264
+        "latency_ms": 15.093
       },
       {
         "tick": 4,
-        "decision_id": "DEC-cddf3d94265b",
+        "decision_id": "DEC-4441e0d54f17",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -2898,11 +2898,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-1942BD09",
+              "contact_id": "FC-5677CCB7",
               "confidence": 0.883,
               "source_feeds": [
-                "FEED-RADAR-8136c387cb6b",
-                "FEED-VISUAL-896799384848"
+                "FEED-RADAR-7569e3700620",
+                "FEED-VISUAL-9aed5145e753"
               ]
             }
           ],
@@ -3001,11 +3001,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 7.566
+        "latency_ms": 17.845
       },
       {
         "tick": 5,
-        "decision_id": "DEC-f3356fa2440f",
+        "decision_id": "DEC-bed5c4a681ce",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -3082,12 +3082,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-6ABABB41",
+              "contact_id": "FC-E254F3F2",
               "confidence": 0.774,
               "source_feeds": [
-                "FEED-RADAR-8d827e273d91",
-                "FEED-VISUAL-1fa103ae7f35",
-                "FEED-SIGINT-5a719be1d55b"
+                "FEED-RADAR-a9675362385a",
+                "FEED-VISUAL-bf81b021e487",
+                "FEED-SIGINT-b6f7ec55fd83"
               ]
             }
           ],
@@ -3172,11 +3172,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 6.401
+        "latency_ms": 22.541
       },
       {
         "tick": 6,
-        "decision_id": "DEC-565c399a869c",
+        "decision_id": "DEC-9dbb2d95e130",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -3253,12 +3253,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-F0B5B735",
+              "contact_id": "FC-CF6E5CB9",
               "confidence": 0.795,
               "source_feeds": [
-                "FEED-RADAR-57d5e3ac887b",
-                "FEED-VISUAL-19b07b893193",
-                "FEED-SIGINT-59e34af517d5"
+                "FEED-RADAR-673d55d1a130",
+                "FEED-VISUAL-218c06316413",
+                "FEED-SIGINT-463248f9da9f"
               ]
             }
           ],
@@ -3350,7 +3350,7 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 10.166
+        "latency_ms": 30.614
       }
     ],
     "failures": [],
@@ -3400,8 +3400,8 @@
       "system_refusals": 1,
       "overrides": 0,
       "noop_steps": 1,
-      "mean_step_latency_ms": 6.386,
-      "max_step_latency_ms": 11.743,
+      "mean_step_latency_ms": 16.271,
+      "max_step_latency_ms": 25.24,
       "feeds_generated": 18,
       "feeds_received": 16,
       "candidates_evaluated": 18,
@@ -3410,7 +3410,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-8957b1fd0e79",
+        "decision_id": "DEC-369e9834de2a",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -3487,12 +3487,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-EB070B15",
+              "contact_id": "FC-7C89F27F",
               "confidence": 0.758,
               "source_feeds": [
-                "FEED-RADAR-c424dcbf45f9",
-                "FEED-VISUAL-b4e4ba38f93b",
-                "FEED-SIGINT-8e0c9f33a636"
+                "FEED-RADAR-ee38d9b4516e",
+                "FEED-VISUAL-b67629bb4ab6",
+                "FEED-SIGINT-355a76d41978"
               ]
             }
           ],
@@ -3591,11 +3591,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.286
+        "latency_ms": 9.992
       },
       {
         "tick": 2,
-        "decision_id": "DEC-2bc1c396b3c1",
+        "decision_id": "DEC-17938a8be50d",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -3672,11 +3672,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-2FB53504",
+              "contact_id": "FC-F9133599",
               "confidence": 0.586,
               "source_feeds": [
-                "FEED-VISUAL-e4e73342a568",
-                "FEED-SIGINT-2ed62f15fc75"
+                "FEED-VISUAL-26e70a4b5fb0",
+                "FEED-SIGINT-9fec3854db98"
               ]
             }
           ],
@@ -3768,11 +3768,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.585
+        "latency_ms": 11.739
       },
       {
         "tick": 3,
-        "decision_id": "DEC-6197537d221f",
+        "decision_id": "DEC-83da15dc8e1d",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -3849,12 +3849,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-4E793590",
+              "contact_id": "FC-391E9916",
               "confidence": 0.81,
               "source_feeds": [
-                "FEED-RADAR-9d0e8e9a7f9a",
-                "FEED-VISUAL-a40a51055b40",
-                "FEED-SIGINT-43e9c6c86523"
+                "FEED-RADAR-9660e46bf649",
+                "FEED-VISUAL-1716e6923240",
+                "FEED-SIGINT-985a547efe4d"
               ]
             }
           ],
@@ -3946,11 +3946,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.637
+        "latency_ms": 16.614
       },
       {
         "tick": 4,
-        "decision_id": "DEC-830a93e0523c",
+        "decision_id": "DEC-6253c72fe238",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -4027,11 +4027,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-568517A5",
+              "contact_id": "FC-DE999A48",
               "confidence": 0.883,
               "source_feeds": [
-                "FEED-RADAR-8d2de6c1155d",
-                "FEED-VISUAL-b5f8081e0812"
+                "FEED-RADAR-98a64187bca1",
+                "FEED-VISUAL-976805be80c1"
               ]
             }
           ],
@@ -4092,11 +4092,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.448
+        "latency_ms": 13.436
       },
       {
         "tick": 5,
-        "decision_id": "DEC-9c81af445b3d",
+        "decision_id": "DEC-83f2f826192f",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -4173,12 +4173,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-7DA43963",
+              "contact_id": "FC-2D5E5269",
               "confidence": 0.799,
               "source_feeds": [
-                "FEED-RADAR-d8696e261461",
-                "FEED-VISUAL-55a9ebe95c83",
-                "FEED-SIGINT-3610a7da81d7"
+                "FEED-RADAR-43319b58dbe3",
+                "FEED-VISUAL-25820cffad24",
+                "FEED-SIGINT-72f868f72dec"
               ]
             }
           ],
@@ -4263,11 +4263,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 8.614
+        "latency_ms": 20.608
       },
       {
         "tick": 6,
-        "decision_id": "DEC-d62c7cb010a5",
+        "decision_id": "DEC-c899b460cad3",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -4344,12 +4344,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-9F11F8DF",
+              "contact_id": "FC-6CD4F2D4",
               "confidence": 0.82,
               "source_feeds": [
-                "FEED-RADAR-ae19eb1b8210",
-                "FEED-VISUAL-f151cc891e21",
-                "FEED-SIGINT-aede20c47f82"
+                "FEED-RADAR-17769687acf7",
+                "FEED-VISUAL-b8ead96121f0",
+                "FEED-SIGINT-151acaafad65"
               ]
             }
           ],
@@ -4441,7 +4441,7 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 11.743
+        "latency_ms": 25.24
       }
     ],
     "failures": [],
@@ -4489,8 +4489,8 @@
       "system_refusals": 6,
       "overrides": 0,
       "noop_steps": 6,
-      "mean_step_latency_ms": 4.575,
-      "max_step_latency_ms": 6.061,
+      "mean_step_latency_ms": 10.072,
+      "max_step_latency_ms": 21.455,
       "feeds_generated": 18,
       "feeds_received": 16,
       "candidates_evaluated": 18,
@@ -4499,7 +4499,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-0645f826bd9f",
+        "decision_id": "DEC-5ea6e38419d8",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -4576,12 +4576,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-7075655B",
+              "contact_id": "FC-2FE39C32",
               "confidence": 0.758,
               "source_feeds": [
-                "FEED-RADAR-59a398b1a927",
-                "FEED-VISUAL-bba79e7a462a",
-                "FEED-SIGINT-71e9fcf746b7"
+                "FEED-RADAR-5613b11ab283",
+                "FEED-VISUAL-375b179c2f69",
+                "FEED-SIGINT-967b4b95c85d"
               ]
             }
           ],
@@ -4642,11 +4642,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 3.659
+        "latency_ms": 5.917
       },
       {
         "tick": 2,
-        "decision_id": "DEC-779fbbd9828e",
+        "decision_id": "DEC-888a4cafe8f0",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -4723,11 +4723,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-2BEAEA47",
+              "contact_id": "FC-AD33CFB3",
               "confidence": 0.586,
               "source_feeds": [
-                "FEED-VISUAL-3e31cdec00ce",
-                "FEED-SIGINT-89926d6faa46"
+                "FEED-VISUAL-ca12d7549430",
+                "FEED-SIGINT-a9c47d3ba6a7"
               ]
             }
           ],
@@ -4781,11 +4781,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 3.695
+        "latency_ms": 6.234
       },
       {
         "tick": 3,
-        "decision_id": "DEC-2b1909e69da3",
+        "decision_id": "DEC-fac942f93918",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -4862,12 +4862,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-8B89511B",
+              "contact_id": "FC-F14D2B9C",
               "confidence": 0.81,
               "source_feeds": [
-                "FEED-RADAR-6eaa580c289d",
-                "FEED-VISUAL-fd76cd6b7119",
-                "FEED-SIGINT-77fbf14b6d01"
+                "FEED-RADAR-f4e7c9d6bfc2",
+                "FEED-VISUAL-8cbde95e8fb7",
+                "FEED-SIGINT-ec7307cec8ea"
               ]
             }
           ],
@@ -4921,11 +4921,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.518
+        "latency_ms": 7.638
       },
       {
         "tick": 4,
-        "decision_id": "DEC-f56b5acd3865",
+        "decision_id": "DEC-275a17ec8bce",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -5002,11 +5002,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-816ABA29",
+              "contact_id": "FC-B77B718B",
               "confidence": 0.883,
               "source_feeds": [
-                "FEED-RADAR-68070beee7c2",
-                "FEED-VISUAL-cc16e52e0a22"
+                "FEED-RADAR-a65fefd1d380",
+                "FEED-VISUAL-a5ef374ea097"
               ]
             }
           ],
@@ -5067,11 +5067,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.098
+        "latency_ms": 8.971
       },
       {
         "tick": 5,
-        "decision_id": "DEC-2914932884e1",
+        "decision_id": "DEC-9956180d3036",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -5148,12 +5148,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-13B87DE2",
+              "contact_id": "FC-6284C69A",
               "confidence": 0.799,
               "source_feeds": [
-                "FEED-RADAR-d81cdc145281",
-                "FEED-VISUAL-83dd1e69adf1",
-                "FEED-SIGINT-69eda3f52b49"
+                "FEED-RADAR-a99e1be60347",
+                "FEED-VISUAL-f8d9965030ba",
+                "FEED-SIGINT-eddb9c8ab213"
               ]
             }
           ],
@@ -5200,11 +5200,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 6.061
+        "latency_ms": 21.455
       },
       {
         "tick": 6,
-        "decision_id": "DEC-59a617dec47b",
+        "decision_id": "DEC-084c9575517d",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -5281,12 +5281,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-289FA54B",
+              "contact_id": "FC-94395410",
               "confidence": 0.82,
               "source_feeds": [
-                "FEED-RADAR-6daa42da9342",
-                "FEED-VISUAL-948e78d1d4ec",
-                "FEED-SIGINT-349651a8f49e"
+                "FEED-RADAR-3f1908316abf",
+                "FEED-VISUAL-b0aca92266e6",
+                "FEED-SIGINT-f325a3c260bc"
               ]
             }
           ],
@@ -5340,7 +5340,7 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 5.419
+        "latency_ms": 10.217
       }
     ],
     "failures": [],
@@ -5380,8 +5380,8 @@
       "system_refusals": 0,
       "overrides": 0,
       "noop_steps": 6,
-      "mean_step_latency_ms": 4.083,
-      "max_step_latency_ms": 5.251,
+      "mean_step_latency_ms": 8.063,
+      "max_step_latency_ms": 11.142,
       "feeds_generated": 18,
       "feeds_received": 16,
       "candidates_evaluated": 18,
@@ -5390,7 +5390,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-081de6805970",
+        "decision_id": "DEC-7cc7c348667e",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -5467,12 +5467,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-7CB63537",
+              "contact_id": "FC-86807449",
               "confidence": 0.758,
               "source_feeds": [
-                "FEED-RADAR-9e0136b4b791",
-                "FEED-VISUAL-02b58d85dc3f",
-                "FEED-SIGINT-013a316a6e28"
+                "FEED-RADAR-dedd5ee49201",
+                "FEED-VISUAL-576010c49d39",
+                "FEED-SIGINT-95d5b1302659"
               ]
             }
           ],
@@ -5565,11 +5565,11 @@
           "HUMAN_DECISION",
           "REJECTED"
         ],
-        "latency_ms": 3.674
+        "latency_ms": 5.518
       },
       {
         "tick": 2,
-        "decision_id": "DEC-6375818fac36",
+        "decision_id": "DEC-f87fd7a8bf44",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -5646,11 +5646,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-A60C1D9E",
+              "contact_id": "FC-E34BB441",
               "confidence": 0.586,
               "source_feeds": [
-                "FEED-VISUAL-cb3a7dce3206",
-                "FEED-SIGINT-8e9b4ddc9f46"
+                "FEED-VISUAL-5592a91c2b43",
+                "FEED-SIGINT-dc61dd106de0"
               ]
             }
           ],
@@ -5736,11 +5736,11 @@
           "HUMAN_DECISION",
           "REJECTED"
         ],
-        "latency_ms": 3.201
+        "latency_ms": 5.625
       },
       {
         "tick": 3,
-        "decision_id": "DEC-689fb20cd211",
+        "decision_id": "DEC-75a47dea0167",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -5817,12 +5817,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-C69745F3",
+              "contact_id": "FC-341DA46B",
               "confidence": 0.81,
               "source_feeds": [
-                "FEED-RADAR-554029d3c691",
-                "FEED-VISUAL-b3b80fb65b98",
-                "FEED-SIGINT-f7a3df71be17"
+                "FEED-RADAR-89c34fcbd808",
+                "FEED-VISUAL-9f8aaab6a460",
+                "FEED-SIGINT-95a8b809c438"
               ]
             }
           ],
@@ -5915,11 +5915,11 @@
           "HUMAN_DECISION",
           "REJECTED"
         ],
-        "latency_ms": 3.012
+        "latency_ms": 7.207
       },
       {
         "tick": 4,
-        "decision_id": "DEC-17f256224d2e",
+        "decision_id": "DEC-4933a7ba9be8",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -5996,11 +5996,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-7C5844C0",
+              "contact_id": "FC-7D45CC16",
               "confidence": 0.883,
               "source_feeds": [
-                "FEED-RADAR-b4774304d3fe",
-                "FEED-VISUAL-4e7a8d80c38a"
+                "FEED-RADAR-5f15c77baa22",
+                "FEED-VISUAL-70fb97e1bd95"
               ]
             }
           ],
@@ -6093,11 +6093,11 @@
           "HUMAN_DECISION",
           "REJECTED"
         ],
-        "latency_ms": 4.217
+        "latency_ms": 8.316
       },
       {
         "tick": 5,
-        "decision_id": "DEC-997225e6b04e",
+        "decision_id": "DEC-43879b09bc1c",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -6174,12 +6174,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-2208F1B2",
+              "contact_id": "FC-2BCF892C",
               "confidence": 0.799,
               "source_feeds": [
-                "FEED-RADAR-5e8ce97c6633",
-                "FEED-VISUAL-0743eee034a4",
-                "FEED-SIGINT-f9e6d4b1368b"
+                "FEED-RADAR-8b424f97cf5b",
+                "FEED-VISUAL-efd9c05b6e9a",
+                "FEED-SIGINT-712cd2464895"
               ]
             }
           ],
@@ -6272,11 +6272,11 @@
           "HUMAN_DECISION",
           "REJECTED"
         ],
-        "latency_ms": 5.251
+        "latency_ms": 11.142
       },
       {
         "tick": 6,
-        "decision_id": "DEC-43b00f8f1ada",
+        "decision_id": "DEC-132d8bcbb08c",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -6353,12 +6353,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-00C16C7B",
+              "contact_id": "FC-D2333E0D",
               "confidence": 0.82,
               "source_feeds": [
-                "FEED-RADAR-3211aae04ecb",
-                "FEED-VISUAL-483ae773bdd4",
-                "FEED-SIGINT-64e55e249443"
+                "FEED-RADAR-538923ce5a0a",
+                "FEED-VISUAL-ec0b0df2a623",
+                "FEED-SIGINT-1f978a9c5f1e"
               ]
             }
           ],
@@ -6444,7 +6444,7 @@
           "HUMAN_DECISION",
           "REJECTED"
         ],
-        "latency_ms": 5.145
+        "latency_ms": 10.571
       }
     ],
     "failures": [],
@@ -6484,8 +6484,8 @@
       "system_refusals": 0,
       "overrides": 1,
       "noop_steps": 0,
-      "mean_step_latency_ms": 10.712,
-      "max_step_latency_ms": 15.673,
+      "mean_step_latency_ms": 21.542,
+      "max_step_latency_ms": 38.105,
       "feeds_generated": 18,
       "feeds_received": 16,
       "candidates_evaluated": 18,
@@ -6494,7 +6494,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-b321d363716a",
+        "decision_id": "DEC-3dd6f485b15b",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -6571,12 +6571,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-553EEAF7",
+              "contact_id": "FC-371646AD",
               "confidence": 0.758,
               "source_feeds": [
-                "FEED-RADAR-e60bb1655a0d",
-                "FEED-VISUAL-4d7d9c199ddf",
-                "FEED-SIGINT-4c4d2349c22e"
+                "FEED-RADAR-21f5518eb2e1",
+                "FEED-VISUAL-a4b59a2ecec1",
+                "FEED-SIGINT-317bb3dc8a38"
               ]
             }
           ],
@@ -6676,11 +6676,11 @@
           "HUMAN_DECISION",
           "OVERRIDDEN"
         ],
-        "latency_ms": 8.437
+        "latency_ms": 18.476
       },
       {
         "tick": 2,
-        "decision_id": "DEC-cb40eb021906",
+        "decision_id": "DEC-7982cb1f7d2e",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -6757,11 +6757,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-46A47196",
+              "contact_id": "FC-3ED12A4C",
               "confidence": 0.586,
               "source_feeds": [
-                "FEED-VISUAL-72dd0e6ac8c9",
-                "FEED-SIGINT-0ddc50ab5441"
+                "FEED-VISUAL-b64b085cb828",
+                "FEED-SIGINT-772905015d0f"
               ]
             }
           ],
@@ -6855,11 +6855,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 8.764
+        "latency_ms": 13.828
       },
       {
         "tick": 3,
-        "decision_id": "DEC-5d98214a57b5",
+        "decision_id": "DEC-633c7ce0e89b",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -6936,12 +6936,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-AB97E0E7",
+              "contact_id": "FC-8F47F772",
               "confidence": 0.81,
               "source_feeds": [
-                "FEED-RADAR-5c9c0f4bf53e",
-                "FEED-VISUAL-ab1feaf8b8d4",
-                "FEED-SIGINT-d22aba080624"
+                "FEED-RADAR-b93df8939191",
+                "FEED-VISUAL-8692c4f8968f",
+                "FEED-SIGINT-e90751a79575"
               ]
             }
           ],
@@ -7035,11 +7035,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 9.919
+        "latency_ms": 15.98
       },
       {
         "tick": 4,
-        "decision_id": "DEC-2475d5980d56",
+        "decision_id": "DEC-0bdf2f2024ff",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -7116,11 +7116,11 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-60E2CE46",
+              "contact_id": "FC-C430A8EA",
               "confidence": 0.883,
               "source_feeds": [
-                "FEED-RADAR-d343cb1f2ed0",
-                "FEED-VISUAL-8895784e24f2"
+                "FEED-RADAR-f4aaca2dc89b",
+                "FEED-VISUAL-7747bf98866d"
               ]
             }
           ],
@@ -7221,11 +7221,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 8.257
+        "latency_ms": 19.097
       },
       {
         "tick": 5,
-        "decision_id": "DEC-2c3a89d1d5d2",
+        "decision_id": "DEC-66dcd900d3db",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -7302,12 +7302,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-753A7270",
+              "contact_id": "FC-6A4943A7",
               "confidence": 0.799,
               "source_feeds": [
-                "FEED-RADAR-173da93bab7c",
-                "FEED-VISUAL-fce921c9d349",
-                "FEED-SIGINT-3e480cbef916"
+                "FEED-RADAR-78a015024366",
+                "FEED-VISUAL-07947fbd83b8",
+                "FEED-SIGINT-6edd2ed846fe"
               ]
             }
           ],
@@ -7394,11 +7394,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 13.219
+        "latency_ms": 23.764
       },
       {
         "tick": 6,
-        "decision_id": "DEC-a0bf2b77d541",
+        "decision_id": "DEC-a6c82853d708",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -7475,12 +7475,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-FDE80036",
+              "contact_id": "FC-DD3EA23D",
               "confidence": 0.82,
               "source_feeds": [
-                "FEED-RADAR-8a8a9e47f0bd",
-                "FEED-VISUAL-c07b9b0b7795",
-                "FEED-SIGINT-c17483369d9b"
+                "FEED-RADAR-8ee43adb7d32",
+                "FEED-VISUAL-c8faa533f16b",
+                "FEED-SIGINT-de38a9a644f3"
               ]
             }
           ],
@@ -7574,7 +7574,7 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 15.673
+        "latency_ms": 38.105
       }
     ],
     "failures": [],
@@ -7586,6 +7586,3048 @@
       "approve": 6,
       "execute": 6,
       "outcome": 6
+    },
+    "audit_chain_verified": true
+  },
+  {
+    "scenario_suite_version": "canonical-scenarios-v1",
+    "scenario_id": "stale_observations",
+    "config": {
+      "scenario_suite_version": "canonical-scenarios-v1",
+      "scenario_id": "stale_observations",
+      "description": "Roughly half of observations are aged snapshots: the pipeline acts on belief that lags ground truth.",
+      "seed": 42,
+      "fault_seed": 624956483,
+      "n_steps": 6,
+      "n_candidates": 3,
+      "sensor_dropout": 0.1,
+      "sensor_noise_sigma": 2.0,
+      "confidence_jitter": 0.15,
+      "min_engagement_confidence": 0.45,
+      "blacklisted_actions": [],
+      "faults": [
+        {
+          "fault_type": "stale_observation",
+          "probability": 0.5,
+          "intensity": 0.0,
+          "feed_type": "",
+          "asset_type": ""
+        }
+      ],
+      "human_policy": "none"
+    },
+    "metrics": {
+      "total_reward": 19.0,
+      "steps": 6,
+      "n_decisions": 6,
+      "safety_rejections": 0,
+      "human_rejections": 0,
+      "system_refusals": 0,
+      "overrides": 0,
+      "noop_steps": 0,
+      "mean_step_latency_ms": 47.406,
+      "max_step_latency_ms": 201.218,
+      "feeds_generated": 18,
+      "feeds_received": 16,
+      "candidates_evaluated": 18,
+      "roe_violations": 0
+    },
+    "steps": [
+      {
+        "tick": 1,
+        "decision_id": "DEC-47db362b60c3",
+        "observation": {
+          "tick": 1,
+          "red_force": {
+            "position": [
+              24,
+              13
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 100,
+            "heading": 80.3558657335762,
+            "fuel": 1.0,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 3,
+                "range": 20,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 3,
+                "range": 50,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [
+            {
+              "contact_id": "FC-88165ABF",
+              "confidence": 0.758,
+              "source_feeds": [
+                "FEED-RADAR-1741795c3a99",
+                "FEED-VISUAL-90772eb6a0a9",
+                "FEED-SIGINT-4355a647b725"
+              ]
+            }
+          ],
+          "primary_target_position": [
+            24.37983963608497,
+            11.90952456148653
+          ],
+          "primary_target_confidence": 0.7579166666666668,
+          "uncertainty": 0.2420833333333332,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 3
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-6155",
+          "COA-EVO-3266",
+          "COA-EVO-1188"
+        ],
+        "proposed_orders": [
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              24.37983963608497,
+              11.90952456148653
+            ]
+          },
+          {
+            "action": "strike",
+            "asset_type": "missiles",
+            "target": [
+              24.37983963608497,
+              11.90952456148653
+            ]
+          },
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              24.37983963608497,
+              11.90952456148653
+            ]
+          }
+        ],
+        "safety_verdict": {
+          "approved": true,
+          "reason": "approved",
+          "rules": [
+            {
+              "rule_id": "R1_TARGET_PRESENT",
+              "passed": true,
+              "detail": "target present"
+            },
+            {
+              "rule_id": "R2_ENGAGEMENT_CONFIDENCE",
+              "passed": true,
+              "detail": "not applicable (non-kinetic)"
+            },
+            {
+              "rule_id": "R3_AMMO_AVAILABLE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R4_ENGAGEMENT_RANGE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R5_FUEL_RESERVE",
+              "passed": true,
+              "detail": "fuel 1.00 vs reserve 0.05"
+            },
+            {
+              "rule_id": "R6_ACTION_BLACKLIST",
+              "passed": true,
+              "detail": "permitted"
+            }
+          ]
+        },
+        "human_state": "EXECUTED",
+        "executed_action": {
+          "action": "jam",
+          "asset_type": "jammers",
+          "target": [
+            24.37983963608497,
+            11.90952456148653
+          ]
+        },
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 10.054
+      },
+      {
+        "tick": 2,
+        "decision_id": "DEC-60eaf0934864",
+        "observation": {
+          "tick": 2,
+          "red_force": {
+            "position": [
+              25,
+              16
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 100,
+            "heading": 80.3558657335762,
+            "fuel": 0.99,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 2,
+                "range": 20,
+                "fuel": 0.99,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 3,
+                "range": 50,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [
+            {
+              "contact_id": "FC-173BFF5C",
+              "confidence": 0.586,
+              "source_feeds": [
+                "FEED-VISUAL-10ae6fd9c728",
+                "FEED-SIGINT-0ce997f93742"
+              ]
+            }
+          ],
+          "primary_target_position": [
+            22.987612119775644,
+            14.15248102551257
+          ],
+          "primary_target_confidence": 0.5855714285714286,
+          "uncertainty": 0.41442857142857137,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 2
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-2743",
+          "COA-EVO-6947",
+          "COA-EVO-8787"
+        ],
+        "proposed_orders": [
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              22.987612119775644,
+              14.15248102551257
+            ]
+          },
+          null,
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              22.987612119775644,
+              14.15248102551257
+            ]
+          }
+        ],
+        "safety_verdict": {
+          "approved": true,
+          "reason": "approved",
+          "rules": [
+            {
+              "rule_id": "R1_TARGET_PRESENT",
+              "passed": true,
+              "detail": "target present"
+            },
+            {
+              "rule_id": "R2_ENGAGEMENT_CONFIDENCE",
+              "passed": true,
+              "detail": "not applicable (non-kinetic)"
+            },
+            {
+              "rule_id": "R3_AMMO_AVAILABLE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R4_ENGAGEMENT_RANGE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R5_FUEL_RESERVE",
+              "passed": true,
+              "detail": "fuel 0.99 vs reserve 0.05"
+            },
+            {
+              "rule_id": "R6_ACTION_BLACKLIST",
+              "passed": true,
+              "detail": "permitted"
+            }
+          ]
+        },
+        "human_state": "EXECUTED",
+        "executed_action": {
+          "action": "jam",
+          "asset_type": "jammers",
+          "target": [
+            22.987612119775644,
+            14.15248102551257
+          ]
+        },
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 11.786
+      },
+      {
+        "tick": 3,
+        "decision_id": "DEC-3b4f498cea3d",
+        "observation": {
+          "tick": 3,
+          "red_force": {
+            "position": [
+              25,
+              16
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 100,
+            "heading": 80.3558657335762,
+            "fuel": 0.99,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 2,
+                "range": 20,
+                "fuel": 0.99,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 3,
+                "range": 50,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [
+            {
+              "contact_id": "FC-DE4656C2",
+              "confidence": 0.81,
+              "source_feeds": [
+                "FEED-RADAR-5e78ed3b531e",
+                "FEED-VISUAL-38f287454087",
+                "FEED-SIGINT-fa239ac6d20b"
+              ]
+            }
+          ],
+          "primary_target_position": [
+            24.328832576289557,
+            15.498960870918754
+          ],
+          "primary_target_confidence": 0.8099166666666667,
+          "uncertainty": 0.19008333333333327,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 3
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-8397",
+          "COA-EVO-4899",
+          "COA-EVO-7735"
+        ],
+        "proposed_orders": [
+          null,
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              24.328832576289557,
+              15.498960870918754
+            ]
+          },
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              24.328832576289557,
+              15.498960870918754
+            ]
+          }
+        ],
+        "safety_verdict": {
+          "approved": true,
+          "reason": "approved",
+          "rules": [
+            {
+              "rule_id": "R1_TARGET_PRESENT",
+              "passed": true,
+              "detail": "target present"
+            },
+            {
+              "rule_id": "R2_ENGAGEMENT_CONFIDENCE",
+              "passed": true,
+              "detail": "not applicable (non-kinetic)"
+            },
+            {
+              "rule_id": "R3_AMMO_AVAILABLE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R4_ENGAGEMENT_RANGE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R5_FUEL_RESERVE",
+              "passed": true,
+              "detail": "fuel 0.99 vs reserve 0.05"
+            },
+            {
+              "rule_id": "R6_ACTION_BLACKLIST",
+              "passed": true,
+              "detail": "permitted"
+            }
+          ]
+        },
+        "human_state": "EXECUTED",
+        "executed_action": {
+          "action": "jam",
+          "asset_type": "jammers",
+          "target": [
+            24.328832576289557,
+            15.498960870918754
+          ]
+        },
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 16.455
+      },
+      {
+        "tick": 4,
+        "decision_id": "DEC-4d1e1d52a647",
+        "observation": {
+          "tick": 4,
+          "red_force": {
+            "position": [
+              28,
+              21
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 100,
+            "heading": 80.3558657335762,
+            "fuel": 0.97,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 0,
+                "range": 20,
+                "fuel": 0.97,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 3,
+                "range": 50,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [
+            {
+              "contact_id": "FC-CDE87E6D",
+              "confidence": 0.883,
+              "source_feeds": [
+                "FEED-RADAR-88ce46c13586",
+                "FEED-VISUAL-db127c9b91fa"
+              ]
+            }
+          ],
+          "primary_target_position": [
+            26.987837870788297,
+            19.68361727655778
+          ],
+          "primary_target_confidence": 0.8831111111111111,
+          "uncertainty": 0.11688888888888893,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 2
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-5092",
+          "COA-EVO-8886",
+          "COA-EVO-8973"
+        ],
+        "proposed_orders": [
+          {
+            "action": "strike",
+            "asset_type": "missiles",
+            "target": [
+              26.987837870788297,
+              19.68361727655778
+            ]
+          },
+          {
+            "action": "strike",
+            "asset_type": "missiles",
+            "target": [
+              26.987837870788297,
+              19.68361727655778
+            ]
+          },
+          {
+            "action": "strike",
+            "asset_type": "missiles",
+            "target": [
+              26.987837870788297,
+              19.68361727655778
+            ]
+          }
+        ],
+        "safety_verdict": {
+          "approved": true,
+          "reason": "approved",
+          "rules": [
+            {
+              "rule_id": "R1_TARGET_PRESENT",
+              "passed": true,
+              "detail": "target present"
+            },
+            {
+              "rule_id": "R2_ENGAGEMENT_CONFIDENCE",
+              "passed": true,
+              "detail": "confidence 0.88 vs required 0.45"
+            },
+            {
+              "rule_id": "R3_AMMO_AVAILABLE",
+              "passed": true,
+              "detail": "ammo=3"
+            },
+            {
+              "rule_id": "R4_ENGAGEMENT_RANGE",
+              "passed": true,
+              "detail": "believed distance 44.8 vs range 50.0"
+            },
+            {
+              "rule_id": "R5_FUEL_RESERVE",
+              "passed": true,
+              "detail": "fuel 1.00 vs reserve 0.05"
+            },
+            {
+              "rule_id": "R6_ACTION_BLACKLIST",
+              "passed": true,
+              "detail": "permitted"
+            }
+          ]
+        },
+        "human_state": "EXECUTED",
+        "executed_action": {
+          "action": "strike",
+          "asset_type": "missiles",
+          "target": [
+            26.987837870788297,
+            19.68361727655778
+          ]
+        },
+        "reward": 24.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 19.647
+      },
+      {
+        "tick": 5,
+        "decision_id": "DEC-91a76c698b19",
+        "observation": {
+          "tick": 5,
+          "red_force": {
+            "position": [
+              25,
+              22
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 50,
+            "heading": 80.3558657335762,
+            "fuel": 0.96,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 0,
+                "range": 20,
+                "fuel": 0.97,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 2,
+                "range": 50,
+                "fuel": 0.97,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [
+            {
+              "contact_id": "FC-A84FCD89",
+              "confidence": 0.799,
+              "source_feeds": [
+                "FEED-RADAR-7d79cf84739d",
+                "FEED-VISUAL-6f68c634ec61",
+                "FEED-SIGINT-3e38e29e2388"
+              ]
+            }
+          ],
+          "primary_target_position": [
+            25.319775628509156,
+            21.93211705979178
+          ],
+          "primary_target_confidence": 0.7990833333333335,
+          "uncertainty": 0.20091666666666652,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 3
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-2122",
+          "COA-EVO-4346",
+          "COA-EVO-9808"
+        ],
+        "proposed_orders": [
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              25.319775628509156,
+              21.93211705979178
+            ]
+          },
+          null,
+          null
+        ],
+        "safety_verdict": {
+          "approved": true,
+          "reason": "approved",
+          "rules": [
+            {
+              "rule_id": "R1_TARGET_PRESENT",
+              "passed": true,
+              "detail": "target present"
+            },
+            {
+              "rule_id": "R2_ENGAGEMENT_CONFIDENCE",
+              "passed": true,
+              "detail": "not applicable (non-kinetic)"
+            },
+            {
+              "rule_id": "R3_AMMO_AVAILABLE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R4_ENGAGEMENT_RANGE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R5_FUEL_RESERVE",
+              "passed": true,
+              "detail": "fuel 0.97 vs reserve 0.05"
+            },
+            {
+              "rule_id": "R6_ACTION_BLACKLIST",
+              "passed": true,
+              "detail": "permitted"
+            }
+          ]
+        },
+        "human_state": "EXECUTED",
+        "executed_action": {
+          "action": "jam",
+          "asset_type": "jammers",
+          "target": [
+            25.319775628509156,
+            21.93211705979178
+          ]
+        },
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 25.278
+      },
+      {
+        "tick": 6,
+        "decision_id": "DEC-18da6d8905e3",
+        "observation": {
+          "tick": 6,
+          "red_force": {
+            "position": [
+              24,
+              19
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 50,
+            "heading": 80.3558657335762,
+            "fuel": 0.95,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 0,
+                "range": 20,
+                "fuel": 0.96,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 2,
+                "range": 50,
+                "fuel": 0.97,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [
+            {
+              "contact_id": "FC-99E315E8",
+              "confidence": 0.82,
+              "source_feeds": [
+                "FEED-RADAR-93d6121601a8",
+                "FEED-VISUAL-76eb0356a7e5",
+                "FEED-SIGINT-e0abdc56a0e2"
+              ]
+            }
+          ],
+          "primary_target_position": [
+            23.36212669992687,
+            18.04831731169736
+          ],
+          "primary_target_confidence": 0.8199166666666667,
+          "uncertainty": 0.18008333333333326,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 3
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-5905",
+          "COA-EVO-9280",
+          "COA-EVO-8007"
+        ],
+        "proposed_orders": [
+          null,
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              23.36212669992687,
+              18.04831731169736
+            ]
+          },
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              23.36212669992687,
+              18.04831731169736
+            ]
+          }
+        ],
+        "safety_verdict": {
+          "approved": true,
+          "reason": "approved",
+          "rules": [
+            {
+              "rule_id": "R1_TARGET_PRESENT",
+              "passed": true,
+              "detail": "target present"
+            },
+            {
+              "rule_id": "R2_ENGAGEMENT_CONFIDENCE",
+              "passed": true,
+              "detail": "not applicable (non-kinetic)"
+            },
+            {
+              "rule_id": "R3_AMMO_AVAILABLE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R4_ENGAGEMENT_RANGE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R5_FUEL_RESERVE",
+              "passed": true,
+              "detail": "fuel 0.96 vs reserve 0.05"
+            },
+            {
+              "rule_id": "R6_ACTION_BLACKLIST",
+              "passed": true,
+              "detail": "permitted"
+            }
+          ]
+        },
+        "human_state": "EXECUTED",
+        "executed_action": {
+          "action": "jam",
+          "asset_type": "jammers",
+          "target": [
+            23.36212669992687,
+            18.04831731169736
+          ]
+        },
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 201.218
+      }
+    ],
+    "failures": [],
+    "constraint_violations": 0,
+    "fingerprint": "e5985f2bb693ff431ebcb3e0e12407a9d6b01c3a166398c7758b1b69b1471975",
+    "audit_events": {
+      "submit": 6,
+      "approve": 6,
+      "execute": 6,
+      "outcome": 6
+    },
+    "audit_chain_verified": true
+  },
+  {
+    "scenario_suite_version": "canonical-scenarios-v1",
+    "scenario_id": "actuator_failure",
+    "config": {
+      "scenario_suite_version": "canonical-scenarios-v1",
+      "scenario_id": "actuator_failure",
+      "description": "Missile actuators intermittently fail (~50%): approved strikes silently degrade to no-ops.",
+      "seed": 42,
+      "fault_seed": 1334974131,
+      "n_steps": 6,
+      "n_candidates": 3,
+      "sensor_dropout": 0.1,
+      "sensor_noise_sigma": 2.0,
+      "confidence_jitter": 0.15,
+      "min_engagement_confidence": 0.45,
+      "blacklisted_actions": [],
+      "faults": [
+        {
+          "fault_type": "actuator_failure",
+          "probability": 0.5,
+          "intensity": 0.0,
+          "feed_type": "",
+          "asset_type": "missiles"
+        }
+      ],
+      "human_policy": "none"
+    },
+    "metrics": {
+      "total_reward": 19.0,
+      "steps": 6,
+      "n_decisions": 6,
+      "safety_rejections": 0,
+      "human_rejections": 0,
+      "system_refusals": 0,
+      "overrides": 0,
+      "noop_steps": 0,
+      "mean_step_latency_ms": 18.661,
+      "max_step_latency_ms": 28.056,
+      "feeds_generated": 18,
+      "feeds_received": 16,
+      "candidates_evaluated": 18,
+      "roe_violations": 0
+    },
+    "steps": [
+      {
+        "tick": 1,
+        "decision_id": "DEC-7e2039497038",
+        "observation": {
+          "tick": 1,
+          "red_force": {
+            "position": [
+              24,
+              13
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 100,
+            "heading": 80.3558657335762,
+            "fuel": 1.0,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 3,
+                "range": 20,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 3,
+                "range": 50,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [
+            {
+              "contact_id": "FC-9F93E372",
+              "confidence": 0.758,
+              "source_feeds": [
+                "FEED-RADAR-68a5221d00ef",
+                "FEED-VISUAL-0b38a38210ef",
+                "FEED-SIGINT-4c37bcc35c45"
+              ]
+            }
+          ],
+          "primary_target_position": [
+            24.37983963608497,
+            11.90952456148653
+          ],
+          "primary_target_confidence": 0.7579166666666668,
+          "uncertainty": 0.2420833333333332,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 3
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-6155",
+          "COA-EVO-3266",
+          "COA-EVO-1188"
+        ],
+        "proposed_orders": [
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              24.37983963608497,
+              11.90952456148653
+            ]
+          },
+          {
+            "action": "strike",
+            "asset_type": "missiles",
+            "target": [
+              24.37983963608497,
+              11.90952456148653
+            ]
+          },
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              24.37983963608497,
+              11.90952456148653
+            ]
+          }
+        ],
+        "safety_verdict": {
+          "approved": true,
+          "reason": "approved",
+          "rules": [
+            {
+              "rule_id": "R1_TARGET_PRESENT",
+              "passed": true,
+              "detail": "target present"
+            },
+            {
+              "rule_id": "R2_ENGAGEMENT_CONFIDENCE",
+              "passed": true,
+              "detail": "not applicable (non-kinetic)"
+            },
+            {
+              "rule_id": "R3_AMMO_AVAILABLE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R4_ENGAGEMENT_RANGE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R5_FUEL_RESERVE",
+              "passed": true,
+              "detail": "fuel 1.00 vs reserve 0.05"
+            },
+            {
+              "rule_id": "R6_ACTION_BLACKLIST",
+              "passed": true,
+              "detail": "permitted"
+            }
+          ]
+        },
+        "human_state": "EXECUTED",
+        "executed_action": {
+          "action": "jam",
+          "asset_type": "jammers",
+          "target": [
+            24.37983963608497,
+            11.90952456148653
+          ]
+        },
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 8.773
+      },
+      {
+        "tick": 2,
+        "decision_id": "DEC-b735cc1896cf",
+        "observation": {
+          "tick": 2,
+          "red_force": {
+            "position": [
+              25,
+              16
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 100,
+            "heading": 80.3558657335762,
+            "fuel": 0.99,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 2,
+                "range": 20,
+                "fuel": 0.99,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 3,
+                "range": 50,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [
+            {
+              "contact_id": "FC-FE5CBF9A",
+              "confidence": 0.586,
+              "source_feeds": [
+                "FEED-VISUAL-50ed9cd9da5c",
+                "FEED-SIGINT-ed15cf951947"
+              ]
+            }
+          ],
+          "primary_target_position": [
+            22.987612119775644,
+            14.15248102551257
+          ],
+          "primary_target_confidence": 0.5855714285714286,
+          "uncertainty": 0.41442857142857137,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 2
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-2743",
+          "COA-EVO-6947",
+          "COA-EVO-8787"
+        ],
+        "proposed_orders": [
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              22.987612119775644,
+              14.15248102551257
+            ]
+          },
+          null,
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              22.987612119775644,
+              14.15248102551257
+            ]
+          }
+        ],
+        "safety_verdict": {
+          "approved": true,
+          "reason": "approved",
+          "rules": [
+            {
+              "rule_id": "R1_TARGET_PRESENT",
+              "passed": true,
+              "detail": "target present"
+            },
+            {
+              "rule_id": "R2_ENGAGEMENT_CONFIDENCE",
+              "passed": true,
+              "detail": "not applicable (non-kinetic)"
+            },
+            {
+              "rule_id": "R3_AMMO_AVAILABLE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R4_ENGAGEMENT_RANGE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R5_FUEL_RESERVE",
+              "passed": true,
+              "detail": "fuel 0.99 vs reserve 0.05"
+            },
+            {
+              "rule_id": "R6_ACTION_BLACKLIST",
+              "passed": true,
+              "detail": "permitted"
+            }
+          ]
+        },
+        "human_state": "EXECUTED",
+        "executed_action": {
+          "action": "jam",
+          "asset_type": "jammers",
+          "target": [
+            22.987612119775644,
+            14.15248102551257
+          ]
+        },
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 10.949
+      },
+      {
+        "tick": 3,
+        "decision_id": "DEC-c85a78ba2db8",
+        "observation": {
+          "tick": 3,
+          "red_force": {
+            "position": [
+              26,
+              19
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 100,
+            "heading": 80.3558657335762,
+            "fuel": 0.98,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 1,
+                "range": 20,
+                "fuel": 0.98,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 3,
+                "range": 50,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [
+            {
+              "contact_id": "FC-5BDA0885",
+              "confidence": 0.81,
+              "source_feeds": [
+                "FEED-RADAR-a58a983f2441",
+                "FEED-VISUAL-322d813652ea",
+                "FEED-SIGINT-51ef7be4ac07"
+              ]
+            }
+          ],
+          "primary_target_position": [
+            25.32883257628956,
+            18.498960870918754
+          ],
+          "primary_target_confidence": 0.8099166666666667,
+          "uncertainty": 0.19008333333333327,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 3
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-8397",
+          "COA-EVO-4899",
+          "COA-EVO-7735"
+        ],
+        "proposed_orders": [
+          null,
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              25.32883257628956,
+              18.498960870918754
+            ]
+          },
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              25.32883257628956,
+              18.498960870918754
+            ]
+          }
+        ],
+        "safety_verdict": {
+          "approved": true,
+          "reason": "approved",
+          "rules": [
+            {
+              "rule_id": "R1_TARGET_PRESENT",
+              "passed": true,
+              "detail": "target present"
+            },
+            {
+              "rule_id": "R2_ENGAGEMENT_CONFIDENCE",
+              "passed": true,
+              "detail": "not applicable (non-kinetic)"
+            },
+            {
+              "rule_id": "R3_AMMO_AVAILABLE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R4_ENGAGEMENT_RANGE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R5_FUEL_RESERVE",
+              "passed": true,
+              "detail": "fuel 0.98 vs reserve 0.05"
+            },
+            {
+              "rule_id": "R6_ACTION_BLACKLIST",
+              "passed": true,
+              "detail": "permitted"
+            }
+          ]
+        },
+        "human_state": "EXECUTED",
+        "executed_action": {
+          "action": "jam",
+          "asset_type": "jammers",
+          "target": [
+            25.32883257628956,
+            18.498960870918754
+          ]
+        },
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 15.872
+      },
+      {
+        "tick": 4,
+        "decision_id": "DEC-a83cc3f3ed82",
+        "observation": {
+          "tick": 4,
+          "red_force": {
+            "position": [
+              28,
+              21
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 100,
+            "heading": 80.3558657335762,
+            "fuel": 0.97,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 0,
+                "range": 20,
+                "fuel": 0.97,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 3,
+                "range": 50,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [
+            {
+              "contact_id": "FC-A15AB559",
+              "confidence": 0.883,
+              "source_feeds": [
+                "FEED-RADAR-074bdc4d539c",
+                "FEED-VISUAL-0c8b1e9c8c09"
+              ]
+            }
+          ],
+          "primary_target_position": [
+            26.987837870788297,
+            19.68361727655778
+          ],
+          "primary_target_confidence": 0.8831111111111111,
+          "uncertainty": 0.11688888888888893,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 2
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-5092",
+          "COA-EVO-8886",
+          "COA-EVO-8973"
+        ],
+        "proposed_orders": [
+          {
+            "action": "strike",
+            "asset_type": "missiles",
+            "target": [
+              26.987837870788297,
+              19.68361727655778
+            ]
+          },
+          {
+            "action": "strike",
+            "asset_type": "missiles",
+            "target": [
+              26.987837870788297,
+              19.68361727655778
+            ]
+          },
+          {
+            "action": "strike",
+            "asset_type": "missiles",
+            "target": [
+              26.987837870788297,
+              19.68361727655778
+            ]
+          }
+        ],
+        "safety_verdict": {
+          "approved": true,
+          "reason": "approved",
+          "rules": [
+            {
+              "rule_id": "R1_TARGET_PRESENT",
+              "passed": true,
+              "detail": "target present"
+            },
+            {
+              "rule_id": "R2_ENGAGEMENT_CONFIDENCE",
+              "passed": true,
+              "detail": "confidence 0.88 vs required 0.45"
+            },
+            {
+              "rule_id": "R3_AMMO_AVAILABLE",
+              "passed": true,
+              "detail": "ammo=3"
+            },
+            {
+              "rule_id": "R4_ENGAGEMENT_RANGE",
+              "passed": true,
+              "detail": "believed distance 44.8 vs range 50.0"
+            },
+            {
+              "rule_id": "R5_FUEL_RESERVE",
+              "passed": true,
+              "detail": "fuel 1.00 vs reserve 0.05"
+            },
+            {
+              "rule_id": "R6_ACTION_BLACKLIST",
+              "passed": true,
+              "detail": "permitted"
+            }
+          ]
+        },
+        "human_state": "EXECUTED",
+        "executed_action": {
+          "action": "strike",
+          "asset_type": "missiles",
+          "target": [
+            26.987837870788297,
+            19.68361727655778
+          ]
+        },
+        "reward": 24.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 20.69
+      },
+      {
+        "tick": 5,
+        "decision_id": "DEC-fd97fd1a58fb",
+        "observation": {
+          "tick": 5,
+          "red_force": {
+            "position": [
+              25,
+              22
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 50,
+            "heading": 80.3558657335762,
+            "fuel": 0.96,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 0,
+                "range": 20,
+                "fuel": 0.97,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 2,
+                "range": 50,
+                "fuel": 0.97,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [
+            {
+              "contact_id": "FC-CE12DBFB",
+              "confidence": 0.799,
+              "source_feeds": [
+                "FEED-RADAR-d13003ebcbf8",
+                "FEED-VISUAL-17bd283d4262",
+                "FEED-SIGINT-59d4d5f0bec2"
+              ]
+            }
+          ],
+          "primary_target_position": [
+            25.319775628509156,
+            21.93211705979178
+          ],
+          "primary_target_confidence": 0.7990833333333335,
+          "uncertainty": 0.20091666666666652,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 3
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-2122",
+          "COA-EVO-4346",
+          "COA-EVO-9808"
+        ],
+        "proposed_orders": [
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              25.319775628509156,
+              21.93211705979178
+            ]
+          },
+          null,
+          null
+        ],
+        "safety_verdict": {
+          "approved": true,
+          "reason": "approved",
+          "rules": [
+            {
+              "rule_id": "R1_TARGET_PRESENT",
+              "passed": true,
+              "detail": "target present"
+            },
+            {
+              "rule_id": "R2_ENGAGEMENT_CONFIDENCE",
+              "passed": true,
+              "detail": "not applicable (non-kinetic)"
+            },
+            {
+              "rule_id": "R3_AMMO_AVAILABLE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R4_ENGAGEMENT_RANGE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R5_FUEL_RESERVE",
+              "passed": true,
+              "detail": "fuel 0.97 vs reserve 0.05"
+            },
+            {
+              "rule_id": "R6_ACTION_BLACKLIST",
+              "passed": true,
+              "detail": "permitted"
+            }
+          ]
+        },
+        "human_state": "EXECUTED",
+        "executed_action": {
+          "action": "jam",
+          "asset_type": "jammers",
+          "target": [
+            25.319775628509156,
+            21.93211705979178
+          ]
+        },
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 27.625
+      },
+      {
+        "tick": 6,
+        "decision_id": "DEC-4ab2c54ca12b",
+        "observation": {
+          "tick": 6,
+          "red_force": {
+            "position": [
+              24,
+              19
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 50,
+            "heading": 80.3558657335762,
+            "fuel": 0.95,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 0,
+                "range": 20,
+                "fuel": 0.96,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 2,
+                "range": 50,
+                "fuel": 0.97,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [
+            {
+              "contact_id": "FC-DBD460BF",
+              "confidence": 0.82,
+              "source_feeds": [
+                "FEED-RADAR-c336e3a4dc04",
+                "FEED-VISUAL-a01d7632239c",
+                "FEED-SIGINT-bb3addba733b"
+              ]
+            }
+          ],
+          "primary_target_position": [
+            23.36212669992687,
+            18.04831731169736
+          ],
+          "primary_target_confidence": 0.8199166666666667,
+          "uncertainty": 0.18008333333333326,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 3
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-5905",
+          "COA-EVO-9280",
+          "COA-EVO-8007"
+        ],
+        "proposed_orders": [
+          null,
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              23.36212669992687,
+              18.04831731169736
+            ]
+          },
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": [
+              23.36212669992687,
+              18.04831731169736
+            ]
+          }
+        ],
+        "safety_verdict": {
+          "approved": true,
+          "reason": "approved",
+          "rules": [
+            {
+              "rule_id": "R1_TARGET_PRESENT",
+              "passed": true,
+              "detail": "target present"
+            },
+            {
+              "rule_id": "R2_ENGAGEMENT_CONFIDENCE",
+              "passed": true,
+              "detail": "not applicable (non-kinetic)"
+            },
+            {
+              "rule_id": "R3_AMMO_AVAILABLE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R4_ENGAGEMENT_RANGE",
+              "passed": true,
+              "detail": "not applicable"
+            },
+            {
+              "rule_id": "R5_FUEL_RESERVE",
+              "passed": true,
+              "detail": "fuel 0.96 vs reserve 0.05"
+            },
+            {
+              "rule_id": "R6_ACTION_BLACKLIST",
+              "passed": true,
+              "detail": "permitted"
+            }
+          ]
+        },
+        "human_state": "EXECUTED",
+        "executed_action": {
+          "action": "jam",
+          "asset_type": "jammers",
+          "target": [
+            23.36212669992687,
+            18.04831731169736
+          ]
+        },
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 28.056
+      }
+    ],
+    "failures": [],
+    "constraint_violations": 0,
+    "fingerprint": "5521c0e836f210ae0799d519f9adecd0dd170a9307e3aad874ccbac15f060d40",
+    "audit_events": {
+      "submit": 6,
+      "approve": 6,
+      "execute": 6,
+      "outcome": 6
+    },
+    "audit_chain_verified": true
+  },
+  {
+    "scenario_suite_version": "canonical-scenarios-v1",
+    "scenario_id": "comms_blackout",
+    "config": {
+      "scenario_suite_version": "canonical-scenarios-v1",
+      "scenario_id": "comms_blackout",
+      "description": "Total communications blackout: every feed is dropped each tick; the pipeline must act (or refrain) blind.",
+      "seed": 42,
+      "fault_seed": 2093441341,
+      "n_steps": 6,
+      "n_candidates": 3,
+      "sensor_dropout": 0.1,
+      "sensor_noise_sigma": 2.0,
+      "confidence_jitter": 0.15,
+      "min_engagement_confidence": 0.45,
+      "blacklisted_actions": [],
+      "faults": [
+        {
+          "fault_type": "comms_loss",
+          "probability": 1.0,
+          "intensity": 0.0,
+          "feed_type": "",
+          "asset_type": ""
+        }
+      ],
+      "human_policy": "none"
+    },
+    "metrics": {
+      "total_reward": -6.0,
+      "steps": 6,
+      "n_decisions": 6,
+      "safety_rejections": 6,
+      "human_rejections": 0,
+      "system_refusals": 6,
+      "overrides": 0,
+      "noop_steps": 6,
+      "mean_step_latency_ms": 7.842,
+      "max_step_latency_ms": 10.412,
+      "feeds_generated": 18,
+      "feeds_received": 0,
+      "candidates_evaluated": 18,
+      "roe_violations": 0
+    },
+    "steps": [
+      {
+        "tick": 1,
+        "decision_id": "DEC-dd628755d518",
+        "observation": {
+          "tick": 1,
+          "red_force": {
+            "position": [
+              24,
+              13
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 100,
+            "heading": 80.3558657335762,
+            "fuel": 1.0,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 3,
+                "range": 20,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 3,
+                "range": 50,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [],
+          "primary_target_position": null,
+          "primary_target_confidence": 0.0,
+          "uncertainty": 1.0,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 0
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-6155",
+          "COA-EVO-3266",
+          "COA-EVO-1188"
+        ],
+        "proposed_orders": [
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": null
+          },
+          {
+            "action": "strike",
+            "asset_type": "missiles",
+            "target": null
+          },
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": null
+          }
+        ],
+        "safety_verdict": {
+          "approved": false,
+          "reason": "all 3 candidate orders rejected",
+          "rules": []
+        },
+        "human_state": "REJECTED",
+        "executed_action": null,
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 5.717
+      },
+      {
+        "tick": 2,
+        "decision_id": "DEC-ae9b26378af3",
+        "observation": {
+          "tick": 2,
+          "red_force": {
+            "position": [
+              25,
+              16
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 100,
+            "heading": 80.3558657335762,
+            "fuel": 0.99,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 3,
+                "range": 20,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 3,
+                "range": 50,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [],
+          "primary_target_position": null,
+          "primary_target_confidence": 0.0,
+          "uncertainty": 1.0,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 0
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-2743",
+          "COA-EVO-6947",
+          "COA-EVO-8787"
+        ],
+        "proposed_orders": [
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": null
+          },
+          null,
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": null
+          }
+        ],
+        "safety_verdict": {
+          "approved": false,
+          "reason": "all 2 candidate orders rejected",
+          "rules": []
+        },
+        "human_state": "REJECTED",
+        "executed_action": null,
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 6.815
+      },
+      {
+        "tick": 3,
+        "decision_id": "DEC-138c73ced056",
+        "observation": {
+          "tick": 3,
+          "red_force": {
+            "position": [
+              26,
+              19
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 100,
+            "heading": 80.3558657335762,
+            "fuel": 0.98,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 3,
+                "range": 20,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 3,
+                "range": 50,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [],
+          "primary_target_position": null,
+          "primary_target_confidence": 0.0,
+          "uncertainty": 1.0,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 0
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-8397",
+          "COA-EVO-4899",
+          "COA-EVO-7735"
+        ],
+        "proposed_orders": [
+          null,
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": null
+          },
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": null
+          }
+        ],
+        "safety_verdict": {
+          "approved": false,
+          "reason": "all 2 candidate orders rejected",
+          "rules": []
+        },
+        "human_state": "REJECTED",
+        "executed_action": null,
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 6.623
+      },
+      {
+        "tick": 4,
+        "decision_id": "DEC-1b6655d8a862",
+        "observation": {
+          "tick": 4,
+          "red_force": {
+            "position": [
+              28,
+              21
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 100,
+            "heading": 80.3558657335762,
+            "fuel": 0.97,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 3,
+                "range": 20,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 3,
+                "range": 50,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [],
+          "primary_target_position": null,
+          "primary_target_confidence": 0.0,
+          "uncertainty": 1.0,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 0
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-5092",
+          "COA-EVO-8886",
+          "COA-EVO-8973"
+        ],
+        "proposed_orders": [
+          {
+            "action": "strike",
+            "asset_type": "missiles",
+            "target": null
+          },
+          {
+            "action": "strike",
+            "asset_type": "missiles",
+            "target": null
+          },
+          {
+            "action": "strike",
+            "asset_type": "missiles",
+            "target": null
+          }
+        ],
+        "safety_verdict": {
+          "approved": false,
+          "reason": "all 3 candidate orders rejected",
+          "rules": []
+        },
+        "human_state": "REJECTED",
+        "executed_action": null,
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 7.106
+      },
+      {
+        "tick": 5,
+        "decision_id": "DEC-916103cc7308",
+        "observation": {
+          "tick": 5,
+          "red_force": {
+            "position": [
+              25,
+              22
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 100,
+            "heading": 80.3558657335762,
+            "fuel": 0.96,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 3,
+                "range": 20,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 3,
+                "range": 50,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [],
+          "primary_target_position": null,
+          "primary_target_confidence": 0.0,
+          "uncertainty": 1.0,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 0
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-2122",
+          "COA-EVO-4346",
+          "COA-EVO-9808"
+        ],
+        "proposed_orders": [
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": null
+          },
+          null,
+          null
+        ],
+        "safety_verdict": {
+          "approved": false,
+          "reason": "all 1 candidate orders rejected",
+          "rules": []
+        },
+        "human_state": "REJECTED",
+        "executed_action": null,
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 10.412
+      },
+      {
+        "tick": 6,
+        "decision_id": "DEC-be37eb1cf1d2",
+        "observation": {
+          "tick": 6,
+          "red_force": {
+            "position": [
+              24,
+              19
+            ],
+            "speed": 3,
+            "type": "armor",
+            "health": 100,
+            "heading": 80.3558657335762,
+            "fuel": 0.95,
+            "linked_supply": "red_supply"
+          },
+          "blue_assets": {
+            "drones": [
+              {
+                "position": [
+                  50,
+                  50
+                ],
+                "ammo": 5,
+                "range": 30,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "jammers": [
+              {
+                "position": [
+                  55,
+                  50
+                ],
+                "ammo": 3,
+                "range": 20,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ],
+            "missiles": [
+              {
+                "position": [
+                  60,
+                  50
+                ],
+                "ammo": 3,
+                "range": 50,
+                "fuel": 1.0,
+                "linked_supply": "blue_supply"
+              }
+            ]
+          },
+          "supply_nodes": {
+            "blue_supply": {
+              "position": [
+                20,
+                50
+              ],
+              "team": "blue",
+              "alive": true,
+              "health": 100
+            },
+            "red_supply": {
+              "position": [
+                80,
+                50
+              ],
+              "team": "red",
+              "alive": true,
+              "health": 100
+            }
+          }
+        },
+        "world_estimate": {
+          "contacts": [],
+          "primary_target_position": null,
+          "primary_target_confidence": 0.0,
+          "uncertainty": 1.0,
+          "n_feeds_generated": 3,
+          "n_feeds_received": 0
+        },
+        "candidate_plan_ids": [
+          "COA-EVO-5905",
+          "COA-EVO-9280",
+          "COA-EVO-8007"
+        ],
+        "proposed_orders": [
+          null,
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": null
+          },
+          {
+            "action": "jam",
+            "asset_type": "jammers",
+            "target": null
+          }
+        ],
+        "safety_verdict": {
+          "approved": false,
+          "reason": "all 2 candidate orders rejected",
+          "rules": []
+        },
+        "human_state": "REJECTED",
+        "executed_action": null,
+        "reward": -1.0,
+        "lifecycle": [
+          "SENSE",
+          "FUSE",
+          "ESTIMATE",
+          "PLAN",
+          "SAFETY_GATE",
+          "EXECUTE",
+          "OUTCOME"
+        ],
+        "latency_ms": 10.378
+      }
+    ],
+    "failures": [],
+    "constraint_violations": 0,
+    "fingerprint": "01e90fb8afdf23de2cb779d64babaca5c161f47f98caa6b531ce130749f699c4",
+    "audit_events": {
+      "submit": 6,
+      "reject": 6
     },
     "audit_chain_verified": true
   },
@@ -7617,8 +10659,8 @@
       "system_refusals": 0,
       "overrides": 0,
       "noop_steps": 0,
-      "mean_step_latency_ms": 23.74,
-      "max_step_latency_ms": 114.717,
+      "mean_step_latency_ms": 16.329,
+      "max_step_latency_ms": 24.006,
       "feeds_generated": 18,
       "feeds_received": 18,
       "candidates_evaluated": 18,
@@ -7627,7 +10669,7 @@
     "steps": [
       {
         "tick": 1,
-        "decision_id": "DEC-047b406e2dc0",
+        "decision_id": "DEC-facf8e9aa44a",
         "observation": {
           "tick": 1,
           "red_force": {
@@ -7704,12 +10746,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-4BCEE142",
+              "contact_id": "FC-463B969B",
               "confidence": 0.84,
               "source_feeds": [
-                "FEED-RADAR-34b90d7fbd09",
-                "FEED-VISUAL-0289cc6c9caa",
-                "FEED-SIGINT-c9f99c71510c"
+                "FEED-RADAR-62e896774be4",
+                "FEED-VISUAL-209ef6c4157d",
+                "FEED-SIGINT-7883eb52cd3b"
               ]
             }
           ],
@@ -7808,11 +10850,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 3.532
+        "latency_ms": 9.108
       },
       {
         "tick": 2,
-        "decision_id": "DEC-143d75670e8a",
+        "decision_id": "DEC-e5a9e44b5c14",
         "observation": {
           "tick": 2,
           "red_force": {
@@ -7889,12 +10931,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-71788181",
+              "contact_id": "FC-987B6CCA",
               "confidence": 0.83,
               "source_feeds": [
-                "FEED-RADAR-c2c19ca60ccf",
-                "FEED-VISUAL-4b40e542daa0",
-                "FEED-SIGINT-92b229315c46"
+                "FEED-RADAR-55e1888e39ce",
+                "FEED-VISUAL-2dd0520d29d6",
+                "FEED-SIGINT-670f1c635ac8"
               ]
             }
           ],
@@ -7993,11 +11035,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 3.607
+        "latency_ms": 11.147
       },
       {
         "tick": 3,
-        "decision_id": "DEC-7727094547f7",
+        "decision_id": "DEC-9de282e88a62",
         "observation": {
           "tick": 3,
           "red_force": {
@@ -8074,12 +11116,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-D335EF15",
+              "contact_id": "FC-21557564",
               "confidence": 0.843,
               "source_feeds": [
-                "FEED-RADAR-75c441689aa2",
-                "FEED-VISUAL-6e4c5fc25c47",
-                "FEED-SIGINT-4d56ada5b7aa"
+                "FEED-RADAR-ea3780070a36",
+                "FEED-VISUAL-34e9eaa894f3",
+                "FEED-SIGINT-5f738162bd8c"
               ]
             }
           ],
@@ -8178,11 +11220,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 4.182
+        "latency_ms": 13.828
       },
       {
         "tick": 4,
-        "decision_id": "DEC-087cea801d41",
+        "decision_id": "DEC-b4d6007c9a61",
         "observation": {
           "tick": 4,
           "red_force": {
@@ -8259,12 +11301,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-F35CF87A",
+              "contact_id": "FC-004B1D59",
               "confidence": 0.79,
               "source_feeds": [
-                "FEED-RADAR-877a961f4683",
-                "FEED-VISUAL-0ceb53a91b8f",
-                "FEED-SIGINT-42b478a82304"
+                "FEED-RADAR-04a669062c9d",
+                "FEED-VISUAL-6ff3daabe7fa",
+                "FEED-SIGINT-47f12a4170d2"
               ]
             }
           ],
@@ -8363,11 +11405,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 7.036
+        "latency_ms": 17.582
       },
       {
         "tick": 5,
-        "decision_id": "DEC-bfc7ae6be93d",
+        "decision_id": "DEC-95fd3952ea29",
         "observation": {
           "tick": 5,
           "red_force": {
@@ -8444,12 +11486,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-D8F89019",
+              "contact_id": "FC-782A1785",
               "confidence": 0.865,
               "source_feeds": [
-                "FEED-RADAR-6cb0a83ec721",
-                "FEED-VISUAL-027d54097346",
-                "FEED-SIGINT-769c3036276d"
+                "FEED-RADAR-2365a49950f1",
+                "FEED-VISUAL-87da7ce76c78",
+                "FEED-SIGINT-aa03a382629a"
               ]
             }
           ],
@@ -8548,11 +11590,11 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 9.365
+        "latency_ms": 22.304
       },
       {
         "tick": 6,
-        "decision_id": "DEC-ab0668e11aef",
+        "decision_id": "DEC-0682a887c16b",
         "observation": {
           "tick": 6,
           "red_force": {
@@ -8629,12 +11671,12 @@
         "world_estimate": {
           "contacts": [
             {
-              "contact_id": "FC-C6779EBE",
+              "contact_id": "FC-7E13372A",
               "confidence": 0.856,
               "source_feeds": [
-                "FEED-RADAR-7a99bcd7e3b8",
-                "FEED-VISUAL-db52cbd08667",
-                "FEED-SIGINT-70d8453f3b3e"
+                "FEED-RADAR-4d50ccd5b38e",
+                "FEED-VISUAL-15ef6d78f8a0",
+                "FEED-SIGINT-da179c6bb59c"
               ]
             }
           ],
@@ -8733,7 +11775,7 @@
           "EXECUTE",
           "OUTCOME"
         ],
-        "latency_ms": 114.717
+        "latency_ms": 24.006
       }
     ],
     "failures": [],

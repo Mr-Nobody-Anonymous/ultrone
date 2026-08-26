@@ -24,7 +24,7 @@ def all_records():
 
 class TestScenarioSuite:
     def test_all_required_scenarios_present(self):
-        assert len(REQUIRED_SCENARIO_IDS) == 8
+        assert len(REQUIRED_SCENARIO_IDS) == 11
         expected = {
             "normal_operation",
             "partial_observation_dropout",
@@ -34,6 +34,10 @@ class TestScenarioSuite:
             "human_rejection",
             "human_override",
             "deterministic_replay",
+            # Sprint B follow-up: full fault-type coverage in the suite.
+            "stale_observations",
+            "actuator_failure",
+            "comms_blackout",
         }
         assert set(REQUIRED_SCENARIO_IDS) == expected
 
