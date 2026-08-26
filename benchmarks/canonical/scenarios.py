@@ -117,6 +117,46 @@ SCENARIOS: Dict[str, ScenarioSpec] = {
             human_policy="override",
         ),
         ScenarioSpec(
+            scenario_id="stale_observations",
+            description=(
+                "Roughly half of observations are aged snapshots: the pipeline "
+                "acts on belief that lags ground truth."
+            ),
+            faults=(
+                FaultSpec(
+                    fault_type=FaultType.STALE_OBSERVATION,
+                    probability=0.5,
+                ),
+            ),
+        ),
+        ScenarioSpec(
+            scenario_id="actuator_failure",
+            description=(
+                "Missile actuators intermittently fail (~50%): approved "
+                "strikes silently degrade to no-ops."
+            ),
+            faults=(
+                FaultSpec(
+                    fault_type=FaultType.ACTUATOR_FAILURE,
+                    probability=0.5,
+                    asset_type="missiles",
+                ),
+            ),
+        ),
+        ScenarioSpec(
+            scenario_id="comms_blackout",
+            description=(
+                "Total communications blackout: every feed is dropped each "
+                "tick; the pipeline must act (or refrain) blind."
+            ),
+            faults=(
+                FaultSpec(
+                    fault_type=FaultType.COMMS_LOSS,
+                    probability=1.0,
+                ),
+            ),
+        ),
+        ScenarioSpec(
             scenario_id="deterministic_replay",
             description="Run twice under the same seed; fingerprints must match.",
             seed=1337,
