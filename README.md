@@ -82,6 +82,13 @@ Each sensor type has its own AI expert:
 - AES-GCM encryption for secure battlefield comms
 - Structured protocol with message types, priority levels, and targeting
 
+### 💥 **Battle Damage Assessment & Predictive Kill-Chain**
+- **BDA**: multi-sensor (visual/SAR/thermal/radar/SIGINT) damage fusion with severity + confidence scoring
+- Re-engagement recommendations: `IMMEDIATE` / `SCHEDULED` / `HUNT` / `STAND_DOWN` / `UNCERTAIN`
+- **Predictive Kill-Chain**: pluggable models (Markov transitions, EMA time series, ensemble) forecasting F2T2EA phase outcomes
+- Bottleneck-phase detection, per-phase duration & success probability, automatic re-engagement
+- Run: `python scripts/run_bda_predictive_kc.py`
+
 ---
 
 ## 📂 Architecture
@@ -492,11 +499,11 @@ print(sat.analyze({'formation': 'tanks'}, {}))
 - [x] ✅ Frontier Intelligence (ToT, GoT, Self-Consistency, Multi-Agent Debate, Reflection/Self-Correction, Bayesian Decision, Confidence Calibration)
 - [x] ✅ Software Engineering Agent (AST analysis, repo indexing, symbol search, static analysis, test generation, bug localization, patch validation)
 - [x] ✅ Benchmark Harness (GSM8K, MMLU, HumanEval, MBPP runners, append-only history, improvement graphs)
-- [ ] 🔧 Backend module implementations (Analytics, Auth, Cache, Database, Events, etc.)
-- [ ] 📦 Kubernetes manifests, Monitoring configs, Nginx configs
+- [x] ✅ Battle Damage Assessment (`brain/reasoning/battle_damage_assessment.py` — multi-sensor fusion, severity/confidence scoring, re-engagement recommendations, 19 tests)
+- [x] ✅ Predictive Kill-Chain Optimization (`brain/reasoning/predictive_kill_chain.py` — Markov + EMA + ensemble models, F2T2EA forecasting, bottleneck detection, 18 tests)
+- [x] ✅ Backend module implementations (Analytics, Auth, Cache, Database, Events, Exporters, Integrations, Metrics, Middleware, Notifications, Pipeline, Plugins, Rules, Schedulers, Security, Workers — all under `backend/`)
+- [x] ✅ Infrastructure (Docker Compose, Helm Charts, Kubernetes manifests, Prometheus monitoring, Loki logs, Nginx reverse proxy)
 - [ ] 🌐 Distributed evolution across nodes
-- [ ] 📱 Battle-damage assessment
-- [ ] 🎯 Predictive kill-chain optimization
 - [ ] 📓 Tutorial notebooks in `/notebooks/`
 - [ ] 🔌 Plugin marketplace for community algorithms
 - [ ] 🧪 Benchmark suite against standard RL environments

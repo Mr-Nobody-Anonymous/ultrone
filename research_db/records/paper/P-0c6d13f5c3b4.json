@@ -1,0 +1,34 @@
+{
+  "paper_id": "P-0c6d13f5c3b4",
+  "title": "Graph Paper",
+  "authors": [
+    "Alice"
+  ],
+  "venue": "",
+  "publication_date": null,
+  "citations": 0,
+  "abstract": "",
+  "summary": "",
+  "algorithms": [
+    "Transformer"
+  ],
+  "equations": [],
+  "architectures": [],
+  "datasets": [],
+  "hyperparameters": {},
+  "limitations": [],
+  "future_work": [],
+  "implementation_ideas": [],
+  "related_papers": [],
+  "github_repositories": [],
+  "benchmark_results": {},
+  "confidence_score": 0.5,
+  "knowledge_graph_links": [],
+  "arxiv_id": "",
+  "doi": "",
+  "url": "",
+  "metadata": {},
+  "version": 1,
+  "created_at": 1787817482.9504714,
+  "updated_at": 1787817482.9504714
+}

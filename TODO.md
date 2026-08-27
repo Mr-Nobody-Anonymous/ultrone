@@ -60,6 +60,13 @@ through architectural improvements — not benchmark hacks.
 - [x] `docs/FRONTIER_INTELLIGENCE.md` — architecture documentation
 - [x] Update `README.md`, `PROJECT_PROGRESS.md` — Frontier Intelligence section
 
+## Phase 8 — Neural Model Integration ✅ DONE
+- [x] `self_improvement/neural/` — 5 components (adapter, pipeline, LoRA, dataset, benchmark)
+- [x] `tests/test_neural_module.py` — 63 tests covering all 5 components
+- [x] `scripts/run_neural_milestone.py` — end-to-end demo
+- [x] `self_improvement/neural/README.md` — module documentation
+- [x] `PROJECT_PROGRESS.md` — Sprint F section added
+
 ## Final
 - [x] Run new test suites (frontier + coding_agent + benchmark_harness) — 70 passed
 - [x] Run full test suite — 597 passed, 15 pre-existing failures in
