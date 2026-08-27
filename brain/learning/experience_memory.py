@@ -1,10 +1,35 @@
 # Copyright (c) Ultrone Contributors. All rights reserved.
-"""Engagement history storage for learning from past combat experiences."""
+"""Engagement history storage for learning from past combat experiences.
 
+Two storage tiers -- the docstring matters because the two behave
+differently under process restart:
+
+- **In-memory** -- ``ExperienceMemory`` keeps the working window of
+  engagements in RAM for the running process. This is *episodic
+  runtime memory* and is lost on process exit.
+- **Durable** -- ``save(path)`` / ``load(path)`` round-trip the full
+  history (with secondary indexes rebuilt on replay) to JSON so
+  experience survives process restarts. This is *long-term memory*.
+
+The two are deliberately separate: a deployed agent may legitimately
+want fast in-memory access for the current mission while persisting to
+durable storage for next-mission warmup. Tests in
+``tests/test_cross_process_persistence.py`` measure the cross-process
+property directly with ``multiprocessing`` -- a passing in-process
+save/load is necessary but not sufficient.
+
+Durable persistence is what turns "episodic runtime memory" into long
+term memory; without it, every restart of ULTRONE starts from zero.
+"""
+
+from __future__ import annotations
+
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Any
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 
 class EngagementOutcome(Enum):
@@ -141,3 +166,69 @@ class ExperienceMemory:
             "outcomes": self._outcomes.copy(),
             "unique_tactics": len(self.by_tactic),
         }
+
+    # -- durable persistence --------------------------------------------------
+    # Without these, the experience layer is *runtime* memory only --
+    # every process restart loses history. The closed-loop learning test
+    # relies on ``save``/``load`` to prove the experience actually flows
+    # across a process boundary.
+
+    _SCHEMA_VERSION = 1
+
+    def save(self, path: Union[str, Path]) -> None:
+        """Persist the full engagement window to ``path`` as JSON.
+
+        Uses a schema-versioned envelope so older payloads can still be
+        inspected and future migrations are possible without a hard break.
+        """
+        target = Path(path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "schema_version": self._SCHEMA_VERSION,
+            "max_history": self.max_history,
+            "engagements": [e.to_dict() for e in self.engagements],
+        }
+        target.write_text(
+            json.dumps(payload, sort_keys=True, indent=2),
+            encoding="utf-8",
+        )
+
+    @classmethod
+    def load(cls, path: Union[str, Path]) -> "ExperienceMemory":
+        """Rehydrate an ``ExperienceMemory`` previously written by ``save``.
+
+        The replay path replays every engagement through
+        ``record_engagement`` so the secondary indexes (``by_domain``,
+        ``by_tactic``, outcome counts, sliding window) are rebuilt
+        identically to a fresh process. That is the property a closed
+        loop actually depends on.
+        """
+        source = Path(path)
+        payload = json.loads(source.read_text(encoding="utf-8"))
+        if payload.get("schema_version") != cls._SCHEMA_VERSION:
+            raise ValueError(
+                f"unsupported experience schema "
+                f"{payload.get('schema_version')!r}; expected "
+                f"{cls._SCHEMA_VERSION}"
+            )
+        memory = cls(max_history=int(payload.get("max_history", 10000)))
+        for raw in payload.get("engagements", []):
+            memory.record_engagement(
+                EngagementHistory(
+                    engagement_id=raw["engagement_id"],
+                    attacker_id=raw["attacker_id"],
+                    target_id=raw["target_id"],
+                    domain=raw["domain"],
+                    engagement_type=raw["engagement_type"],
+                    outcome=EngagementOutcome(raw["outcome"]),
+                    timestamp=raw.get("timestamp",
+                                       datetime.utcnow().isoformat()),
+                    duration_ms=float(raw.get("duration_ms", 0.0)),
+                    kill_chain_phases=list(raw.get("kill_chain_phases", [])),
+                    tactics_used=list(raw.get("tactics_used", [])),
+                    casualties=int(raw.get("casualties", 0)),
+                    damage_dealt=float(raw.get("damage_dealt", 0.0)),
+                    notes=raw.get("notes", ""),
+                )
+            )
+        return memory

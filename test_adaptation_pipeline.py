@@ -46,7 +46,6 @@ def test_pipeline():
     print("\n" + "=" * 60)
     print("ALL CORE COMPONENTS LOADED SUCCESSFULLY")
     print("=" * 60)
-    return True
 
 if __name__ == "__main__":
     try:
