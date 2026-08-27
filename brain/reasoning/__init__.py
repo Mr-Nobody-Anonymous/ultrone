@@ -10,6 +10,25 @@ from .composite_kill_chain import CompositeKillChain, CompositePhase, DomainEnga
 from .course_of_action import CourseOfAction, COAGenerator, COAScorer, Action
 from .resource_allocator import ResourceAllocator, Allocation
 from .evolutionary_coagen import EvolutionaryGenome, EvolutionaryCOAGenerator
+from .battle_damage_assessment import (
+    BattleDamageAssessment,
+    BDAResult,
+    BDASeverity,
+    BDAConfidence,
+    DamageAssessmentEngine,
+    DamageIndicator,
+    ReEngagementRecommendation,
+)
+from .predictive_kill_chain import (
+    PredictiveKillChain,
+    KillChainPrediction,
+    PhasePrediction,
+    PhaseOutcome,
+    PredictiveModel,
+    MarkovPredictiveModel,
+    TimeSeriesPredictiveModel,
+    EnsemblePredictiveModel,
+)
 
 # Lazy-import search planners to keep startup fast
 _SEARCH_IMPORTED = False
@@ -31,6 +50,13 @@ __all__ = [
     "CourseOfAction", "COAGenerator", "COAScorer", "Action",
     "ResourceAllocator", "Allocation",
     "EvolutionaryGenome", "EvolutionaryCOAGenerator",
+    # Battle Damage Assessment
+    "BattleDamageAssessment", "BDAResult", "BDASeverity", "BDAConfidence",
+    "DamageAssessmentEngine", "DamageIndicator", "ReEngagementRecommendation",
+    # Predictive Kill-Chain Optimization
+    "PredictiveKillChain", "KillChainPrediction", "PhasePrediction", "PhaseOutcome",
+    "PredictiveModel", "MarkovPredictiveModel", "TimeSeriesPredictiveModel",
+    "EnsemblePredictiveModel",
     # Search planners
     "Planner", "PlanningAction", "PlanningDomain", "PlanningGoal", "PlanningResult",
     "MCTS", "MCTSConfig",
