@@ -37,6 +37,8 @@ class PromotionRecord:
 class PromotionGate:
     """Turns EvaluationResults into audited promotion decisions."""
 
+    _SCHEMA_VERSION = 1
+
     def __init__(self) -> None:
         self._history: List[PromotionRecord] = []
 
@@ -61,6 +63,43 @@ class PromotionGate:
 
     def promotions(self) -> List[PromotionRecord]:
         return [r for r in self._history if r.decision == "promote"]
+
+    # -- durable audit trail ---------------------------------------------------
+    # The BrainStore already persists channel configs; without persisting
+    # the gate's history, a restart keeps the promoted config but loses the
+    # proof that it was ever reviewed. The closed-loop test exercises a
+    # cross-process reload and must see both halves.
+
+    def save(self, path) -> None:
+        from pathlib import Path
+        import json as _json
+        target = Path(path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "schema_version": self._SCHEMA_VERSION,
+            "history": [r.to_dict() for r in self._history],
+        }
+        target.write_text(
+            _json.dumps(payload, sort_keys=True, indent=2),
+            encoding="utf-8",
+        )
+
+    @classmethod
+    def load(cls, path) -> "PromotionGate":
+        from pathlib import Path
+        import json as _json
+        source = Path(path)
+        payload = _json.loads(source.read_text(encoding="utf-8"))
+        if payload.get("schema_version") != cls._SCHEMA_VERSION:
+            raise ValueError(
+                f"unsupported promotion schema "
+                f"{payload.get('schema_version')!r}; expected "
+                f"{cls._SCHEMA_VERSION}"
+            )
+        gate = cls()
+        for raw in payload.get("history", []):
+            gate._history.append(PromotionRecord(**raw))
+        return gate
 
 
 class BrainStore:

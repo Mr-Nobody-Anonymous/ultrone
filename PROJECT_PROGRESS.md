@@ -307,3 +307,299 @@ or explicitly routed to `cognitive/prediction_layer` to remove the dead dir.
 ### Architecture Documentation
 See `ARCHITECTURE_EXTENSION_PLAN.md` for the complete architecture overview and design decisions.
 
+---
+
+## Sprint B — Closed-Loop Learning Validation (complete)
+
+Goal: stop *adding* modules and prove the existing Adaptive +
+Learning/Memory layers form a genuinely **closed** loop that learns,
+generalizes to unseen tasks, and survives process restarts.
+
+### The cycle under test
+
+```
+Episode -> ExperienceMemory -> Reflection -> Candidate
+   -> Evaluator (reproducibility + margin gates)
+   -> PromotionGate (audited) -> BrainStore (production channel)
+   -> next Episode (loads production config back through
+      ParameterRegistry.apply()) -> ExperienceMemory -> ...
+```
+
+### Artifacts
+
+- `tests/test_closed_loop_learning.py` — the 12-step integration loop:
+  baseline episode -> experience -> reflection -> candidate ->
+  multi-repeat evaluation -> gate review -> promotion -> persistence ->
+  second episode -> second experience. Headline assertion is NOT
+  `promotion.success` but::
+
+      next_episode.configuration_hash == promoted.configuration_hash
+
+  i.e. the promoted brain config demonstrably flows into the next
+  cycle. (Required `ParameterRegistry.apply()` — added as the canonical
+  bulk-load entry point used to rehydrate a registry from BrainStore.)
+
+- `tests/test_cross_process_persistence.py` — durable long-term memory
+  proof via `multiprocessing` spawn context: Process A records
+  experiences and promotes a configuration, exits; Process B restores
+  experience memory + BrainStore + PromotionGate audit trail in a fresh
+  interpreter and verifies byte-level fidelity. This closes the
+  requirement "ExperienceMemory persists across sessions" as *durable*
+  long-term storage rather than episodic runtime memory.
+
+- `benchmarks/learning_benchmark.py` (+ `tests/test_learning_benchmark.py`)
+  — measurable learning benchmark over a family of seeded patrol
+  scenarios (`adaptive.evaluator.PatrolScenario`, `scenario_from_seed`,
+  `make_patrol_task`). Training and holdout seed sets are disjoint by
+  construction; adaptation sees only training scenarios, so improvement
+  on unseen scenarios evidences generalization rather than memorized
+  tuning. Includes an advisory reflection rule fed from recorded
+  experience (`reflect_on_experience`), evolutionary refinement
+  (`AdaptiveOptimizer`) against the aggregate training objective, and
+  regression-suite + reproducibility verdicts on every promotion.
+
+### Sample benchmark output (default seeds, standalone run)
+
+```
+Score
+Baseline episode              33.80
+Iteration 1                   34.45
+Iteration 2                   34.45
+Iteration 3                   34.45
+Iteration 4                   34.47
+Iteration 5                   34.48
+Iteration 6                   34.48
+
+Training scenarios   ↑ (33.80 -> 34.48)
+Unseen scenarios     ↑ (34.28 -> 34.79)
+Regression suite     PASS
+Reproducibility      PASS
+Promotion            promote (beats baseline by 0.671284)
+Production hash      2b42d651c6f4e37f
+```
+
+Run it with:
+
+```
+python -m pytest tests/test_closed_loop_learning.py tests/test_cross_process_persistence.py tests/test_learning_benchmark.py -v
+python -m benchmarks.learning_benchmark          # headline table
+```
+
+---
+
+## Sprint C — Model + Tool Orchestration (complete)
+
+Goal: a **routing layer**, not another giant agent class — ULTRONE now
+selects among interchangeable models, tools, memory strategies, and
+skills *per task*, and the existing adaptive machinery evolves the
+routing policy itself through Evaluator gates into production.
+
+### Architecture (orchestration/)
+
+```
+Task -> task_classifier -> RoutingPolicy (registry knobs) -> ranked candidates
+   -> execute -> result_validator --accept--> StructuredResult
+        |                                          |
+     fallback chain                    trace + ExperienceMemory
+```
+
+- `task_classifier.py` — `TaskProfile` (difficulty, reasoning_depth,
+  context_requirement, tool_requirement, latency_sensitivity,
+  privacy) via transparent precedence rules; `synthetic_profile`
+  builds deterministic benchmark families.
+- `model_registry.py` / `tool_registry.py` / `memory_router.py` /
+  `skill_router.py` — spec catalogs with measured tradeoffs
+  (strengths per dimension, context window, credits, latency,
+  reliability); no silent overwrites; selection rules are auditable.
+- `context_builder.py`, `cost_policy.py`, `result_validator.py`,
+  `fallback.py` — token-budgeted context planning; cost/latency
+  accounting that bills retries in full; structured-result contract;
+  ordered candidate chains.
+- `router.py` — `RoutingPolicy` (economy/balanced/premium regimes
+  driven by registry thresholds), `Orchestrator` execution loop with
+  SLO-slack scoring, and the deterministic truth simulator seam for
+  swapping real providers without touching callers.
+- `traces.py` — every decision recorded as JSONL with
+  `configuration_hash` of the policy snapshot => traces join to
+  BrainStore promotions.
+
+### The payoff: policy evolution
+
+Every routing knob lives in `ParameterRegistry`
+(`default_routing_registry`: regime thresholds, cost/latency/memory
+weights, planning depth, iterations, budget cap, validator
+intercept). `benchmarks/orchestration_benchmark.py` therefore points
+the stock `AdaptiveOptimizer` at routing: disjoint train/holdout task
+families, regression-aware objective (sacrificing a solved task costs
+more than it can buy), regression suite gating promotion BEFORE
+BrainStore writes.
+
+```
+Score
+Baseline episode               4.89
+Iteration 1                    5.01
+Iteration 2                    5.22
+Iteration 3                    5.24
+Iteration 4                    5.65
+Iteration 5                    5.65
+
+Training scenarios   ↑ (4.89 -> 5.65)
+Unseen scenarios     ↑ (2.14 -> 2.36)
+Regression suite     PASS
+Reproducibility      PASS
+Promotion            promote (beats baseline by 0.759485)
+Production hash      3723e0c130a746a7
+```
+
+Canonical route behavior (asserted by tests): simple -> cheap tier;
+deep reasoning -> reasoner `[complexity]`; coding -> coder;
+long-context -> longctx + tiered memory; private -> local tiers only;
+validation failures walk the fallback chain and bill cumulatively;
+impossible budgets stop runs with named failures.
+
+Loop closure (Sprint B's headline property, orchestration edition):
+a fresh Orchestrator rebuilt from the BrainStore production channel
+routes under the promoted policy -- proven via trace provenance
+
+    fresh_trace.configuration_hash == promoted.configuration_hash
+
+rather than by trusting stored JSON
+(`test_promoted_policy_drives_the_next_run`).
+
+Run it with:
+
+```
+python -m pytest tests/test_orchestration_components.py \
+                 tests/test_router_integration.py \
+                 tests/test_orchestration_benchmark.py -v
+python -m benchmarks.orchestration_benchmark    # headline table
+```
+
+---
+
+## Sprint D — Self-Training Substrate *(learning support + controlled loop)*
+
+Goal: give ULTRONE a real **learning substrate** that can turn its own
+experiences into training signal and a **controlled self-improvement
+cycle** -- while resisting the trap of calling parameter/route
+optimization "training." Per the architecture charter, the substrate is
+a *capability learner* (not a pretrained foundation model): a
+serialized ``LearnedWeights`` model that the Orchestrator executes
+through an adapter seam, so a real neural backend can be swapped in
+without touching any gate.
+
+### Architecture (self_improvement/self_training/)
+
+```
+GENERATE -> EXECUTE -> EVALUATE -> SELECT -> TRAIN
+  -> VALIDATE (regression families) -> COMPARE -> PROMOTE
+```
+
+- `task_generator.py` / `curriculum_manager.py` — 5-rung curriculum
+  ladder; a level graduates only when mean utility saturates
+  (streak-based), so the system practices before advancing.
+- `experience_selector.py` — three-way bucket (good/bad/uncertain);
+  only *good* experiences become training data, so bad examples can
+  never teach bad behavior; a weakness profile targets practice.
+- `dataset_builder.py` — experience -> SFT-shaped JSONL with dedup and
+  a **supervisor ceiling** target (so the learner moves, not just
+  converges to its own self-reported quality), plus a continuous
+  70/20/10 historical/recent/weakness mixture to resist forgetting.
+- `trainer.py` — prior-shrunk statistical capability learner;
+  `LearnedWeights` is the serialized model, `make_executor` bridges it
+  into the Orchestrator seam (real training slots in behind the same
+  ``to_config``/``from_config`` contract).
+- `regression.py` + `promotion.py` — five gated families (normal,
+  unseen, difficult, fault_recovery, adversarial); promotion reuses
+  the existing `Evaluator` -> `PromotionGate` -> `BrainStore` pipeline
+  and refuses a candidate that breaks any family (honest 'reject'
+  recorded, never 'promote').
+- `checkpoint.py` / `scheduler.py` — lineage-tracked models
+  (model/dataset/config hashes, seed, parent) with a separate
+  production channel, and a gate deciding *when* a cycle is worthwhile.
+- `controller.py` — the closed loop; production model is only ever
+  READ as baseline; candidates are trained in the sandbox workdir and
+  reach production only through the gates.
+
+### Proof (tests/test_self_training.py, 24 tests)
+
+Cycle one from a starter model is a genuine promotion: dataset built,
+candidate differs from baseline, regression passes, production updated
+(baseline 3.516 -> candidate 3.570 on the holdout objective). Later
+cycles keep climbing capability while the promotion gate honestly
+refuses the plateau (no measurable holdout gain). Cross-process
+reproducibility holds: two independent runs produce the identical
+production model hash.
+
+Run it with:
+
+```
+python -m pytest tests/test_self_training.py -v
+```
+
+---
+
+## Sprint E — Capability Evaluation & the "measurably better?" harness
+
+Goal: turn the Phase-4 question into an exact, re-runnable measurement --
+**does the loop-produced model measurably beat the model it started
+with?** -- without faking a neural training pass.
+
+### Additions
+
+- `self_improvement/self_training/evaluation.py` — multidimensional
+  model report `CapabilityMetrics` covering **reasoning, planning,
+  memory, tool use, generalization, robustness, simulation
+  performance, regression risk, latency, and resource cost**, computed
+  deterministically by running the candidate's executor over the same
+  gated families as promotion. `compare_capabilities` applies the
+  verdict:
+  ```
+  promotable = overall  AND no critical regression
+               AND holdout improvement AND reproducibility
+  ```
+- `benchmarks/self_training_benchmark.py` — runs the self-training
+  loop from a starter, then reports baseline-vs-final capability
+  deltas, the regression verdict, and `MEASURABLY BETTER` /
+  `not measurably better`, with JSON persistence. Deterministic:
+  identical final hash every run. Standalone:
+  `python -m benchmarks.self_training_benchmark`.
+- `tests/test_self_training_benchmark.py` — 5 tests (determinism,
+  all-dimension report, better/worse verdicts, benchmark + persistence).
+
+### Measured result (default run)
+
+```
+Capability benchmark    MEASURABLY BETTER
+Baseline model          a0ba2825cc2d9ffb
+Final model             51e47cec943aec81
+Regression suite        PASS
+Promoted during loop      yes
+Plateau honestly refused  yes
+
+generalization       3.7353 -> 3.7799   (+0.0445, the transfer gain)
+reasoning            0.2896 -> 0.2984   (+0.0088)
+robustness          -1.0000 -> -1.0000   (+0.0000 -- NOT faked)
+```
+
+The cell-verify signal: the harness is honest on the underside too --
+the adversarial/robustness dimension shows no improvement because none
+was achieved; only measured gains count.
+
+**Milestone boundary stays intact:** this is a *measurement harness*,
+not a training run. The same harness is the benchmark you'll point at
+a real neural/hosted backend once it is substituted behind the
+executor seam -- the verdict criteria, lineage, and gating already
+operate on any model exposing ``LearnedWeights``.
+
+Run it with:
+
+```
+python -m pytest tests/test_self_training_benchmark.py -v
+python -m benchmarks.self_training_benchmark    # headline table
+```
+
+
+
+
+

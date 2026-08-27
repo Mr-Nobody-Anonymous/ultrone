@@ -128,6 +128,16 @@ class ParameterRegistry:
         return {name: self.set(name, value)
                 for name, value in overrides.items()}
 
+    def apply(self, overrides: Dict[str, Any]) -> Dict[str, Any]:
+        """Canonical bulk-load entry point (alias of ``apply_overrides``).
+
+        Used when flowing a stored configuration (e.g. the BrainStore
+        ``production`` channel) back into a fresh registry for the next
+        episode -- the step that closes the learning loop. Bounds and
+        type enforcement come from ``set`` exactly as for single keys.
+        """
+        return self.apply_overrides(overrides)
+
     def reset(self, name: Optional[str] = None) -> None:
         targets = [name] if name else self.names()
         for target in targets:
