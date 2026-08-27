@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="images.jfif" alt="ULTRONE Battlefield AI" width="600"/>
+  <img src="images.png" alt="ULTRONE Battlefield AI" width="600"/>
 </div>
 
 # ⚡ ULTRONE - Next-Gen Multi-Domain Battlefield AI
