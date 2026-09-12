@@ -1,27 +1,65 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useWorldStore } from '../store/worldStore';
 import {
   Play,
   Pause,
   RotateCcw,
-  Box,
   Wind,
   Sun,
+  Cpu,
 } from 'lucide-react';
 
-export const SimulationView: React.FC = () => {
-  const entities = useWorldStore((s) => s.entities);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+interface ScenarioSpec {
+  id: string;
+  name: string;
+  category: string;
+  assetCount: number;
+  objective: string;
+  cohesionScore: number;
+  collisionMarginMeters: number;
+}
 
+const SCENARIOS: ScenarioSpec[] = [
+  {
+    id: 'SCEN-01',
+    name: 'DARPA OFFSET: Autonomous UAV Swarm Coordination',
+    category: 'Swarm Tactics',
+    assetCount: 16,
+    objective: 'Surround and establish perimeter coverage around Sector Alpha',
+    cohesionScore: 97.4,
+    collisionMarginMeters: 320,
+  },
+  {
+    id: 'SCEN-02',
+    name: 'DARPA ACE: Radar Jamming & ECM Spoofing Intercept',
+    category: 'Electronic Warfare',
+    assetCount: 8,
+    objective: 'Penetrate radar degradation zone while maintaining telemetry link',
+    cohesionScore: 92.1,
+    collisionMarginMeters: 280,
+  },
+  {
+    id: 'SCEN-03',
+    name: 'Multi-Domain Cross-Layer Search & Recon',
+    category: 'Search & Recon',
+    assetCount: 12,
+    objective: 'Correlate ground and airborne sensors to identify unknown contact',
+    cohesionScore: 98.8,
+    collisionMarginMeters: 450,
+  },
+];
+
+export const SimulationView: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const angleRef = useRef<number>(0);
+
+  const [activeScenario, setActiveScenario] = useState<ScenarioSpec>(SCENARIOS[0]);
   const [isPlaying, setIsPlaying] = useState(true);
   const [speed, setSpeed] = useState<number>(1);
-  const [simTick, setSimTick] = useState<number>(0);
   const [weatherMode, setWeatherMode] = useState<'clear' | 'fog' | 'storm'>('clear');
 
   // Interactive 3D/Isometric canvas animation
   useEffect(() => {
     let animId: number;
-    let angle = 0;
 
     const render = () => {
       const canvas = canvasRef.current;
@@ -41,12 +79,12 @@ export const SimulationView: React.FC = () => {
       ctx.fillRect(0, 0, w, h);
 
       const cx = w / 2;
-      const cy = h / 2 + 40;
+      const cy = h / 2 + 30;
 
       if (isPlaying) {
-        angle += 0.004 * speed;
-        setSimTick((t) => t + 1);
+        angleRef.current += 0.005 * speed;
       }
+      const angle = angleRef.current;
 
       // Draw 3D Isometric Grid Plane
       const gridSize = 14;
@@ -58,78 +96,70 @@ export const SimulationView: React.FC = () => {
       // Isometric projection transform
       for (let i = -gridSize; i <= gridSize; i++) {
         // Grid lines X
-        const x1 = (i * spacing) * Math.cos(angle) - (-gridSize * spacing) * Math.sin(angle);
-        const y1 = ((i * spacing) * Math.sin(angle) + (-gridSize * spacing) * Math.cos(angle)) * 0.45;
-        const x2 = (i * spacing) * Math.cos(angle) - (gridSize * spacing) * Math.sin(angle);
-        const y2 = ((i * spacing) * Math.sin(angle) + (gridSize * spacing) * Math.cos(angle)) * 0.45;
+        const x1 = (i - gridSize) * spacing * 0.7;
+        const y1 = (i + gridSize) * spacing * 0.35;
+        const x2 = (i + gridSize) * spacing * 0.7;
+        const y2 = (i - gridSize) * spacing * 0.35;
 
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
-        ctx.strokeStyle = i === 0 ? 'rgba(56, 189, 248, 0.35)' : 'rgba(30, 41, 59, 0.5)';
-        ctx.lineWidth = i === 0 ? 1.5 : 1;
+        ctx.strokeStyle = weatherMode === 'fog' ? 'rgba(56, 189, 248, 0.08)' : 'rgba(51, 65, 85, 0.3)';
+        ctx.lineWidth = 1;
         ctx.stroke();
 
         // Grid lines Y
-        const x3 = (-gridSize * spacing) * Math.cos(angle) - (i * spacing) * Math.sin(angle);
-        const y3 = ((-gridSize * spacing) * Math.sin(angle) + (i * spacing) * Math.cos(angle)) * 0.45;
-        const x4 = (gridSize * spacing) * Math.cos(angle) - (i * spacing) * Math.sin(angle);
-        const y4 = ((gridSize * spacing) * Math.sin(angle) + (i * spacing) * Math.cos(angle)) * 0.45;
+        const gx1 = (-gridSize + i) * spacing * 0.7;
+        const gy1 = (-gridSize - i) * spacing * 0.35;
+        const gx2 = (gridSize + i) * spacing * 0.7;
+        const gy2 = (gridSize - i) * spacing * 0.35;
 
         ctx.beginPath();
-        ctx.moveTo(x3, y3);
-        ctx.lineTo(x4, y4);
-        ctx.strokeStyle = i === 0 ? 'rgba(56, 189, 248, 0.35)' : 'rgba(30, 41, 59, 0.5)';
-        ctx.lineWidth = i === 0 ? 1.5 : 1;
+        ctx.moveTo(gx1, gy1);
+        ctx.lineTo(gx2, gy2);
+        ctx.strokeStyle = weatherMode === 'fog' ? 'rgba(56, 189, 248, 0.08)' : 'rgba(51, 65, 85, 0.3)';
+        ctx.lineWidth = 1;
         ctx.stroke();
       }
 
-      // Draw simulated 3D entities
-      entities.forEach((ent, idx) => {
-        const entOffsetAngle = (idx / entities.length) * Math.PI * 2 + angle;
-        const radius = 180 + (idx % 3) * 40;
-        const ex = Math.cos(entOffsetAngle) * radius;
-        const ey = (Math.sin(entOffsetAngle) * radius) * 0.45;
-        const altitude = ent.type === 'air_asset' ? 90 : 20;
+      // Draw Swarm Simulation Assets in Isometric Space
+      const swarmCount = activeScenario.assetCount;
+      for (let s = 0; s < swarmCount; s++) {
+        const offsetAngle = (s / swarmCount) * Math.PI * 2 + angle;
+        const radius = 180 + Math.sin(s * 1.5 + angle * 2) * 40;
+        const isoX = Math.cos(offsetAngle) * radius * 0.8;
+        const isoY = Math.sin(offsetAngle) * radius * 0.4;
+        const altitude = 60 + Math.cos(s + angle) * 20;
 
-        // Ground shadow
+        // Ground shadow dot
         ctx.beginPath();
-        ctx.ellipse(ex, ey, 14, 6, 0, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
+        ctx.ellipse(isoX, isoY, 6, 3, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
         ctx.fill();
 
-        // Altitude tether line
+        // Altitude drop pillar
         ctx.beginPath();
-        ctx.moveTo(ex, ey);
-        ctx.lineTo(ex, ey - altitude);
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+        ctx.moveTo(isoX, isoY);
+        ctx.lineTo(isoX, isoY - altitude);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
         ctx.setLineDash([2, 2]);
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Elevated entity marker
-        const color =
-          ent.type === 'air_asset'
-            ? '#38bdf8'
-            : ent.type === 'ground_unit'
-            ? '#34d399'
-            : ent.type === 'sensor_station'
-            ? '#818cf8'
-            : '#f43f5e';
-
+        // Swarm Asset Mesh
         ctx.beginPath();
-        ctx.arc(ex, ey - altitude, 8, 0, Math.PI * 2);
-        ctx.fillStyle = color;
+        ctx.arc(isoX, isoY - altitude, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = s % 2 === 0 ? '#38bdf8' : '#34d399';
         ctx.fill();
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Entity label
-        ctx.fillStyle = '#f8fafc';
-        ctx.font = '10px JetBrains Mono, monospace';
-        ctx.fillText(ent.entity_id, ex + 12, ey - altitude + 3);
-      });
+        // Label
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '9px JetBrains Mono, monospace';
+        ctx.fillText(`UAV-${s + 1}`, isoX + 7, isoY - altitude + 3);
+      }
 
       ctx.restore();
 
@@ -138,28 +168,54 @@ export const SimulationView: React.FC = () => {
 
     animId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animId);
-  }, [isPlaying, speed, entities, weatherMode]);
+  }, [isPlaying, speed, weatherMode, activeScenario]);
 
   return (
-    <div className="relative h-full w-full bg-slate-950 overflow-hidden font-mono select-none">
-      {/* 3D Canvas */}
-      <canvas ref={canvasRef} className="h-full w-full" />
+    <div className="relative flex h-full w-full flex-col overflow-hidden bg-slate-950 font-mono select-none text-xs">
+      {/* Canvas */}
+      <canvas ref={canvasRef} className="h-full w-full cursor-grab" />
 
-      {/* Top Floating Simulation HUD */}
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
-        <div className="flex items-center gap-2 rounded-lg bg-slate-900/90 border border-slate-800 px-3 py-1.5 backdrop-blur shadow-lg">
-          <Box className="w-4 h-4 text-ultrone-400" />
-          <span className="text-xs font-bold text-slate-100 uppercase tracking-wider">
-            3D Simulation Sandbox
-          </span>
-          <span className="text-[10px] text-cyan-400 bg-cyan-950/60 border border-cyan-800/60 px-2 py-0.5 rounded">
-            TICK: {simTick}
-          </span>
+      {/* Top Left Scenario Selector */}
+      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 rounded-xl bg-slate-900/90 border border-slate-800 p-3 backdrop-blur shadow-2xl max-w-sm">
+        <div className="flex items-center gap-2 text-ultrone-400 font-bold">
+          <Cpu className="w-4 h-4" />
+          <span className="uppercase tracking-wider">DARPA Experiment Scenario</span>
+        </div>
+
+        <select
+          value={activeScenario.id}
+          onChange={(e) => {
+            const found = SCENARIOS.find((s) => s.id === e.target.value);
+            if (found) setActiveScenario(found);
+          }}
+          className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 outline-none cursor-pointer"
+        >
+          {SCENARIOS.map((scen) => (
+            <option key={scen.id} value={scen.id}>
+              {scen.name}
+            </option>
+          ))}
+        </select>
+
+        <p className="text-[11px] text-slate-400 leading-relaxed">
+          Objective: <strong className="text-slate-200">{activeScenario.objective}</strong>
+        </p>
+
+        {/* Live Evaluation Metrics */}
+        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80 text-[10px]">
+          <div className="p-2 rounded bg-slate-950 border border-slate-800/60">
+            <span className="text-slate-500 block">Swarm Cohesion</span>
+            <span className="font-bold text-emerald-400">{activeScenario.cohesionScore}%</span>
+          </div>
+          <div className="p-2 rounded bg-slate-950 border border-slate-800/60">
+            <span className="text-slate-500 block">Collision Margin</span>
+            <span className="font-bold text-cyan-300">&gt;{activeScenario.collisionMarginMeters} m</span>
+          </div>
         </div>
       </div>
 
       {/* Top Right Weather & Environment Settings */}
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-2 rounded-lg bg-slate-900/90 border border-slate-800 p-1.5 backdrop-blur shadow-lg text-xs">
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-2 rounded-lg bg-slate-900/90 border border-slate-800 p-1.5 backdrop-blur shadow-lg">
         <button
           onClick={() => setWeatherMode('clear')}
           className={`flex items-center gap-1 px-2.5 py-1 rounded transition-colors ${
@@ -195,7 +251,9 @@ export const SimulationView: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setSimTick(0)}
+          onClick={() => {
+            angleRef.current = 0;
+          }}
           className="p-2 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-300 border border-slate-700 transition-colors"
           title="Reset Simulation"
         >

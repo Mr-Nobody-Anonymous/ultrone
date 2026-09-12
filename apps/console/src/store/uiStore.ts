@@ -5,14 +5,13 @@ import { create } from 'zustand';
 export type WorldViewMode = 'map' | 'globe' | 'network' | 'timeline' | 'data';
 
 export type SidebarSection =
-  | 'home'
+  | 'overview'
   | 'world'
   | 'entities'
-  | 'events'
-  | 'agents'
+  | 'investigations'
   | 'simulation'
+  | 'ai'
   | 'analytics'
-  | 'ai-lab'
   | 'research'
   | 'admin';
 
@@ -40,6 +39,7 @@ interface UIState {
   // Actions
   toggleSidebar: () => void;
   setActiveSection: (section: SidebarSection) => void;
+  setActiveView: (view: SidebarSection) => void;
   toggleRightPanel: () => void;
   setRightPanelOpen: (open: boolean) => void;
   toggleBottomTimeline: () => void;
@@ -53,7 +53,7 @@ export const useUIStore = create<UIState>((set) => ({
   sidebarExpanded: false,
   activeSection: 'world',
   rightPanelOpen: false,
-  bottomTimelineOpen: true,
+  bottomTimelineOpen: false,
   bottomTimelineHeight: 160,
   worldViewMode: 'map',
   commandPaletteOpen: false,
@@ -61,10 +61,12 @@ export const useUIStore = create<UIState>((set) => ({
 
   toggleSidebar: () => set((s) => ({ sidebarExpanded: !s.sidebarExpanded })),
   setActiveSection: (section) => set({ activeSection: section }),
+  setActiveView: (view) => set({ activeSection: view }),
   toggleRightPanel: () => set((s) => ({ rightPanelOpen: !s.rightPanelOpen })),
   setRightPanelOpen: (open) => set({ rightPanelOpen: open }),
   toggleBottomTimeline: () => set((s) => ({ bottomTimelineOpen: !s.bottomTimelineOpen })),
-  setBottomTimelineHeight: (height) => set({ bottomTimelineHeight: Math.max(100, Math.min(400, height)) }),
+  setBottomTimelineHeight: (height) =>
+    set({ bottomTimelineHeight: Math.max(100, Math.min(400, height)) }),
   setWorldViewMode: (mode) => set({ worldViewMode: mode }),
   toggleCommandPalette: () => set((s) => ({ commandPaletteOpen: !s.commandPaletteOpen })),
   setEventTypeFilter: (types) => set({ eventTypeFilter: types }),

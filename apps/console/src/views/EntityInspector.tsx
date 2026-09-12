@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useWorldStore } from '../store/worldStore';
 import ConfidenceBadge from '../components/ConfidenceBadge';
+import EntityDetailDrawer from '../components/EntityDetailDrawer';
 import {
   Search,
   Filter,
@@ -257,6 +258,14 @@ export const EntityInspector: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Palantir-Style 8-Tab Entity Drawer */}
+      {selectedEntity && (
+        <EntityDetailDrawer
+          entity={selectedEntity}
+          onClose={() => selectEntity(null)}
+        />
+      )}
     </div>
   );
 };

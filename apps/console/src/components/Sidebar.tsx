@@ -1,13 +1,16 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
+  Shield,
   Globe,
   Layers,
+  FolderLock,
   Activity,
   GitFork,
   Bot,
   Box,
   BarChart3,
+  Microscope,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -16,6 +19,7 @@ import {
 import { clsx } from 'clsx';
 import { useUIStore } from '../store/uiStore';
 import { useWorldStore } from '../store/worldStore';
+import { useInvestigationStore } from '../store/investigationStore';
 
 interface NavItem {
   to: string;
@@ -28,9 +32,11 @@ export const Sidebar: React.FC = () => {
   const { sidebarExpanded, toggleSidebar } = useUIStore();
   const entities = useWorldStore((s) => s.entities);
   const events = useWorldStore((s) => s.events);
+  const cases = useInvestigationStore((s) => s.cases);
 
   const NAV_ITEMS: NavItem[] = [
-    { to: '/', label: 'World View', icon: <Globe className="w-4 h-4" /> },
+    { to: '/', label: 'Overview', icon: <Shield className="w-4 h-4" /> },
+    { to: '/world', label: 'World (COP)', icon: <Globe className="w-4 h-4" /> },
     {
       to: '/entities',
       label: 'Entities',
@@ -38,22 +44,29 @@ export const Sidebar: React.FC = () => {
       badge: entities.length,
     },
     {
+      to: '/investigations',
+      label: 'Investigations',
+      icon: <FolderLock className="w-4 h-4" />,
+      badge: cases.length,
+    },
+    { to: '/simulation', label: 'Simulation', icon: <Box className="w-4 h-4" /> },
+    { to: '/ai', label: 'AI Workspace', icon: <Bot className="w-4 h-4" /> },
+    {
       to: '/events',
-      label: 'Event Feed',
+      label: 'Timeline',
       icon: <Activity className="w-4 h-4" />,
       badge: events.length,
     },
     { to: '/ontology', label: 'Ontology Graph', icon: <GitFork className="w-4 h-4" /> },
-    { to: '/assist', label: 'AI Assist', icon: <Bot className="w-4 h-4" /> },
-    { to: '/simulation', label: 'Simulation', icon: <Box className="w-4 h-4" /> },
     { to: '/analytics', label: 'Analytics', icon: <BarChart3 className="w-4 h-4" /> },
+    { to: '/research', label: 'DARPA Lab', icon: <Microscope className="w-4 h-4" /> },
     { to: '/admin', label: 'Admin & Health', icon: <Settings className="w-4 h-4" /> },
   ];
 
   return (
     <nav
       className={clsx(
-        'flex shrink-0 flex-col border-r border-slate-800 bg-slate-900/90 transition-all duration-200 z-20',
+        'flex shrink-0 flex-col border-r border-slate-800 bg-slate-900/90 transition-all duration-200 z-20 font-mono select-none',
         sidebarExpanded ? 'w-56' : 'w-16'
       )}
     >
@@ -69,7 +82,7 @@ export const Sidebar: React.FC = () => {
                 ULTRONE
               </span>
               <span className="text-[10px] text-slate-500 font-mono tracking-tighter">
-                OPS CONSOLE v2
+                OPS CONSOLE v2.5
               </span>
             </div>
           )}
@@ -88,63 +101,42 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Nav items */}
-      <div className="flex flex-1 flex-col gap-1 p-2 overflow-y-auto">
+      <div className="flex flex-1 flex-col gap-1 p-2 overflow-y-auto no-scrollbar">
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
+            end={item.to === '/'}
             className={({ isActive }) =>
               clsx(
                 'flex items-center rounded-lg text-xs font-medium transition-all group relative',
                 sidebarExpanded ? 'px-3 py-2 gap-3' : 'h-10 w-10 justify-center mx-auto',
                 isActive
-                  ? 'bg-ultrone-600/20 text-ultrone-300 border border-ultrone-500/40 shadow-sm shadow-ultrone-950/40'
-                  : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-200 border border-transparent'
+                  ? 'bg-ultrone-600/20 text-ultrone-300 font-semibold border border-ultrone-500/30 shadow-sm'
+                  : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
               )
             }
-            title={!sidebarExpanded ? item.label : undefined}
           >
             <span className="shrink-0">{item.icon}</span>
+
             {sidebarExpanded && (
-              <span className="flex-1 truncate text-left">{item.label}</span>
+              <span className="truncate flex-1 text-left">{item.label}</span>
             )}
-            {item.badge !== undefined && (
-              <span
-                className={clsx(
-                  'rounded-full font-mono text-[10px] px-1.5 py-0.5',
-                  sidebarExpanded
-                    ? 'bg-slate-800 text-slate-300 border border-slate-700'
-                    : 'absolute -top-1 -right-1 bg-ultrone-600 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full'
-                )}
-              >
+
+            {sidebarExpanded && item.badge !== undefined && (
+              <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400 font-mono shrink-0">
                 {item.badge}
               </span>
             )}
+
+            {/* Tooltip for collapsed mode */}
+            {!sidebarExpanded && (
+              <div className="absolute left-full ml-2 z-50 hidden rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-200 shadow-lg group-hover:block whitespace-nowrap border border-slate-700">
+                {item.label}
+              </div>
+            )}
           </NavLink>
         ))}
-      </div>
-
-      {/* Bottom Status / Mode Toggle */}
-      <div className="p-2 border-t border-slate-800">
-        <div
-          className={clsx(
-            'flex items-center rounded-lg p-2 bg-slate-950/50 border border-slate-800/80 text-xs',
-            sidebarExpanded ? 'justify-between' : 'justify-center'
-          )}
-        >
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            {sidebarExpanded && (
-              <span className="text-[11px] font-mono text-emerald-400">DEFCON 4</span>
-            )}
-          </div>
-          {sidebarExpanded && (
-            <span className="text-[10px] text-slate-500 font-mono">ENCRYPTED</span>
-          )}
-        </div>
       </div>
     </nav>
   );
