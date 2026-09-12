@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import heapq
+import itertools
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -64,8 +65,17 @@ class MAPFPlanner(Planner):
                      constraints: Optional[List[_Constraint]] = None,
                      agent_id: int = 0,
                      banned_positions: Optional[Set[Tuple[int, int]]] = None) -> Optional[List[Tuple[int, int]]]:
-        """A* path for a single agent with constraints."""
-        open_set = [(0.0, id(start), start, [start])]
+        """A* path for a single agent with constraints.
+
+        The search is bounded by ``max_t``: because waiting in place is a
+        legal move, the ``(x, y, t)`` state space is otherwise unbounded, and
+        when the goal is unreachable (e.g. walled off by conflict-resolution
+        bans) the open set would never empty. The time bound guarantees
+        termination in finite time.
+        """
+        max_t = self._grid_width * self._grid_height + 16
+        counter = itertools.count()  # deterministic heap tie-breaker
+        open_set = [(0.0, next(counter), start, [start])]
         closed: Set[Tuple[int, int, int]] = set()  # (x, y, t)
         constraint_set = set()
         if constraints:
@@ -83,6 +93,9 @@ class MAPFPlanner(Planner):
                 continue
             closed.add((current[0], current[1], t))
 
+            if t >= max_t:
+                continue  # horizon reached: stop expanding this branch
+
             for dx, dy in [(0, 0), (0, 1), (0, -1), (1, 0), (-1, 0)]:
                 nx, ny = current[0] + dx, current[1] + dy
                 # Grid bounds check (skip out-of-bounds cells)
@@ -92,7 +105,7 @@ class MAPFPlanner(Planner):
                     continue
                 if (nx, ny, t + 1) not in constraint_set:
                     heapq.heappush(open_set, (t + 1 + abs(nx - goal[0]) + abs(ny - goal[1]),
-                                              id((nx, ny)), (nx, ny), path + [(nx, ny)]))
+                                              next(counter), (nx, ny), path + [(nx, ny)]))
         return None
 
     def plan(self, state: Any, goal: PlanningGoal) -> PlanningResult:
@@ -136,18 +149,28 @@ class MAPFPlanner(Planner):
         # two agents' paths (at any timestep) and ban that cell for the agent
         # that arrives there later, forcing a disjoint detour. This satisfies
         # the "no vertex conflicts" contract for fully cell-disjoint paths.
+        # A shared cell that is the later agent's own goal is never banned for
+        # that agent (the goal would become unreachable and the replan would
+        # be guaranteed to fail) — the other agent is detoured instead.
         for _ in range(min(self.config.max_iterations, 500)):
             conflict = self._find_first_shared_cell(plans)
             if conflict is None:
                 break
-            agent_id, x, y = conflict
-            banned_positions[agent_id].add((x, y))
-            path = self._a_star_path(starts[agent_id], goals[agent_id], constraints,
-                                     agent_id, banned_positions[agent_id])
-            if path is None:
-                logger.info("MAPF: agent %d replan FAILED after conflict", agent_id)
+            owner_id, later_id, x, y = conflict
+            detour = later_id
+            if (x, y) == tuple(goals[detour]):
+                detour = owner_id
+            if (x, y) in banned_positions[detour]:
+                # No new detour possible: cell-disjointness is unreachable.
+                logger.info("MAPF: no new ban possible for agent %d", detour)
                 return PlanningResult(success=False, cost=float("inf"))
-            plans[agent_id] = path
+            banned_positions[detour].add((x, y))
+            path = self._a_star_path(starts[detour], goals[detour], constraints,
+                                     detour, banned_positions[detour])
+            if path is None:
+                logger.info("MAPF: agent %d replan FAILED after conflict", detour)
+                return PlanningResult(success=False, cost=float("inf"))
+            plans[detour] = path
 
         self._last_plans = plans
 
@@ -184,8 +207,10 @@ class MAPFPlanner(Planner):
         legitimately start on cells that another agent's path ends at, and
         start positions are not emitted as move actions.
 
-        Returns ``(agent_id, x, y)`` for the agent that should be detoured,
-        or ``None`` if all non-start cells are cell-disjoint.
+        Returns ``(owner_agent_id, later_agent_id, x, y)`` where ``owner`` is
+        the first agent recorded at the cell and ``later`` is the agent that
+        occupies it afterwards, or ``None`` if all non-start cells are
+        cell-disjoint.
         """
         cell_owner: Dict[Tuple[int, int], int] = {}
         max_len = max(len(p) for p in plans.values()) if plans else 0
@@ -194,7 +219,7 @@ class MAPFPlanner(Planner):
                 if t < len(path):
                     pos = path[t]
                     if pos in cell_owner and cell_owner[pos] != agent_id:
-                        return (agent_id, pos[0], pos[1])
+                        return (cell_owner[pos], agent_id, pos[0], pos[1])
                     cell_owner[pos] = agent_id
         return None
 

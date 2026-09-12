@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+title: Ultrone
+message: >-
+  If you use this software in your work, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - name: Ultrone Contributors
+repository-code: "https://github.com/Mr-Nobody-Anonymous/ultrone"
+url: "https://github.com/Mr-Nobody-Anonymous/ultrone"
+abstract: >-
+  Ultrone is a simulation-only, multi-domain battlefield AI research
+  platform with a 15-layer cognitive architecture, a 7-tier memory system,
+  human-in-the-loop safety gates with a tamper-evident audit chain, a
+  canonical benchmark suite, and an integrated Ultron collective-memory
+  system for cross-agent shared memory, skills, and harnesses.
+keywords:
+  - artificial-intelligence
+  - multi-agent-systems
+  - reinforcement-learning
+  - cognitive-architecture
+  - simulation
+  - research-platform
+license: MIT

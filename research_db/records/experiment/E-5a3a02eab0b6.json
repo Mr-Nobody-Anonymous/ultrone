@@ -1,0 +1,23 @@
+{
+  "experiment_id": "E-5a3a02eab0b6",
+  "hypothesis": "H",
+  "research_motivation": "",
+  "implementation": "",
+  "dataset": "",
+  "training_config": {},
+  "evaluation_metrics": {},
+  "benchmark_comparison": {},
+  "resource_usage": {
+    "gpu_utilization": 0.3,
+    "memory_gb": 5
+  },
+  "execution_logs": [],
+  "performance_graphs": [],
+  "success_criteria": "",
+  "rollback_strategy": "",
+  "conclusion": "",
+  "recommendation": "",
+  "status": "completed",
+  "created_at": 1789194329.696266,
+  "updated_at": 1789194329.697471
+}

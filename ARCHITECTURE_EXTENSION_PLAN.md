@@ -150,7 +150,7 @@ ultrone/
 │   │       ├── transformer.py
 │   │       └── change_point.py
 │   ├── perception/
-│   │   ├── specialized_analyzers.py  # 11 AI experts per sensor type
+│   │   ├── specialized_analyzers.py  # 10 AI experts per sensor type
 │   │   ├── multi_source_analyzer.py  # Fusion layer
 │   │   ├── sensor_fusion.py          # Combined sensor confidence
 │   │   ├── situational_awareness.py  # Battlefield state awareness

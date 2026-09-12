@@ -1,14 +1,18 @@
 # ULTRONE — Module-by-Module Audit & P0/P1/P2 Roadmap
 
-> **Status of this document:** current as of inspection of the working tree,
-> not the README. Several findings in a prior external review are now stale;
-> this audit corrects them against the actual code.
+> **Status of this document:** historical audit, written ahead of the
+> Sprint A–F execution. It is correct as of the working tree it inspected
+> (a past external review is re-scored against that tree); several
+> findings here have since been resolved in code. For the *current*
+> roadmap use [`ROADMAP.md`](../ROADMAP.md) — this file is kept as the
+> detailed record of how those roadmap items were identified.
 
 **Evidence base (verified in the tree):**
 - `core/` (contracts, pipeline, safety_gate) — implemented, integration test
   `tests/test_core_pipeline.py` = **14 passed**.
 - Unit counts are live counts of `.py` files/bytes per top-level directory.
-- `PROJECT_PROGRESS.md` is **stale** (see §3 below).
+- `PROJECT_PROGRESS.md` was **stale** at the time of this audit (see §3); it
+  has since been updated with Sprints A–F and is actively maintained.
 - **Sprint A completed (post-audit):** backend identity decided (vendored
   "Argus" → **isolate**); clean `ultrone_hitl/` HITL API + tamper-evident
   audit store built; repo hygiene done; full test suite green.

@@ -1,0 +1,62 @@
+# Ultrone Military Simulation Core Configuration
+# Extended with self-evolution capabilities
+
+system:
+  name: "Ultrone Military Simulation Core"
+  version: "3.0.0-EVO"
+  log_level: "INFO"
+
+domains:
+  air:
+    max_bandwidth_hz: 500000
+    default_altitude_meters: 12000
+    drone_swarm_size: 8
+    fighter_squadron_size: 4
+  land:
+    terrain_types: ["urban", "desert", "forest", "mud"]
+    max_engagement_range_km: 25.0
+    tank_squadron_size: 3
+  sea:
+    depth_limit_meters: -400
+    vessel_squadron_size: 2
+  space:
+    orbital_period_seconds: 5400
+    satellite_coverage: 5
+  cyber:
+    protocols: ["RF", "TCP_IP", "LINK_16"]
+    max_jamming_power_dbm: 50
+
+kill_chain:
+  auto_engagement: true
+  rules_of_engagement: "Strict hostile identification required"
+  threat_priority:
+    - "intercontinental_ballistic_missile"
+    - "fighter_jet"
+    - "air_defense_system"
+    - "tank"
+    - "naval_vessel"
+    - "submarine"
+    - "satellite_uplink"
+    - "command_post"
+
+evolutionary_engine:
+  enabled: true
+  genome_protocol: "GEP-V2"
+  mutation_rate: 0.15
+  crossover_rate: 0.40
+  min_acceptable_fitness: 0.75
+  sandbox_environment: "Docker"
+  evolution_interval_hours: 6
+  max_generations: 1000
+
+performance_telemetry:
+  window_size: 10
+  response_time_weight: 0.2
+  success_weight: 0.8
+  adaptation_threshold: 0.1
+
+docker_sandbox:
+  image: "python:3.11-slim"
+  memory_limit: "512m"
+  timeout_seconds: 30
+  network_disabled: true

@@ -68,8 +68,11 @@ through architectural improvements — not benchmark hacks.
 - [x] `PROJECT_PROGRESS.md` — Sprint F section added
 
 ## Final
-- [x] Run new test suites (frontier + coding_agent + benchmark_harness) — 70 passed
-- [x] Run full test suite — 597 passed, 15 pre-existing failures in
-      `test_research_division.py` (async `run_async` helper + shared DB state
-      isolation), unrelated to Frontier Intelligence changes
+- [x] Run new test suites (frontier + coding_agent + benchmark_harness) — 67 passed
+      (27 + 20 + 20, verified against the current tree)
+- [x] Run full test suite — 2232 tests collected across the merged monorepo
+      (Ultrone core + Ultron integration via the `ultron/` shim); historical
+      note: 597 passed at the pre-merge Ultrone baseline with 15 pre-existing
+      failures in `test_research_division.py` (async `run_async` helper +
+      shared DB state isolation), unrelated to Frontier Intelligence changes
 - [x] Update progress docs (README.md, PROJECT_PROGRESS.md, TODO.md)

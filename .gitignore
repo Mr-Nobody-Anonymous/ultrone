@@ -41,4 +41,9 @@ final_test_output.txt
 full_test_output.txt
 tests/test_artifacts/*.bin
 
-scripts/
+# Local test-output scratch files
+pytest_*.txt
+search_failures.txt
+test_out.txt
+test_output.txt
+test_run_final.txt
