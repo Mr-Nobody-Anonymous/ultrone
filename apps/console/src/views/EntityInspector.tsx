@@ -236,7 +236,7 @@ export const EntityInspector: React.FC = () => {
                       {entity.sensors?.slice(0, 2).map((s) => (
                         <span
                           key={s}
-                          className="px-1.5 py-0.2 rounded bg-slate-800 text-[10px] text-slate-400 border border-slate-700/60"
+                          className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-400 border border-slate-700/60"
                         >
                           {s}
                         </span>

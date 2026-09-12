@@ -141,7 +141,7 @@ export const CommandBar: React.FC = () => {
                         <span className="text-xs text-slate-300 capitalize">
                           {entity.type.replace('_', ' ')}
                         </span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-mono">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">
                           {entity.status}
                         </span>
                       </div>

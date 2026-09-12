@@ -4,6 +4,10 @@ export default {
   theme: {
     extend: {
       colors: {
+        slate: {
+          750: '#243042',
+          850: '#131c2e',
+        },
         ultrone: {
           50: '#f0f4ff',
           100: '#dbe4ff',
@@ -17,6 +21,9 @@ export default {
           900: '#364fc7',
           950: '#1e3a5f',
         },
+      },
+      spacing: {
+        '88': '22rem',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

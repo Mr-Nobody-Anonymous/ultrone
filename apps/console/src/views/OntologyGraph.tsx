@@ -295,7 +295,7 @@ export const OntologyGraph: React.FC = () => {
           <span className="text-xs font-bold text-slate-100 uppercase tracking-wider">
             Ontology & Relationship Graph
           </span>
-          <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.2 rounded">
+          <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
             {entities.length} Nodes
           </span>
         </div>

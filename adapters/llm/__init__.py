@@ -1,27 +1,67 @@
 # Copyright (c) Ultrone Contributors. All rights reserved.
 """LLM provider adapters — port for model providers.
 
-Concrete wiring should wrap ``orchestration.model_registry`` /
-``orchestration.router`` (model selection + fallback) and
-``core.llm_service`` (hosted LLM calls). No provider logic lives here.
+Provides concrete integrations for:
+- OpenRouter
+- Google Gemini
+- OpenAI
+- Anthropic Claude
+- DeepSeek
+- Local AI (Ollama / Qwen / LM Studio / vLLM)
 """
-from adapters.base import BaseAdapter, unavailable
-from typing import Any, Dict
+from adapters.base import BaseAdapter
+from .providers import SUPPORTED_PROVIDERS, MultiProviderLLMClient, ProviderSpec, ModelSpec
+from typing import Any, Dict, List, Optional
 
-__all__ = ["LLMAdapter", "BaseAdapter"]
+__all__ = [
+    "LLMAdapter",
+    "BaseAdapter",
+    "SUPPORTED_PROVIDERS",
+    "MultiProviderLLMClient",
+    "ProviderSpec",
+    "ModelSpec",
+]
 
 
 class LLMAdapter(BaseAdapter):
-    """Port every LLM provider implementation must satisfy."""
+    """Universal multi-provider LLM Adapter port."""
 
     name = "llm"
 
-    def connect(self) -> bool:  # pragma: no cover - placeholder
-        return False
+    def __init__(self, default_provider: str = "openrouter", **kwargs):
+        self.default_provider = default_provider
+        self.client = MultiProviderLLMClient(provider=default_provider, **kwargs)
 
-    def close(self) -> None:  # pragma: no cover - placeholder
+    def connect(self) -> bool:
+        check = self.client.health_check()
+        return bool(check.get("available", False))
+
+    def close(self) -> None:
         pass
 
-    def health(self) -> Dict[str, Any]:  # pragma: no cover - placeholder
-        return unavailable("no provider implementation wired; see "
-                           "orchestration/model_registry and core/llm_service")
+    def health(self) -> Dict[str, Any]:
+        return self.client.health_check()
+
+    def get_supported_providers(self) -> Dict[str, Any]:
+        """Return catalog of all supported providers and their recommended models."""
+        return {
+            pid: {
+                "id": spec.id,
+                "name": spec.name,
+                "description": spec.description,
+                "default_base_url": spec.default_base_url,
+                "is_local": spec.is_local,
+                "is_configured": bool(spec.resolve_api_key()),
+                "models": [
+                    {
+                        "id": m.id,
+                        "name": m.name,
+                        "context_window": m.context_window,
+                        "description": m.description,
+                        "strengths": m.strengths,
+                    }
+                    for m in spec.recommended_models
+                ],
+            }
+            for pid, spec in SUPPORTED_PROVIDERS.items()
+        }

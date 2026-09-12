@@ -111,7 +111,7 @@ export const Sidebar: React.FC = () => {
             {item.badge !== undefined && (
               <span
                 className={clsx(
-                  'rounded-full font-mono text-[10px] px-1.5 py-0.2',
+                  'rounded-full font-mono text-[10px] px-1.5 py-0.5',
                   sidebarExpanded
                     ? 'bg-slate-800 text-slate-300 border border-slate-700'
                     : 'absolute -top-1 -right-1 bg-ultrone-600 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full'

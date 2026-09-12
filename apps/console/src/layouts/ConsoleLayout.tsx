@@ -64,7 +64,7 @@ export default function ConsoleLayout() {
                 <span className="font-mono text-xs font-semibold uppercase tracking-wider text-slate-300">
                   Live Event Feed
                 </span>
-                <span className="rounded-full bg-slate-800 px-2 py-0.2 text-[10px] font-mono text-slate-400 border border-slate-700">
+                <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-mono text-slate-400 border border-slate-700">
                   {events.length} events
                 </span>
               </div>
@@ -103,7 +103,7 @@ export default function ConsoleLayout() {
                             const ent = useWorldStore.getState().entities.find((x) => x.entity_id === evt.entity_id);
                             if (ent) selectEntity(ent);
                           }}
-                          className="px-1.5 py-0.2 rounded bg-slate-800 text-cyan-300 hover:underline text-[10px]"
+                          className="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 hover:underline text-[10px]"
                         >
                           {evt.entity_id}
                         </button>
