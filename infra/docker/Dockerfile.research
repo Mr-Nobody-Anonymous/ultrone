@@ -1,4 +1,4 @@
-# ULTRONE Research Platform Dockerfile
+﻿# ULTRONE Research Platform Dockerfile
 # Multi-stage build for the autonomous research platform
 
 FROM python:3.11-slim as base
@@ -19,7 +19,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Set Python path
-ENV PYTHONPATH=/app
+# Monorepo: packages keep their original import names but live in buckets
+# (see _ultrone_paths.py); expose every bucket so imports resolve in-container.
+ENV PYTHONPATH=/app:/app/apps:/app/packages/core:/app/packages/cognition:/app/packages/agents:/app/packages/knowledge:/app/packages/orchestration:/app/packages/runtime:/app/packages/safety:/app/packages/observability:/app/packages/transport:/app/research:/app/simulation:/app/vendor:/app/data
 ENV PYTHONUNBUFFERED=1
 
 # Expose API port

@@ -10,6 +10,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Monorepo: packages keep their original import names but live in buckets
+# (see _ultrone_paths.py). PYTHONPATH exposes every bucket to pytest, flake8,
+# black and the docker smoke test.
+env:
+  PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/apps:${{ github.workspace }}/packages/core:${{ github.workspace }}/packages/knowledge:${{ github.workspace }}/packages/agents:${{ github.workspace }}/packages/cognition:${{ github.workspace }}/research:${{ github.workspace }}/simulation
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -37,7 +43,7 @@ jobs:
 
       - name: Generate coverage report
         run: |
-          python -m pytest --cov=knowledge_engine --cov=research_db --cov=research_division --cov=self_improvement --cov=plugin_sdk --cov=extension_log --cov-report=xml
+          python -m pytest --cov=packages/knowledge/knowledge_engine --cov=research/research_db --cov=research/research_division --cov=packages/cognition/self_improvement --cov=packages/agents/plugin_sdk --cov=packages/core/extension_log --cov-report=xml
 
       - name: Upload coverage
         if: always()
@@ -58,9 +64,9 @@ jobs:
       - name: Install linter
         run: pip install flake8 black mypy
       - name: Run flake8
-        run: flake8 knowledge_engine/ research_db/ research_division/ self_improvement/ plugin_sdk/ extension_log/ --max-line-length=120 --extend-ignore=E203,W503
+        run: flake8 packages/knowledge/knowledge_engine/ research/research_db/ research/research_division/ packages/cognition/self_improvement/ packages/agents/plugin_sdk/ packages/core/extension_log/ --max-line-length=120 --extend-ignore=E203,W503
       - name: Run black check
-        run: black --check knowledge_engine/ research_db/ research_division/ self_improvement/ plugin_sdk/ extension_log/
+        run: black --check packages/knowledge/knowledge_engine/ research/research_db/ research/research_division/ packages/cognition/self_improvement/ packages/agents/plugin_sdk/ packages/core/extension_log/
 
   docker-build:
     runs-on: ubuntu-latest
@@ -71,4 +77,3 @@ jobs:
         run: docker build -f infra/docker/Dockerfile.research -t ultrone-research:latest .
       - name: Run container smoke test
         run: docker run --rm ultrone-research:latest python -c "from knowledge_engine import KnowledgeMemoryManager; print('OK')"
-

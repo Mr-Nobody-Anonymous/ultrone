@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="images.png" alt="ULTRONE Battlefield AI" width="640"/>
+<img src="docs/assets/images.png" alt="ULTRONE Battlefield AI" width="640"/>
 
 # ⚡ ULTRONE
 
@@ -25,6 +25,83 @@
 </p>
 
 </div>
+
+---
+## 🗂️ Repository Layout (monorepo)
+
+ULTRONE is organized as a semantic monorepo. Packages keep their original
+top-level import names (`import cognitive`, `import brain`, `import agents`,
+...), but every package lives inside a bucket that states its role:
+
+```text
+ULTRONE/
+│
+├── apps/                     # Product layer — what users run
+│   ├── api/                  # FastAPI service, CLI entry, scripts (main/server/ultrone)
+│   ├── backend/              # Research platform REST surface (api/v1, exporters, vision)
+│   ├── cli/                  # Interactive CLI client
+│   ├── services/             # Harness/memory/skill/trajectory services
+│   └── ultrone_hitl/         # Human-in-the-loop decision workflows + audit store
+│
+├── packages/                 # Platform layer — the cognitive/runtime building blocks
+│   ├── core/                 # Core contracts, config, datasets, utils + world_model/
+│   ├── cognition/            # brain/, cognitive/, frontier/, sandbox/, self_improvement/,
+│   │                         # evolution/, game_ai/, generative/, ultrone_ai/
+│   ├── agents/               # agents/, ai_architectures/, coding_agent/, plugin_sdk/,
+│   │                         # plugins/, robotics/, skills/
+│   ├── knowledge/            # knowledge_engine/, learning/, mlops/, training_platform/,
+│   │                         # memory_cluster/
+│   ├── orchestration/        # Model/tool/memory/skill routing + traces
+│   ├── runtime/              # runtime/, compiler/, hardware/, ultrone_os/, ultrone_rt/,
+│   │                         # ultrone_bindings/, cpp/, go/, rust/
+│   ├── safety/               # security/ (permissions, sandbox, secrets, ai_safety)
+│   ├── observability/        # viz/ telemetry
+│   └── transport/            # comms/ (api server, message bus, protocol, encryption)
+│
+├── research/                 # Research layer
+│   ├── benchmarks/           # Canonical benchmarks + regression gate
+│   ├── research_db/          # Papers/experiments/benchmarks catalog (JSON/SQLite)
+│   ├── research_division/    # Autonomous research agents
+│   └── *.py                  # Reproducibility, ablation, statistical evaluation
+│
+├── simulation/               # Simulation layer
+│   ├── sim/                  # World modeling, fault injection, performance engines
+│   └── *.py                  # Core sim, digital twin, physics, runner, world
+│
+├── adapters/                 # Integration seams (ports to external systems)
+│   ├── llm/  vision/  vector_db/  database/  external/
+│
+├── data/                     # Simulation datasets + run artifacts (memory/, terrain, entities)
+├── datasets → packages/core/datasets
+│
+├── infra/                    # Deployment layer
+│   ├── docker/  helm/  kubernetes/  monitoring/  nginx/
+│   └── deploy/hf_space/      # Public simulation-only Hugging Face demo
+│
+├── vendor/                   # Third-party projects (unmodified)
+│   ├── original_source/      # Vendored Ultron collective-memory system
+│   ├── ultron/               # Import shim exposing the vendored tree as `ultron.*`
+│   └── adelise-agent-framework-main/  # Vendored agent framework + docs + examples
+│
+├── docs/                     # Architecture docs, progress, plans, assets
+├── tests/                    # Unit, integration, smoke tests
+├── scripts/                  # Utility scripts
+│
+├── _ultrone_paths.py         # Import bootstrap: puts every bucket on sys.path
+├── pyproject.toml            # Packaging (all buckets listed)
+├── pytest.ini                # Test config (all buckets on pythonpath)
+└── README.md
+```
+
+**Nothing was deleted in the reorganization** — every tracked file was moved
+with `git mv`, so history is preserved. The duplicated `original_source/` +
+root-level copies are now clearly vendored under `vendor/` with a single
+import shim (`ultron` → `vendor/original_source`), eliminating the
+"which copy does the runtime import?" problem.
+
+**Imports keep working** thanks to `_ultrone_paths.py`: entry points call
+`ensure_on_syspath()`, pytest and packaging list every bucket, and CI sets
+`PYTHONPATH` to all buckets.
 
 ---
 

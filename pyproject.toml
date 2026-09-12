@@ -35,4 +35,24 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["."]
+# ULTRONE is a monorepo. Packages keep their original top-level import names
+# but live inside semantic buckets; list every bucket here so an editable
+# install exposes all of them.
+namespaces = false
+where = [
+    ".",
+    "apps",
+    "packages/core",
+    "packages/cognition",
+    "packages/agents",
+    "packages/knowledge",
+    "packages/orchestration",
+    "packages/runtime",
+    "packages/safety",
+    "packages/observability",
+    "packages/transport",
+    "research",
+    "simulation",
+    "vendor",
+    "data",
+]

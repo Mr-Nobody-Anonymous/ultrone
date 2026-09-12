@@ -19,7 +19,7 @@ import sys
 import pytest
 
 APP_PATH = pathlib.Path(__file__).resolve().parent.parent / \
-    "deploy" / "hf_space" / "app.py"
+    "infra" / "deploy" / "hf_space" / "app.py"
 
 ALLOWED_AGENT_MODULES = (
     "agents.base_agent",

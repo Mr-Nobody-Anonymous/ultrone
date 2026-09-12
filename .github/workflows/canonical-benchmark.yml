@@ -3,17 +3,23 @@ name: Canonical Benchmark Regression Gate
 on:
   push:
     paths:
-      - "core/**"
-      - "ultrone_hitl/**"
-      - "benchmarks/canonical/**"
-      - "sim/fault_injection.py"
+      - "packages/core/core/**"
+      - "apps/ultrone_hitl/**"
+      - "research/benchmarks/canonical/**"
+      - "simulation/sim/fault_injection.py"
       - ".github/workflows/canonical-benchmark.yml"
   pull_request:
     paths:
-      - "core/**"
-      - "ultrone_hitl/**"
-      - "benchmarks/canonical/**"
-      - "sim/fault_injection.py"
+      - "packages/core/core/**"
+      - "apps/ultrone_hitl/**"
+      - "research/benchmarks/canonical/**"
+      - "simulation/sim/fault_injection.py"
+
+# Monorepo: packages keep their original import names but live in buckets
+# (see _ultrone_paths.py). PYTHONPATH exposes every bucket to pytest and the
+# ``python -m benchmarks.canonical`` entry point.
+env:
+  PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/apps:${{ github.workspace }}/packages/core:${{ github.workspace }}/research:${{ github.workspace }}/simulation
 
 jobs:
   benchmark-regression:

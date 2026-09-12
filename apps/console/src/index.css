@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg-primary: theme('colors.slate.950');
+    --color-bg-secondary: theme('colors.slate.900');
+    --color-bg-tertiary: theme('colors.slate.800');
+    --color-border: theme('colors.slate.700');
+    --color-text-primary: theme('colors.slate.100');
+    --color-text-secondary: theme('colors.slate.400');
+    --color-accent: theme('colors.ultrone.500');
+  }
+
+  body {
+    @apply bg-slate-950 text-slate-100;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  * {
+    @apply border-slate-700/50;
+  }
+}

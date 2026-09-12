@@ -16,10 +16,14 @@ __version__ = "1.0.0"
 
 
 def __getattr__(name: str) -> Any:
+    # Monorepo note: brain/ and config/ moved into packages/cognition and
+    # packages/core respectively. Import them absolutely via the bucket
+    # sys.path (see _ultrone_paths.ensure_on_syspath) instead of relative
+    # imports, which no longer resolve from the repo root.
     if name == "Orchestrator":
-        from .brain import Orchestrator as _Orchestrator
+        from brain.orchestrator import Orchestrator as _Orchestrator
         return _Orchestrator
     if name == "MilitaryConfig":
-        from .config import MilitaryConfig as _MilitaryConfig
+        from config import MilitaryConfig as _MilitaryConfig
         return _MilitaryConfig
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

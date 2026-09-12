@@ -5,6 +5,10 @@
 # them to a Hugging Face Space. The heavy research stack (torch,
 # transformers, ...) is deliberately NOT mirrored publicly.
 #
+# Monorepo note: agents/ sandbox/ data/ comms/ keep their original import
+# names but live in buckets (packages/agents, packages/cognition, data,
+# packages/transport); staging flattens them back to top level.
+#
 # One-time setup:
 #   1. Create an access token on huggingface.co (write scope).
 #   2. Add it as a GitHub secret named HF_TOKEN.
@@ -18,11 +22,11 @@ on:
   push:
     branches: [main]
     paths:
-      - "deploy/hf_space/**"
-      - "agents/**"
-      - "sandbox/**"
+      - "infra/deploy/hf_space/**"
+      - "packages/agents/agents/**"
+      - "packages/cognition/sandbox/**"
       - "data/**"
-      - "comms/**"
+      - "packages/transport/comms/**"
   workflow_dispatch:
 
 concurrency:
@@ -39,9 +43,12 @@ jobs:
       - name: Stage Space payload (demo + simulation packages only)
         run: |
           mkdir -p stage
-          cp deploy/hf_space/app.py deploy/hf_space/README.md \
-             deploy/hf_space/requirements.txt stage/
-          cp -r agents sandbox data comms stage/
+          cp infra/deploy/hf_space/app.py infra/deploy/hf_space/README.md \
+             infra/deploy/hf_space/requirements.txt stage/
+          cp -r packages/agents/agents stage/agents
+          cp -r packages/cognition/sandbox stage/sandbox
+          cp -r data stage/data
+          cp -r packages/transport/comms stage/comms
           find stage -name '__pycache__' -type d -prune -exec rm -rf {} +
           echo "Staged files:" && du -sh stage && find stage -maxdepth 1
 
