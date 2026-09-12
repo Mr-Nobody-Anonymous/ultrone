@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useWorldStore } from '../store/worldStore';
-import { GitFork, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { GitFork, ZoomIn, ZoomOut, RotateCcw, Network } from 'lucide-react';
 import type { Entity } from '../types/entity';
+import { RelationshipGraph } from '../components/features/graph/RelationshipGraph';
 
 interface GraphNode {
   id: string;
@@ -23,6 +24,7 @@ interface GraphLink {
 }
 
 export const OntologyGraph: React.FC = () => {
+  const [graphMode, setGraphMode] = useState<'structured' | 'force'>('structured');
   const entities = useWorldStore((s) => s.entities);
   const selectedEntity = useWorldStore((s) => s.selectedEntity);
   const selectEntity = useWorldStore((s) => s.selectEntity);
@@ -277,6 +279,30 @@ export const OntologyGraph: React.FC = () => {
     setDraggedNode(null);
   };
 
+  if (graphMode === 'structured') {
+    return (
+      <div className="relative h-full w-full flex flex-col">
+        <div className="absolute top-2.5 right-6 z-20 flex rounded border border-slate-700 bg-slate-900/90 backdrop-blur p-0.5 shadow-lg font-mono">
+          <button
+            onClick={() => setGraphMode('structured')}
+            className="flex items-center space-x-1.5 rounded px-2.5 py-1 text-[11px] font-bold uppercase bg-cyan-500 text-slate-950 transition-colors"
+          >
+            <Network className="h-3.5 w-3.5" />
+            <span>Structured (Palantir)</span>
+          </button>
+          <button
+            onClick={() => setGraphMode('force')}
+            className="flex items-center space-x-1.5 rounded px-2.5 py-1 text-[11px] font-medium uppercase text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            <GitFork className="h-3.5 w-3.5" />
+            <span>Force Canvas</span>
+          </button>
+        </div>
+        <RelationshipGraph />
+      </div>
+    );
+  }
+
   return (
     <div className="relative h-full w-full bg-slate-950 overflow-hidden font-mono select-none">
       <canvas
@@ -288,7 +314,7 @@ export const OntologyGraph: React.FC = () => {
         className="h-full w-full cursor-grab active:cursor-grabbing"
       />
 
-      {/* Top Banner */}
+      {/* Top Banner & Mode Toggle */}
       <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
         <div className="flex items-center gap-2 rounded-lg bg-slate-900/90 border border-slate-800 px-3 py-1.5 shadow-lg backdrop-blur">
           <GitFork className="w-4 h-4 text-ultrone-400" />
@@ -298,6 +324,23 @@ export const OntologyGraph: React.FC = () => {
           <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
             {entities.length} Nodes
           </span>
+        </div>
+
+        <div className="flex rounded border border-slate-800 bg-slate-900/90 backdrop-blur p-0.5 shadow-lg">
+          <button
+            onClick={() => setGraphMode('structured')}
+            className="flex items-center space-x-1.5 rounded px-2 py-1 text-[10px] font-medium uppercase text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            <Network className="h-3 w-3" />
+            <span>Structured (Palantir)</span>
+          </button>
+          <button
+            onClick={() => setGraphMode('force')}
+            className="flex items-center space-x-1.5 rounded px-2 py-1 text-[10px] font-bold uppercase bg-cyan-500 text-slate-950 transition-colors"
+          >
+            <GitFork className="h-3 w-3" />
+            <span>Force Canvas</span>
+          </button>
         </div>
       </div>
 
