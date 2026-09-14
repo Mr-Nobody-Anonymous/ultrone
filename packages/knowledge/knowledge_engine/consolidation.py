@@ -45,14 +45,20 @@ class KnowledgeConsolidation:
 
         Returns (kept_entries, report).
         """
-        duplicates = self.cross_reference.find_duplicates(entries, threshold=self.max_merge_similarity)
+        duplicates = self.cross_reference.find_duplicates(
+            entries, threshold=self.max_merge_similarity
+        )
         merged_ids = set()
         merged_entries: Dict[str, List[KnowledgeEntry]] = defaultdict(list)
 
         # Group duplicate pairs
         for entry_a, entry_b, score in duplicates:
             # Keep the higher-confidence one as "primary"
-            primary = entry_a if entry_a.confidence_score >= entry_b.confidence_score else entry_b
+            primary = (
+                entry_a
+                if entry_a.confidence_score >= entry_b.confidence_score
+                else entry_b
+            )
             secondary = entry_b if primary == entry_a else entry_a
             merged_ids.add(secondary.entry_id)
             merged_entries[primary.entry_id].append(secondary)
@@ -76,7 +82,9 @@ class KnowledgeConsolidation:
         }
         return kept, report
 
-    def _merge(self, primary: KnowledgeEntry, secondaries: List[KnowledgeEntry]) -> KnowledgeEntry:
+    def _merge(
+        self, primary: KnowledgeEntry, secondaries: List[KnowledgeEntry]
+    ) -> KnowledgeEntry:
         """Merge secondary entries into primary."""
         # Combine tags and entities
         all_tags = list(dict.fromkeys(primary.tags))

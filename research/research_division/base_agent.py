@@ -107,7 +107,10 @@ class ResearchAgent(ABC):
                 result = handler(message)
                 self._log_action(
                     "handle_message",
-                    {"message_id": message.message_id, "type": message.message_type.value},
+                    {
+                        "message_id": message.message_id,
+                        "type": message.message_type.value,
+                    },
                     result,
                 )
             except Exception as e:
@@ -116,7 +119,9 @@ class ResearchAgent(ABC):
     # ------------------------------------------------------------------
     # Logging
     # ------------------------------------------------------------------
-    def _log_action(self, action: str, details: Dict[str, Any] = None, result: Any = None) -> None:
+    def _log_action(
+        self, action: str, details: Dict[str, Any] = None, result: Any = None
+    ) -> None:
         """Log every agent action with timestamp."""
         self.actions_taken += 1
         entry = {
@@ -125,7 +130,11 @@ class ResearchAgent(ABC):
             "role": self.role.value,
             "action": action,
             "details": details or {},
-            "result": result if isinstance(result, (dict, list, str, int, float, bool, type(None))) else str(result),
+            "result": (
+                result
+                if isinstance(result, (dict, list, str, int, float, bool, type(None)))
+                else str(result)
+            ),
         }
         self.log.append(entry)
         logger.debug("[%s] %s: %s", self.agent_id, action, details)

@@ -24,7 +24,9 @@ class QualityReviewer(ResearchAgent):
             role=ResearchAgentRole.REVIEWER,
             **kwargs,
         )
-        self.message_handlers[MessageType.RESEARCH_QUALITY_REVIEW] = self._on_review_request
+        self.message_handlers[MessageType.RESEARCH_QUALITY_REVIEW] = (
+            self._on_review_request
+        )
 
     async def run(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Review all completed experiments and generated code."""
@@ -41,7 +43,9 @@ class QualityReviewer(ResearchAgent):
     def _on_review_request(self, message: Any) -> Any:
         """Handle review request events."""
         experiment_id = message.content.get("experiment_id")
-        experiment = self.research_db.get_experiment(experiment_id) if experiment_id else None
+        experiment = (
+            self.research_db.get_experiment(experiment_id) if experiment_id else None
+        )
         if experiment:
             return self._review_experiment(experiment)
         return None
@@ -92,5 +96,7 @@ class QualityReviewer(ResearchAgent):
             metadata={"experiment_id": experiment.experiment_id, "review": review},
         )
 
-        self._log_action("experiment_reviewed", {"experiment_id": experiment.experiment_id}, review)
+        self._log_action(
+            "experiment_reviewed", {"experiment_id": experiment.experiment_id}, review
+        )
         return review

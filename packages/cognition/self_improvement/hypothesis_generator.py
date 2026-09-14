@@ -19,7 +19,9 @@ class HypothesisGenerator:
     def __init__(self):
         self._hypotheses: List[Dict[str, Any]] = []
 
-    def generate_from_weaknesses(self, weaknesses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def generate_from_weaknesses(
+        self, weaknesses: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Generate hypotheses from identified weaknesses."""
         hypotheses = []
         for weakness in weaknesses:

@@ -24,7 +24,9 @@ class CitationManager(ResearchAgent):
             role=ResearchAgentRole.CITATION_MANAGER,
             **kwargs,
         )
-        self.message_handlers[MessageType.RESEARCH_CITATION_ADDED] = self._on_citation_added
+        self.message_handlers[MessageType.RESEARCH_CITATION_ADDED] = (
+            self._on_citation_added
+        )
 
     async def run(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Index citations from all papers in the research database."""
@@ -57,7 +59,9 @@ class CitationManager(ResearchAgent):
             authors=paper.authors,
             venue=paper.venue,
             year=(
-                int(paper.publication_date[:4]) if paper.publication_date and len(paper.publication_date) >= 4 else None
+                int(paper.publication_date[:4])
+                if paper.publication_date and len(paper.publication_date) >= 4
+                else None
             ),
             doi=paper.doi,
             arxiv_id=paper.arxiv_id,

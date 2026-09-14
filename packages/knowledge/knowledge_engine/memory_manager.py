@@ -106,7 +106,9 @@ class KnowledgeMemoryManager:
             vector_memory=self.vector_memory,
             knowledge_graph=self.knowledge_graph,
         )
-        self.consolidation = KnowledgeConsolidation(cross_reference=self.cross_reference)
+        self.consolidation = KnowledgeConsolidation(
+            cross_reference=self.cross_reference
+        )
 
         # Track all entries globally
         self._all_entries: Dict[str, KnowledgeEntry] = {}
@@ -141,7 +143,9 @@ class KnowledgeMemoryManager:
 
         # Entity linking registration
         if self.enable_entity_linking:
-            self.entity_linker.register_entity(stored.entry_id, stored.content[:50], aliases=stored.tags[:5])
+            self.entity_linker.register_entity(
+                stored.entry_id, stored.content[:50], aliases=stored.tags[:5]
+            )
 
         # RAG registration
         if self.enable_rag:
@@ -233,7 +237,9 @@ class KnowledgeMemoryManager:
     # ------------------------------------------------------------------
     # Unified recall
     # ------------------------------------------------------------------
-    def recall(self, query: str, limit: int = 10, layer: Optional[str] = None) -> List[KnowledgeEntry]:
+    def recall(
+        self, query: str, limit: int = 10, layer: Optional[str] = None
+    ) -> List[KnowledgeEntry]:
         """Recall entries from layers (optionally filtered)."""
         if layer:
             layer_obj = self._layers.get(layer)
@@ -246,11 +252,15 @@ class KnowledgeMemoryManager:
         results.sort(key=lambda e: e.confidence_score, reverse=True)
         return results[:limit]
 
-    def semantic_search(self, query: str, limit: int = 10) -> List[Tuple[KnowledgeEntry, float]]:
+    def semantic_search(
+        self, query: str, limit: int = 10
+    ) -> List[Tuple[KnowledgeEntry, float]]:
         """Vector-based semantic search across all indexed entries."""
         if not self.enable_vector:
             return []
-        return self.vector_memory.search_with_entries(query, self._all_entries, limit=limit)
+        return self.vector_memory.search_with_entries(
+            query, self._all_entries, limit=limit
+        )
 
     def graph_search(self, query: str, limit: int = 10) -> List[KnowledgeEntry]:
         """Search via knowledge graph traversal."""
@@ -259,7 +269,9 @@ class KnowledgeMemoryManager:
         # Find nodes matching query
         matching_nodes = []
         for node in self.knowledge_graph._nodes.values():
-            if query.lower() in node.label.lower() or query.lower() in " ".join(node.properties.get("tags", [])):
+            if query.lower() in node.label.lower() or query.lower() in " ".join(
+                node.properties.get("tags", [])
+            ):
                 matching_nodes.append(node)
         # Get related entries
         result = []
@@ -274,7 +286,9 @@ class KnowledgeMemoryManager:
                     result.append(entry)
         return result[:limit]
 
-    def rag_retrieve(self, query: str, limit: int = 5) -> List[Tuple[KnowledgeEntry, float]]:
+    def rag_retrieve(
+        self, query: str, limit: int = 5
+    ) -> List[Tuple[KnowledgeEntry, float]]:
         """RAG-based hybrid retrieval."""
         if not self.enable_rag:
             return []
@@ -308,7 +322,12 @@ class KnowledgeMemoryManager:
     ) -> bool:
         """Add a graph edge. Returns True on success."""
         return (
-            self.knowledge_graph.add_edge(source_id, target_id, edge_type=edge_type, confidence_score=confidence_score)
+            self.knowledge_graph.add_edge(
+                source_id,
+                target_id,
+                edge_type=edge_type,
+                confidence_score=confidence_score,
+            )
             is not None
         )
 

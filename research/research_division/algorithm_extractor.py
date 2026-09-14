@@ -26,7 +26,9 @@ class AlgorithmExtractor(ResearchAgent):
             role=ResearchAgentRole.EXTRACTOR,
             **kwargs,
         )
-        self.message_handlers[MessageType.RESEARCH_PAPER_ANALYZED] = self._on_paper_analyzed
+        self.message_handlers[MessageType.RESEARCH_PAPER_ANALYZED] = (
+            self._on_paper_analyzed
+        )
 
     async def run(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         paper_ids = kwargs.get("paper_ids")

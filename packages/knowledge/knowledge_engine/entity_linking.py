@@ -96,7 +96,9 @@ class EntityLinker:
             result[entry.entry_id] = [eid for eid, _, _ in linked]
         return result
 
-    def disambiguate(self, mention: str, context: str = "") -> Optional[Tuple[str, float]]:
+    def disambiguate(
+        self, mention: str, context: str = ""
+    ) -> Optional[Tuple[str, float]]:
         """Resolve a single mention with optional context to best entity."""
         candidates = self.link_text(mention + " " + context)
         if not candidates:

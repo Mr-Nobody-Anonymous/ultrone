@@ -46,8 +46,11 @@ class SelectedExperiences:
     uncertain: List[OrchestrationTrace] = field(default_factory=list)
 
     def counts(self) -> Dict[str, int]:
-        return {"good": len(self.good), "bad": len(self.bad),
-                "uncertain": len(self.uncertain)}
+        return {
+            "good": len(self.good),
+            "bad": len(self.bad),
+            "uncertain": len(self.uncertain),
+        }
 
     def weakness_profile(self) -> Dict[str, float]:
         """Mean demand vector over FAILED work -- what to practice.
@@ -58,8 +61,13 @@ class SelectedExperiences:
         if not self.bad:
             return {}
         profiles = [t.task_profile for t in self.bad]
-        keys = ("difficulty", "reasoning_depth", "context_requirement",
-                "tool_requirement", "latency_sensitivity")
+        keys = (
+            "difficulty",
+            "reasoning_depth",
+            "context_requirement",
+            "tool_requirement",
+            "latency_sensitivity",
+        )
         out: Dict[str, float] = {}
         for key in keys:
             values = [getattr(p, key) for p in profiles]
@@ -72,12 +80,13 @@ class SelectedExperiences:
 class ExperienceSelector:
     """Deterministic three-way splitter over orchestration traces."""
 
-    def __init__(self,
-                 good_floor: float = GOOD_QUALITY_FLOOR,
-                 bad_ceiling: float = BAD_QUALITY_CEILING) -> None:
+    def __init__(
+        self,
+        good_floor: float = GOOD_QUALITY_FLOOR,
+        bad_ceiling: float = BAD_QUALITY_CEILING,
+    ) -> None:
         if not 0.0 <= bad_ceiling <= good_floor <= 1.0:
-            raise ValueError(
-                "require 0 <= bad_ceiling <= good_floor <= 1")
+            raise ValueError("require 0 <= bad_ceiling <= good_floor <= 1")
         self.good_floor = float(good_floor)
         self.bad_ceiling = float(bad_ceiling)
 

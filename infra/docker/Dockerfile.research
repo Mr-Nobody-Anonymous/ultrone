@@ -1,4 +1,4 @@
-﻿# ULTRONE Research Platform Dockerfile
+# ULTRONE Research Platform Dockerfile
 # Multi-stage build for the autonomous research platform
 
 FROM python:3.11-slim as base
@@ -31,8 +31,13 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
     CMD python -c "from knowledge_engine import KnowledgeMemoryManager; print('healthy')" || exit 1
 
-# Default command: run the research platform API
-CMD ["python", "-m", "uvicorn", "backend.api.v1:app", "--host", "0.0.0.0", "--port", "8000"]
-
-# Research platform entry point
-ENTRYPOINT ["python"]
+# Default command: run the research platform API.
+# NOTE: no ENTRYPOINT is set on purpose. An ENTRYPOINT of ["python"] would be
+# prepended to every `docker run ... <args>` invocation, turning the CI smoke
+# test's `python -c ...` into `python python -c ...` (and this CMD into
+# `python python -m uvicorn ...`). The app module is ultron.server:app -- the
+# documented, tested FastAPI app (see docs/ultron and tests/test_server.py).
+# Like upstream Ultron, serving traffic needs the documented runtime embedding
+# backend (dashscope/openai/local + API keys); the image build and the CI
+# knowledge_engine smoke test do not.
+CMD ["python", "-m", "uvicorn", "ultron.server:app", "--host", "0.0.0.0", "--port", "8000"]

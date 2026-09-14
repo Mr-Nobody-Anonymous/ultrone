@@ -50,9 +50,15 @@ class SourceClient:
     BASE_URL: str = ""
     ALLOWED_CONTENT_TYPES: List[str] = ["application/json"]
     TRUSTED_LICENSES: List[str] = [
-        "mit", "apache-2.0", "bsd-3-clause", "bsd-2-clause",
-        "cc-by-4.0", "cc-by-sa-4.0", "cc0-1.0",
-        "apache-2.0", "mpl-2.0",
+        "mit",
+        "apache-2.0",
+        "bsd-3-clause",
+        "bsd-2-clause",
+        "cc-by-4.0",
+        "cc-by-sa-4.0",
+        "cc0-1.0",
+        "apache-2.0",
+        "mpl-2.0",
     ]
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
@@ -201,13 +207,24 @@ class ArxivClient(SourceClient):
         deduplicated by content hash.
         """
         seeds = [
-            ("Mixture of Experts: Training Sparse Networks",
-             ["Shazeer et al."], "arXiv:1701.06538",
-             "We propose a mixture of experts layer that activates only a subset of experts."),
-            ("Attention Is All You Need", ["Vaswani et al."], "arXiv:1706.03762",
-             "We propose a new simple layer that replaces recurrence with attention."),
-            ("Language Models are Few-Shot Learners", ["Brown et al."], "arXiv:2005.14165",
-             "We demonstrate state-of-the-art performance on language understanding tasks."),
+            (
+                "Mixture of Experts: Training Sparse Networks",
+                ["Shazeer et al."],
+                "arXiv:1701.06538",
+                "We propose a mixture of experts layer that activates only a subset of experts.",
+            ),
+            (
+                "Attention Is All You Need",
+                ["Vaswani et al."],
+                "arXiv:1706.03762",
+                "We propose a new simple layer that replaces recurrence with attention.",
+            ),
+            (
+                "Language Models are Few-Shot Learners",
+                ["Brown et al."],
+                "arXiv:2005.14165",
+                "We demonstrate state-of-the-art performance on language understanding tasks.",
+            ),
         ]
         papers = []
         for title, authors, arxiv_id, summary in seeds:
@@ -217,21 +234,27 @@ class ArxivClient(SourceClient):
             self._seen_hashes.add(content_hash)
             # Always include the first seed (guaranteed discovery) and
             # additional seeds if they match the query
-            if len(papers) == 0 or query.lower() in title.lower() or query.lower() in summary.lower()[:50]:
-                papers.append(PaperRecord(
-                    title=title,
-                    authors=authors,
-                    venue="arXiv",
-                    arxiv_id=arxiv_id,
-                    abstract=summary,
-                    metadata={
-                        "source": "arxiv_synthetic",
-                        "published": "2024-01-01",
-                        "license": "arxiv-standard",
-                        "synthetic": True,
-                    },
-                    confidence_score=0.6,
-                ))
+            if (
+                len(papers) == 0
+                or query.lower() in title.lower()
+                or query.lower() in summary.lower()[:50]
+            ):
+                papers.append(
+                    PaperRecord(
+                        title=title,
+                        authors=authors,
+                        venue="arXiv",
+                        arxiv_id=arxiv_id,
+                        abstract=summary,
+                        metadata={
+                            "source": "arxiv_synthetic",
+                            "published": "2024-01-01",
+                            "license": "arxiv-standard",
+                            "synthetic": True,
+                        },
+                        confidence_score=0.6,
+                    )
+                )
         return papers[:max_results]
 
     def _extract_license(self, entry: Any) -> str:
@@ -267,7 +290,11 @@ class SemanticScholarClient(SourceClient):
             papers = []
             for item in data.get("data", [])[:max_results]:
                 content = item.get("abstract", "")
-                if not content or not self._validate_content(content) or self._is_duplicate(content):
+                if (
+                    not content
+                    or not self._validate_content(content)
+                    or self._is_duplicate(content)
+                ):
                     continue
                 paper = PaperRecord(
                     title=item.get("title", ""),
@@ -278,7 +305,8 @@ class SemanticScholarClient(SourceClient):
                     metadata={
                         "source": "semantic_scholar",
                         "year": item.get("year", ""),
-                        "license": "semanticscholar-" + str(item.get("openAccess", {}).get("status", "unknown")),
+                        "license": "semanticscholar-"
+                        + str(item.get("openAccess", {}).get("status", "unknown")),
                     },
                     confidence_score=0.9,
                 )
@@ -292,31 +320,40 @@ class SemanticScholarClient(SourceClient):
 
     def _synthetic_results(self, query: str, max_results: int) -> List[PaperRecord]:
         seeds = [
-            ("Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
-             ["Lewis et al."], "",
-             "We describe a retrieval-augmented language model that combines a large pre-trained knowledge database."),
-            ("Chain-of-Thought Prompting Elicits Reasoning in Large Language Models",
-             ["Wei et al."], "",
-             "We show that chain-of-thought prompting improves reasoning in large language models."),
+            (
+                "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+                ["Lewis et al."],
+                "",
+                "We describe a retrieval-augmented language model that combines "
+                "a large pre-trained knowledge database.",
+            ),
+            (
+                "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models",
+                ["Wei et al."],
+                "",
+                "We show that chain-of-thought prompting improves reasoning in large language models.",
+            ),
         ]
         papers = []
         for title, authors, arxiv_id, summary in seeds:
             if len(papers) == 0 or query.lower() in title.lower()[:50]:
                 if self._is_duplicate(summary):
                     continue
-                papers.append(PaperRecord(
-                    title=title,
-                    authors=authors,
-                    venue="Semantic Scholar",
-                    abstract=summary,
-                    arxiv_id=arxiv_id,
-                    metadata={
-                        "source": "semantic_scholar_synthetic",
-                        "year": 2024,
-                        "license": "researchgate-open-access",
-                    },
-                    confidence_score=0.5,
-                ))
+                papers.append(
+                    PaperRecord(
+                        title=title,
+                        authors=authors,
+                        venue="Semantic Scholar",
+                        abstract=summary,
+                        arxiv_id=arxiv_id,
+                        metadata={
+                            "source": "semantic_scholar_synthetic",
+                            "year": 2024,
+                            "license": "researchgate-open-access",
+                        },
+                        confidence_score=0.5,
+                    )
+                )
         return papers[:max_results]
 
 
@@ -345,7 +382,11 @@ class HuggingFaceClient(SourceClient):
             papers = []
             for item in data[:max_results]:
                 content = item.get("description", "")
-                if not content or not self._validate_content(content) or self._is_duplicate(content):
+                if (
+                    not content
+                    or not self._validate_content(content)
+                    or self._is_duplicate(content)
+                ):
                     continue
                 paper = PaperRecord(
                     title=item.get("id", ""),
@@ -369,27 +410,39 @@ class HuggingFaceClient(SourceClient):
 
     def _synthetic_results(self, query: str, max_results: int) -> List[PaperRecord]:
         seeds = [
-            ("transformers", "State-of-the-art machine learning models for NLP.",
-             ["huggingface"], "Hugging Face", "apache-2.0"),
-            ("diffusers", "Machine learning toolkit for diffusion models.",
-             ["huggingface"], "Hugging Face", "apache-2.0"),
+            (
+                "transformers",
+                "State-of-the-art machine learning models for NLP.",
+                ["huggingface"],
+                "Hugging Face",
+                "apache-2.0",
+            ),
+            (
+                "diffusers",
+                "Machine learning toolkit for diffusion models.",
+                ["huggingface"],
+                "Hugging Face",
+                "apache-2.0",
+            ),
         ]
         papers = []
         for title, summary, authors, venue, license_val in seeds:
             if len(papers) == 0 or query.lower() in title.lower():
                 if self._is_duplicate(summary):
                     continue
-                papers.append(PaperRecord(
-                    title=title,
-                    authors=authors,
-                    venue=venue,
-                    abstract=summary,
-                    metadata={
-                        "source": "huggingface_synthetic",
-                        "license": license_val,
-                    },
-                    confidence_score=0.5,
-                ))
+                papers.append(
+                    PaperRecord(
+                        title=title,
+                        authors=authors,
+                        venue=venue,
+                        abstract=summary,
+                        metadata={
+                            "source": "huggingface_synthetic",
+                            "license": license_val,
+                        },
+                        confidence_score=0.5,
+                    )
+                )
         return papers[:max_results]
 
 
@@ -430,8 +483,14 @@ class ResearchScout(ResearchAgent):
         self._clients: Dict[str, SourceClient] = {}
         self._domain_allowlist: List[str] = self.config.get(
             "domain_allowlist",
-            ["arxiv.org", "semanticscholar.org", "huggingface.co",
-             "paperswithcode.com", "openreview.net", "github.com"],
+            [
+                "arxiv.org",
+                "semanticscholar.org",
+                "huggingface.co",
+                "paperswithcode.com",
+                "openreview.net",
+                "github.com",
+            ],
         )
 
     def _get_client(self, source: str) -> Optional[SourceClient]:
@@ -468,7 +527,9 @@ class ResearchScout(ResearchAgent):
                     papers = self._scan_source(source, max_papers)
                     discovered.extend(papers)
             except Exception as e:
-                self._log_action("scan_error", {"source": source, "error": str(e)}, None)
+                self._log_action(
+                    "scan_error", {"source": source, "error": str(e)}, None
+                )
 
         # Store and publish discoveries
         stored_ids = []
@@ -564,7 +625,11 @@ class ResearchScout(ResearchAgent):
                 title=info["title"],
                 venue=info["venue"],
                 arxiv_id="",
-                metadata={"source": source, "synthetic": True, "license": info["license"]},
+                metadata={
+                    "source": source,
+                    "synthetic": True,
+                    "license": info["license"],
+                },
                 confidence_score=0.5,
             )
             return [paper]

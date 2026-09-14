@@ -37,7 +37,11 @@ class EpisodicKnowledgeMemory(KnowledgeMemoryBase):
             content=description,
             category=self._category_for_event(event_type),
             source=KnowledgeSource.EXPERIMENT,
-            confidence=ConfidenceLevel.HIGH if confidence_score >= 0.7 else ConfidenceLevel.MEDIUM,
+            confidence=(
+                ConfidenceLevel.HIGH
+                if confidence_score >= 0.7
+                else ConfidenceLevel.MEDIUM
+            ),
             confidence_score=confidence_score,
             tags=["episodic", event_type] + (["outcome:" + outcome] if outcome else []),
             metadata=metadata or {},

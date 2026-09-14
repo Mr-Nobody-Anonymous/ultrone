@@ -108,7 +108,11 @@ class CitationDatabase:
         return self._citations.get(cid) if cid else None
 
     def find_by_author(self, author: str) -> List[Citation]:
-        return [c for c in self._citations.values() if any(a.lower() == author.lower() for a in c.authors)]
+        return [
+            c
+            for c in self._citations.values()
+            if any(a.lower() == author.lower() for a in c.authors)
+        ]
 
     def find_by_venue(self, venue: str) -> List[Citation]:
         v = venue.lower()
@@ -139,7 +143,9 @@ class CitationDatabase:
             "type": "CitationDatabase",
             "name": self.name,
             "citations": len(self._citations),
-            "total_references": sum(len(c.references) for c in self._citations.values()),
+            "total_references": sum(
+                len(c.references) for c in self._citations.values()
+            ),
         }
 
     def to_dict(self) -> Dict[str, Any]:

@@ -16,10 +16,14 @@ on:
       - "simulation/sim/fault_injection.py"
 
 # Monorepo: packages keep their original import names but live in buckets
-# (see _ultrone_paths.py). PYTHONPATH exposes every bucket to pytest and the
-# ``python -m benchmarks.canonical`` entry point.
-env:
-  PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/apps:${{ github.workspace }}/packages/core:${{ github.workspace }}/research:${{ github.workspace }}/simulation
+# (see _ultrone_paths.py). NOTE: PYTHONPATH is intentionally NOT set globally
+# here. A workflow-level PYTHONPATH is exported into *every* step, including
+# `pip install` itself; any bucket entry that shadows a stdlib module then
+# breaks pip before tests even start. It is set per-step below, only on the
+# steps that import repo code — and it must list EVERY bucket: the
+# ``python -m benchmarks.canonical`` entry point does not read pytest.ini, so
+# anything missing here (e.g. packages/cognition providing ``brain``) fails
+# with ModuleNotFoundError.
 
 jobs:
   benchmark-regression:
@@ -35,7 +39,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install numpy pytest
       - name: Run HITL lifecycle + fault injection tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/apps:${{ github.workspace }}/packages/core:${{ github.workspace }}/packages/cognition:${{ github.workspace }}/packages/agents:${{ github.workspace }}/packages/knowledge:${{ github.workspace }}/packages/orchestration:${{ github.workspace }}/packages/runtime:${{ github.workspace }}/packages/safety:${{ github.workspace }}/packages/observability:${{ github.workspace }}/packages/transport:${{ github.workspace }}/research:${{ github.workspace }}/simulation:${{ github.workspace }}/vendor:${{ github.workspace }}/data
         run: |
           python -m pytest tests/test_hitl_lifecycle.py tests/test_fault_injection.py tests/test_core_pipeline.py tests/test_audit_store.py -q
       - name: Canonical benchmark regression gate (fails on regression)
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/apps:${{ github.workspace }}/packages/core:${{ github.workspace }}/packages/cognition:${{ github.workspace }}/packages/agents:${{ github.workspace }}/packages/knowledge:${{ github.workspace }}/packages/orchestration:${{ github.workspace }}/packages/runtime:${{ github.workspace }}/packages/safety:${{ github.workspace }}/packages/observability:${{ github.workspace }}/packages/transport:${{ github.workspace }}/research:${{ github.workspace }}/simulation:${{ github.workspace }}/vendor:${{ github.workspace }}/data
         run: python -m benchmarks.canonical --output results.json

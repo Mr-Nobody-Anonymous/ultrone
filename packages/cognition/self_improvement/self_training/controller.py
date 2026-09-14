@@ -22,13 +22,11 @@ dataset, hence no candidate, hence no promotion.
 
 from __future__ import annotations
 
-import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from orchestration.router import Orchestrator, RoutingPolicy
-from orchestration.task_classifier import TaskProfile
 from orchestration.traces import TraceLog
 
 from self_improvement.self_training.checkpoint import (
@@ -69,8 +67,8 @@ from self_improvement.self_training.trainer import (
 
 
 def synthesize_weakness_examples(
-        weakness: Dict[str, float],
-        count: int = 2) -> List[Dict[str, Any]]:
+    weakness: Dict[str, float], count: int = 2
+) -> List[Dict[str, Any]]:
     """Targeted practice: examples on exactly what failed recently.
 
     Weakness profile comes from the selector's bad bucket; each
@@ -83,24 +81,24 @@ def synthesize_weakness_examples(
     domains = (weakness.get("domains") or "analysis").split(",")
     examples = []
     for index in range(count):
-        examples.append({
-            "example_id": f"synthetic-weak-{index}",
-            "input": {
-                "domain": domains[index % len(domains)],
-                "difficulty": weakness.get("difficulty", 0.5),
-                "reasoning_depth": weakness.get("reasoning_depth", 0.5),
-                "context_requirement": weakness.get(
-                    "context_requirement", 0.3),
-                "tool_requirement": weakness.get("tool_requirement", 0.0),
-                "latency_sensitivity": weakness.get(
-                    "latency_sensitivity", 0.2),
-                "privacy_required": False,
-                "summary": "targeted weakness practice",
-            },
-            "context": {},
-            "desired_behavior": {"accepted": True},
-            "outcome_score": 0.60,
-        })
+        examples.append(
+            {
+                "example_id": f"synthetic-weak-{index}",
+                "input": {
+                    "domain": domains[index % len(domains)],
+                    "difficulty": weakness.get("difficulty", 0.5),
+                    "reasoning_depth": weakness.get("reasoning_depth", 0.5),
+                    "context_requirement": weakness.get("context_requirement", 0.3),
+                    "tool_requirement": weakness.get("tool_requirement", 0.0),
+                    "latency_sensitivity": weakness.get("latency_sensitivity", 0.2),
+                    "privacy_required": False,
+                    "summary": "targeted weakness practice",
+                },
+                "context": {},
+                "desired_behavior": {"accepted": True},
+                "outcome_score": 0.60,
+            }
+        )
     return examples
 
 
@@ -127,38 +125,40 @@ class CycleReport:
             "selected": self.selected.counts() if self.selected else {},
             "dataset": self.dataset.to_dict() if self.dataset else None,
             "mixture": self.mixture.to_dict() if self.mixture else None,
-            "candidate_hash": (self.candidate.model_hash
-                               if self.candidate else None),
-            "regression_passed": (self.regression.passed
-                                  if self.regression else None),
-            "promotion": {"decision": self.promotion.decision,
-                          "reason": self.promotion.reason}
-            if self.promotion else None,
-            "checkpoint": self.checkpoint.model_id
-            if self.checkpoint else None,
-            "curriculum": self.curriculum.to_dict()
-            if self.curriculum else None,
+            "candidate_hash": (self.candidate.model_hash if self.candidate else None),
+            "regression_passed": (self.regression.passed if self.regression else None),
+            "promotion": (
+                {"decision": self.promotion.decision, "reason": self.promotion.reason}
+                if self.promotion
+                else None
+            ),
+            "checkpoint": self.checkpoint.model_id if self.checkpoint else None,
+            "curriculum": self.curriculum.to_dict() if self.curriculum else None,
         }
 
 
 #: Fresh starter weights (deliberately inconsistent so tasks vary).
-_DEFAULT_STARTER = LearnedWeights(values={
-    "reasoning": 0.52, "coding": 0.56, "retrieval": 0.46,
-    "tool_use": 0.58})
+_DEFAULT_STARTER = LearnedWeights(
+    values={"reasoning": 0.52, "coding": 0.56, "retrieval": 0.46, "tool_use": 0.58}
+)
 
 
 class SelfTrainingController:
     """Closed loop: generate, learn, validate, promote -- never freely."""
 
-    def __init__(self, *, workdir: str = "self_improvement/self_training",
-                 policy: Optional[RoutingPolicy] = None,
-                 starter: Optional[LearnedWeights] = None,
-                 batch: int = 8,
-                 good_floor: float = 0.50,
-                 prior_strength: float = 2.0,
-                 margin: float = 0.01,
-                 min_good_examples: int = 3,
-                 desired_ceiling: float = 0.85) -> None:
+    def __init__(
+        self,
+        *,
+        workdir: str = "self_improvement/self_training",
+        policy: Optional[RoutingPolicy] = None,
+        starter: Optional[LearnedWeights] = None,
+        batch: int = 8,
+        good_floor: float = 0.50,
+        prior_strength: float = 2.0,
+        margin: float = 0.01,
+        min_good_examples: int = 3,
+        desired_ceiling: float = 0.85,
+    ) -> None:
         self.policy = policy or RoutingPolicy()
         self._workdir = Path(workdir)
         self._workdir.mkdir(parents=True, exist_ok=True)
@@ -174,11 +174,11 @@ class SelfTrainingController:
         brain = None
         try:
             from adaptive.promotion import BrainStore
+
             brain = BrainStore(storage_dir=str(self._workdir / "brain"))
-        except ImportError:               # pragma: no cover
+        except ImportError:  # pragma: no cover
             pass
-        self.promoter = Promoter(holdout=families["unseen"],
-                                 margin=margin, brain=brain)
+        self.promoter = Promoter(holdout=families["unseen"], margin=margin, brain=brain)
         self.batch = int(batch)
         self._starter = starter or _DEFAULT_STARTER
         self._desired_ceiling = float(desired_ceiling)
@@ -187,40 +187,46 @@ class SelfTrainingController:
         self._historical: Optional[DatasetArtifact] = None
 
     # -- the loop -------------------------------------------------------- #
-    def run_cycle(self, cycle: int, *,
-                  baseline: Optional[LearnedWeights] = None) -> CycleReport:
+    def run_cycle(
+        self, cycle: int, *, baseline: Optional[LearnedWeights] = None
+    ) -> CycleReport:
         current = baseline or self._current_model()
         profiles = self.curriculum.tasks(self.batch)
         outcomes, traces = self._execute(profiles, current, cycle)
 
-        mean_utility = (sum(o.score for o in outcomes) / len(outcomes)
-                        if outcomes else 0.0)
+        mean_utility = (
+            sum(o.score for o in outcomes) / len(outcomes) if outcomes else 0.0
+        )
         selected = self.selector.select(traces)
-        decision = self.scheduler.decide(
-            len(selected.good), recent_rejected=0)
-        outcome = CycleReport(cycle=cycle, decision=decision,
-                              mean_utility=round(float(mean_utility), 6),
-                              selected=selected)
+        decision = self.scheduler.decide(len(selected.good), recent_rejected=0)
+        outcome = CycleReport(
+            cycle=cycle,
+            decision=decision,
+            mean_utility=round(float(mean_utility), 6),
+            selected=selected,
+        )
         if not decision.should_train:
             return outcome
 
         dataset = self.builder.build_from_traces(
-            selected.good, tag=f"cycle-{cycle}",
-            desired_ceiling=self._desired_ceiling)
+            selected.good, tag=f"cycle-{cycle}", desired_ceiling=self._desired_ceiling
+        )
         weakness = selected.weakness_profile()
         synthesized = synthesize_weakness_examples(weakness)
         mixture = self.mixture_ratios.merge(
-            self._historical, dataset, synthesized,
+            self._historical,
+            dataset,
+            synthesized,
             workdir=str(self._workdir / "mixtures"),
-            tag=f"cycle-{cycle}")
+            tag=f"cycle-{cycle}",
+        )
         self._historical = mixture
         if mixture is None:
-            return outcome                   # no usable signal this cycle
+            return outcome  # no usable signal this cycle
 
         candidate = self.trainer.fit(mixture.load(), current).weights
         regression = self.suite.run(candidate, current)
-        promotion = self.promoter.run(candidate, current, regression,
-                                      persist=True)
+        promotion = self.promoter.run(candidate, current, regression, persist=True)
 
         checkpoint: Optional[ModelRecord] = None
         parent = self.checkpoints.production()
@@ -231,9 +237,11 @@ class SelfTrainingController:
                 configuration_hash=candidate.to_config()["kind"],
                 training_seed=str(cycle),
                 parent_model=parent.model_id if parent else "",
-                duration_seconds=0.0)
-            scores = {family: rep.mean_delta
-                      for family, rep in regression.families.items()}
+                duration_seconds=0.0,
+            )
+            scores = {
+                family: rep.mean_delta for family, rep in regression.families.items()
+            }
             self.checkpoints.evaluate(checkpoint.model_id, scores)
             self.checkpoints.promote(checkpoint.model_id)
 
@@ -250,8 +258,7 @@ class SelfTrainingController:
     def _execute(self, profiles, current, cycle):
         """Run every profile under the current model; return outcomes+traces."""
         log = TraceLog(self._traces_dir / f"cycle-{cycle}.jsonl")
-        orchestrator = Orchestrator(self.policy,
-                                    executor=make_executor(current))
+        orchestrator = Orchestrator(self.policy, executor=make_executor(current))
         outcomes = orchestrator.run_many(profiles, trace_log=log)
         return outcomes, log.load()
 

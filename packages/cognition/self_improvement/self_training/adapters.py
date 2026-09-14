@@ -54,10 +54,11 @@ class TestModelAdapter(ModelAdapter):
         self.name = name
 
     def generate(self, prompt: str, *, context: str = "") -> ModelOutput:
-        digest = hashlib.sha256(
-            f"{prompt}\n\x1f{context}".encode("utf-8")).hexdigest()
-        return ModelOutput(text=f"answer:{digest[:12]}",
-                           meta={"adapter": self.name, "sha8": digest[:8]})
+        digest = hashlib.sha256(f"{prompt}\n\x1f{context}".encode("utf-8")).hexdigest()
+        return ModelOutput(
+            text=f"answer:{digest[:12]}",
+            meta={"adapter": self.name, "sha8": digest[:8]},
+        )
 
     # Tell pytest this is an implementation class, not a test collection
     # (it is imported into test namespaces).
@@ -70,20 +71,21 @@ class TestModelAdapter(ModelAdapter):
 class HostedModelAdapter(ModelAdapter):
     """Bridges an externally supplied endpoint callable."""
 
-    def __init__(self, endpoint: Callable[..., str],
-                 name: str = "hosted-model") -> None:
+    def __init__(
+        self, endpoint: Callable[..., str], name: str = "hosted-model"
+    ) -> None:
         if endpoint is None:
-            raise ValueError("hosted adapters require an endpoint "
-                             "callable")
+            raise ValueError("hosted adapters require an endpoint " "callable")
         self._endpoint = endpoint
         self.name = name
 
     def generate(self, prompt: str, *, context: str = "") -> ModelOutput:
-        text = self._endpoint(prompt, context=context) \
-            if _accepts_context(self._endpoint) \
+        text = (
+            self._endpoint(prompt, context=context)
+            if _accepts_context(self._endpoint)
             else self._endpoint(prompt)
-        return ModelOutput(text=str(text),
-                           meta={"adapter": self.name})
+        )
+        return ModelOutput(text=str(text), meta={"adapter": self.name})
 
     def describe(self) -> Dict[str, Any]:
         return {"name": self.name, "kind": "hosted"}
@@ -92,9 +94,13 @@ class HostedModelAdapter(ModelAdapter):
 class LocalModelAdapter(ModelAdapter):
     """Real local transformers generation; weights load lazily."""
 
-    def __init__(self, model_id: str, *,
-                 device: str = "cpu",
-                 gen_kwargs: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(
+        self,
+        model_id: str,
+        *,
+        device: str = "cpu",
+        gen_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> None:
         if not model_id:
             raise ValueError("local adapters require a model_id")
         self.model_id = model_id
@@ -106,38 +112,47 @@ class LocalModelAdapter(ModelAdapter):
     def load(self) -> "LocalModelAdapter":
         try:
             from transformers import pipeline
-        except ImportError as exc:              # pragma: no cover
+        except ImportError as exc:  # pragma: no cover
             raise RuntimeError(
                 "transformers is required for LocalModelAdapter; "
-                "install it or use a hosted/test adapter") from exc
+                "install it or use a hosted/test adapter"
+            ) from exc
         self._pipeline = pipeline(
-            "text-generation", model=self.model_id, device=self.device)
+            "text-generation", model=self.model_id, device=self.device
+        )
         return self
 
     def generate(self, prompt: str, *, context: str = "") -> ModelOutput:
         if self._pipeline is None:
             raise RuntimeError(
                 f"model '{self.model_id}' not loaded -- call load() "
-                f"first (construction deliberately performs no I/O)")
-        outputs = self._pipeline(context + prompt,
-                                 **self.gen_kwargs)
+                f"first (construction deliberately performs no I/O)"
+            )
+        outputs = self._pipeline(context + prompt, **self.gen_kwargs)
         generated = outputs[0]["generated_text"]
-        completion = generated[len(context + prompt):] \
-            if generated.startswith(context + prompt) else generated
-        return ModelOutput(text=str(completion),
-                           meta={"adapter": self.name,
-                                 "model_id": self.model_id})
+        completion = (
+            generated[len(context + prompt) :]
+            if generated.startswith(context + prompt)
+            else generated
+        )
+        return ModelOutput(
+            text=str(completion), meta={"adapter": self.name, "model_id": self.model_id}
+        )
 
     def describe(self) -> Dict[str, Any]:
-        return {"name": self.name, "kind": "local",
-                "loaded": self._pipeline is not None,
-                "dimensions": list(DIMENSIONS)}
+        return {
+            "name": self.name,
+            "kind": "local",
+            "loaded": self._pipeline is not None,
+            "dimensions": list(DIMENSIONS),
+        }
 
 
 def _accepts_context(fn: Callable) -> bool:
     import inspect
+
     try:
         signature = inspect.signature(fn)
-    except (TypeError, ValueError):             # pragma: no cover
+    except (TypeError, ValueError):  # pragma: no cover
         return False
     return "context" in signature.parameters

@@ -37,14 +37,13 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Sequence
 
 from self_improvement.self_training.dataset_builder import (
     DatasetArtifact,
     TrainingExample,
     content_hash,
 )
-
 
 # --- Data types ----------------------------------------------------------- #
 
@@ -116,15 +115,19 @@ class ExternalCorpus:
     #: Valid corpus kinds.
     KINDS = ("curated", "public_instruct", "synthetic", "experience")
 
-    def __init__(self, name: str, kind: str, examples: Sequence[Any],
-                 *, split: str = "train",
-                 source: str = "") -> None:
+    def __init__(
+        self,
+        name: str,
+        kind: str,
+        examples: Sequence[Any],
+        *,
+        split: str = "train",
+        source: str = "",
+    ) -> None:
         if split not in ("train", "holdout"):
-            raise ValueError(
-                f"split must be 'train' or 'holdout', got {split!r}")
+            raise ValueError(f"split must be 'train' or 'holdout', got {split!r}")
         if kind not in self.KINDS:
-            raise ValueError(
-                f"kind must be one of {self.KINDS}, got {kind!r}")
+            raise ValueError(f"kind must be one of {self.KINDS}, got {kind!r}")
         if not name:
             raise ValueError("corpus name is required")
         self.name = str(name)
@@ -143,7 +146,8 @@ class ExternalCorpus:
             else:
                 raise TypeError(
                     f"examples must be TrainingExample or dict, got "
-                    f"{type(ex).__name__}")
+                    f"{type(ex).__name__}"
+                )
         self._content_hash = self._compute_hash()
 
     # -- accessors ------------------------------------------------------- #
@@ -176,12 +180,18 @@ class ExternalCorpus:
         ids = sorted(r.get("example_id", "") for r in self._records)
         # Hash the *fields*, not the raw bytes, so json-equal records
         # produce equal fingerprints across jsonlibs.
-        canonical = json.dumps({"name": self.name, "kind": self.kind,
-                                "split": self.split, "ids": ids,
-                                "records": sorted(
-                                    [json.dumps(r, sort_keys=True)
-                                     for r in self._records])},
-                               sort_keys=True).encode("utf-8")
+        canonical = json.dumps(
+            {
+                "name": self.name,
+                "kind": self.kind,
+                "split": self.split,
+                "ids": ids,
+                "records": sorted(
+                    [json.dumps(r, sort_keys=True) for r in self._records]
+                ),
+            },
+            sort_keys=True,
+        ).encode("utf-8")
         return hashlib.sha256(canonical).hexdigest()[:16]
 
 
@@ -201,8 +211,9 @@ class DatasetSplitter:
     it would silently inflate the holdout improvement.
     """
 
-    def __init__(self, *, train_ratio: float = 0.8,
-                 seed: int = 0, workdir: str = "") -> None:
+    def __init__(
+        self, *, train_ratio: float = 0.8, seed: int = 0, workdir: str = ""
+    ) -> None:
         if not 0.5 <= train_ratio <= 0.95:
             raise ValueError("train_ratio must lie in [0.5, 0.95]")
         self.train_ratio = float(train_ratio)
@@ -210,28 +221,27 @@ class DatasetSplitter:
         self._workdir = Path(workdir) if workdir else None
 
     # -- public API ------------------------------------------------------ #
-    def split(self, examples: Sequence[Any], *,
-              tag: str = "split") -> SplitResult:
-        records = [e.to_dict() if isinstance(e, TrainingExample)
-                   else dict(e) for e in examples]
+    def split(self, examples: Sequence[Any], *, tag: str = "split") -> SplitResult:
+        records = [
+            e.to_dict() if isinstance(e, TrainingExample) else dict(e) for e in examples
+        ]
         if not records:
             return SplitResult(
                 pair=TrainHoldoutPair(
-                    train=DatasetArtifact(path="", content_hash="",
-                                          num_examples=0),
-                    holdout=DatasetArtifact(path="", content_hash="",
-                                            num_examples=0),
-                    seed=self.seed, train_ratio=self.train_ratio),
+                    train=DatasetArtifact(path="", content_hash="", num_examples=0),
+                    holdout=DatasetArtifact(path="", content_hash="", num_examples=0),
+                    seed=self.seed,
+                    train_ratio=self.train_ratio,
+                ),
                 leakage_checked=True,
                 leaked_ids=[],
-                total_examples=0)
+                total_examples=0,
+            )
 
         # Deterministic ordering: by (id, seed) so a different seed
         # produces a different split, but the same seed always
         # reproduces it.
-        ordered = sorted(records,
-                         key=lambda r: (r.get("example_id", ""),
-                                        self.seed))
+        ordered = sorted(records, key=lambda r: (r.get("example_id", ""), self.seed))
         cut = int(round(self.train_ratio * len(ordered)))
         # Guarantee at least one example in each half when feasible.
         if 0 < cut < len(ordered):
@@ -250,6 +260,7 @@ class DatasetSplitter:
 
         if self._workdir is None:
             import tempfile
+
             self._workdir = Path(tempfile.mkdtemp(prefix="datasplit-"))
         out_dir = self._workdir
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -258,10 +269,14 @@ class DatasetSplitter:
         holdout_path = out_dir / f"{tag}_holdout.jsonl"
         train_path.write_text(
             "\n".join(json.dumps(r, sort_keys=True) for r in train_records)
-            + ("\n" if train_records else ""), encoding="utf-8")
+            + ("\n" if train_records else ""),
+            encoding="utf-8",
+        )
         holdout_path.write_text(
             "\n".join(json.dumps(r, sort_keys=True) for r in holdout_records)
-            + ("\n" if holdout_records else ""), encoding="utf-8")
+            + ("\n" if holdout_records else ""),
+            encoding="utf-8",
+        )
 
         train_hash = content_hash(train_records)
         holdout_hash = content_hash(holdout_records)
@@ -269,14 +284,21 @@ class DatasetSplitter:
         return SplitResult(
             pair=TrainHoldoutPair(
                 train=DatasetArtifact(
-                    path=str(train_path), content_hash=train_hash,
+                    path=str(train_path),
+                    content_hash=train_hash,
                     num_examples=len(train_records),
-                    source_counts={"external": len(train_records)}),
+                    source_counts={"external": len(train_records)},
+                ),
                 holdout=DatasetArtifact(
-                    path=str(holdout_path), content_hash=holdout_hash,
+                    path=str(holdout_path),
+                    content_hash=holdout_hash,
                     num_examples=len(holdout_records),
-                    source_counts={"external": len(holdout_records)}),
-                seed=self.seed, train_ratio=self.train_ratio),
+                    source_counts={"external": len(holdout_records)},
+                ),
+                seed=self.seed,
+                train_ratio=self.train_ratio,
+            ),
             leakage_checked=leakage_checked,
             leaked_ids=leaked,
-            total_examples=len(records))
+            total_examples=len(records),
+        )

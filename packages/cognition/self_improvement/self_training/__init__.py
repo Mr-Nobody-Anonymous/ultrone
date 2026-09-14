@@ -73,6 +73,7 @@ __all__ = [
     "ModelOutput",
     "TestModelAdapter",
     "CheckpointManager",
+    "ModelRecord",
     "CurriculumManager",
     "CurriculumStep",
     "ContinualMixture",

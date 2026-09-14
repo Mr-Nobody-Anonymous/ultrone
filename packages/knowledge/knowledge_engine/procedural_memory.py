@@ -28,7 +28,9 @@ class ProceduralMemory(KnowledgeMemoryBase):
         metadata: Optional[Dict[str, Any]] = None,
     ) -> KnowledgeEntry:
         """Store a named procedure with ordered steps."""
-        content = f"Procedure: {name}\n" + "\n".join(f"{i+1}. {s}" for i, s in enumerate(steps))
+        content = f"Procedure: {name}\n" + "\n".join(
+            f"{i+1}. {s}" for i, s in enumerate(steps)
+        )
         entry = KnowledgeEntry(
             content=content,
             category=KnowledgeCategory.METHOD,

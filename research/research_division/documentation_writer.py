@@ -24,7 +24,9 @@ class DocumentationWriter(ResearchAgent):
             role=ResearchAgentRole.WRITER,
             **kwargs,
         )
-        self.message_handlers[MessageType.RESEARCH_DOCUMENTATION] = self._on_documentation_request
+        self.message_handlers[MessageType.RESEARCH_DOCUMENTATION] = (
+            self._on_documentation_request
+        )
 
     async def run(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Generate documentation for all research records."""

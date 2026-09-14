@@ -24,7 +24,6 @@ from self_improvement.lab.candidate_manager import (
 from self_improvement.lab.evaluator import CapabilitySnapshot, measure_genome
 from self_improvement.lab.experiment_designer import (
     design_next_experiment,
-    detect_weaknesses,
     run_experiment,
 )
 from self_improvement.lab.genome import Genome, make_genome, mutate, seed_population
@@ -32,13 +31,13 @@ from self_improvement.lab.genome import Genome, make_genome, mutate, seed_popula
 
 @dataclass
 class LabReport:
-    timeline: List[Dict[str, Any]]          # per-generation best summaries
+    timeline: List[Dict[str, Any]]  # per-generation best summaries
     promotions: List[str]
-    archive: Dict[str, str]                 # niche -> candidate_id
+    archive: Dict[str, str]  # niche -> candidate_id
     designer_log: List[Dict[str, Any]]
     registry_size: int
-    analyses: List[Any] = field(default_factory=list)   # AnalysisReport per gen
-    trajectory: Optional[Dict[str, Any]] = None         # plot-ready series
+    analyses: List[Any] = field(default_factory=list)  # AnalysisReport per gen
+    trajectory: Optional[Dict[str, Any]] = None  # plot-ready series
 
 
 def _best(pop: List[CapabilitySnapshot]) -> CapabilitySnapshot:
@@ -75,13 +74,16 @@ def run_lab(
 
     for generation in range(1, generations + 1):
         elites = sorted(
-            population, key=lambda s: (-s.capability_index, s.candidate_id),
+            population,
+            key=lambda s: (-s.capability_index, s.candidate_id),
         )[: max(2, pop_size // 2)]
 
         children: List[CapabilitySnapshot] = []
         for elite in elites:
             child_genome = mutate(
-                _genome_of(elite, registry), rng, generation,
+                _genome_of(elite, registry),
+                rng,
+                generation,
             )
             child = measure_genome(child_genome, seed=seed)
             registry.register(child)
@@ -93,13 +95,15 @@ def run_lab(
             proposal = design_next_experiment(canonical)
             if proposal is not None:
                 evidence = run_experiment(proposal, child_genome, seed=seed)
-                designer_log.append({
-                    "generation": generation,
-                    "hypothesis": proposal.hypothesis,
-                    "target_dim": proposal.target_dim,
-                    "confirmed": evidence.confirmed,
-                    "delta": evidence.delta,
-                })
+                designer_log.append(
+                    {
+                        "generation": generation,
+                        "hypothesis": proposal.hypothesis,
+                        "target_dim": proposal.target_dim,
+                        "confirmed": evidence.confirmed,
+                        "delta": evidence.delta,
+                    }
+                )
                 if evidence.confirmed:
                     improved = evidence.child_snapshot
                     try:
@@ -132,8 +136,9 @@ def run_lab(
     )
 
 
-def _genome_of(snapshot: CapabilitySnapshot,
-               registry: Optional[CandidateRegistry] = None) -> Genome:
+def _genome_of(
+    snapshot: CapabilitySnapshot, registry: Optional[CandidateRegistry] = None
+) -> Genome:
     """Reconstruct a Genome from a snapshot's recorded architecture."""
     arch = snapshot.architecture
     return make_genome(

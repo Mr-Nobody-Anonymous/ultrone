@@ -11,10 +11,13 @@ concurrency:
   cancel-in-progress: true
 
 # Monorepo: packages keep their original import names but live in buckets
-# (see _ultrone_paths.py). PYTHONPATH exposes every bucket to pytest, flake8,
-# black and the docker smoke test.
-env:
-  PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/apps:${{ github.workspace }}/packages/core:${{ github.workspace }}/packages/knowledge:${{ github.workspace }}/packages/agents:${{ github.workspace }}/packages/cognition:${{ github.workspace }}/research:${{ github.workspace }}/simulation
+# (see _ultrone_paths.py). NOTE: PYTHONPATH is intentionally NOT set globally
+# here. A workflow-level PYTHONPATH is exported into *every* step, including
+# actions/setup-python's pip-cache step and `pip install` itself; any bucket
+# entry that shadows a stdlib module (e.g. packages/core/types shadowing
+# `types`) then breaks pip before tests even start. Instead, PYTHONPATH is set
+# per-step below, only on the steps that import repo code. (pytest itself is
+# additionally covered by pytest.ini's `pythonpath`, which lists every bucket.)
 
 jobs:
   test:
@@ -32,16 +35,51 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
+      - name: Check for stdlib module shadowing
+        run: |
+          python - <<'PY'
+          import sys
+          from pathlib import Path
+          # Every directory that lands on sys.path (see _ultrone_paths.BUCKETS
+          # plus the repo root). A top-level package/module here whose name
+          # collides with the stdlib breaks the interpreter itself (incl. pip).
+          buckets = [
+              "apps", "packages/core", "packages/cognition", "packages/agents",
+              "packages/knowledge", "packages/orchestration", "packages/runtime",
+              "packages/safety", "packages/observability", "packages/transport",
+              "research", "simulation", "vendor", "data", ".",
+          ]
+          shadows = []
+          for b in buckets:
+              for child in sorted(Path(b).iterdir()):
+                  is_pkg = child.is_dir() and (child / "__init__.py").is_file()
+                  is_mod = child.is_file() and child.suffix == ".py" and child.name != "__init__.py"
+                  if not (is_pkg or is_mod):
+                      continue
+                  name = child.stem if is_mod else child.name
+                  if name in sys.stdlib_module_names:
+                      shadows.append(f"{b}/{child.name} shadows stdlib module '{name}'")
+          if shadows:
+              print("STDLIB SHADOWING DETECTED:")
+              print("\n".join(f"  - {s}" for s in shadows))
+              sys.exit(1)
+          print(f"OK: no stdlib shadowing ({len(sys.stdlib_module_names)} stdlib names checked)")
+          PY
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Run tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/apps:${{ github.workspace }}/packages/core:${{ github.workspace }}/packages/cognition:${{ github.workspace }}/packages/agents:${{ github.workspace }}/packages/knowledge:${{ github.workspace }}/packages/orchestration:${{ github.workspace }}/packages/runtime:${{ github.workspace }}/packages/safety:${{ github.workspace }}/packages/observability:${{ github.workspace }}/packages/transport:${{ github.workspace }}/research:${{ github.workspace }}/simulation:${{ github.workspace }}/vendor:${{ github.workspace }}/data
         run: |
           python -m pytest tests/ --tb=short -q
 
       - name: Generate coverage report
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/apps:${{ github.workspace }}/packages/core:${{ github.workspace }}/packages/cognition:${{ github.workspace }}/packages/agents:${{ github.workspace }}/packages/knowledge:${{ github.workspace }}/packages/orchestration:${{ github.workspace }}/packages/runtime:${{ github.workspace }}/packages/safety:${{ github.workspace }}/packages/observability:${{ github.workspace }}/packages/transport:${{ github.workspace }}/research:${{ github.workspace }}/simulation:${{ github.workspace }}/vendor:${{ github.workspace }}/data
         run: |
           python -m pytest --cov=packages/knowledge/knowledge_engine --cov=research/research_db --cov=research/research_division --cov=packages/cognition/self_improvement --cov=packages/agents/plugin_sdk --cov=packages/core/extension_log --cov-report=xml
 
@@ -62,7 +100,9 @@ jobs:
           python-version: "3.11"
           cache: pip
       - name: Install linter
-        run: pip install flake8 black mypy
+        # Pinned: unpinned linters drift, and a new black/flake8 release can
+        # flip --check from green to red with no repo change.
+        run: pip install "flake8==7.3.0" "black==26.5.1" mypy
       - name: Run flake8
         run: flake8 packages/knowledge/knowledge_engine/ research/research_db/ research/research_division/ packages/cognition/self_improvement/ packages/agents/plugin_sdk/ packages/core/extension_log/ --max-line-length=120 --extend-ignore=E203,W503
       - name: Run black check
