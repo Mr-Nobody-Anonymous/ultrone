@@ -1,0 +1,76 @@
+services:
+  wwv:
+    image: ghcr.io/silvertakana/worldwideview:latest
+    pull_policy: always
+    ports:
+      - "3100:3000"
+    volumes:
+      - wwv-data:/app/data
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # Required: high-entropy value distinct from API_KEY_HMAC_SECRET.
+      # The app fails closed (auth broken) if this is unset.
+      # Replaces legacy AUTH_SECRET from the NextAuth era.
+      - "BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}"
+      - "WWV_DEMO_ADMIN_SECRET=${WWV_DEMO_ADMIN_SECRET:-}"
+      - "WWV_BRIDGE_TOKEN=${WWV_BRIDGE_TOKEN:-}"
+      - "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/worldwideview?schema=public}"
+      # Provide the explicit public URL of the data engine for the frontend to use.
+      - "NEXT_PUBLIC_WWV_PLUGIN_DATA_ENGINE_URL=https://dataenginev2.worldwideview.dev/stream"
+      # REST base URL for server-side MCP data queries (NOT the WebSocket /stream path).
+      # getEngineUrl() reads this first and falls back to http://localhost:5000 when unset.
+      # The public URL is network-topology-independent (verified reachable from app containers).
+      - "WWV_DATA_ENGINE_URL=${WWV_DATA_ENGINE_URL:-https://dataenginev2.worldwideview.dev}"
+      # Redis session/cache/rate-limit store.
+      # Operators using a managed Redis (e.g. Upstash) should set REDIS_URL to their
+      # rediss:// endpoint in .env and remove the wwv-redis service and depends_on below.
+      - "REDIS_URL=redis://:${REDIS_PASSWORD}@wwv-redis:6379"
+      - "REDIS_PASSWORD=${REDIS_PASSWORD}"
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      wwv-redis:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: worldwideview
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d worldwideview"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # Co-located Redis for sessions, command queue, geocode cache, and rate limiters.
+  # Remove this service and the depends_on entry above when using a managed Redis
+  # (set REDIS_URL=rediss://:<password>@<host>:6380 in .env instead).
+  wwv-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-}
+    environment:
+      - "REDIS_PASSWORD=${REDIS_PASSWORD}"
+    volumes:
+      - wwv-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  wwv-data:
+  postgres-data:
+  wwv-redis-data:

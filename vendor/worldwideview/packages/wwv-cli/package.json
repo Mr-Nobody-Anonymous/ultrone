@@ -1,0 +1,25 @@
+{
+  "name": "@worldwideview/wwv-cli",
+  "version": "1.3.1",
+  "type": "module",
+  "description": "WorldWideView CLI",
+  "main": "dist/index.js",
+  "bin": {
+    "wwv": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "test": "node --test \"test/**/*.test.mjs\""
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "@types/prompts": "^2.4.9",
+    "typescript": "^5.0.0"
+  }
+}

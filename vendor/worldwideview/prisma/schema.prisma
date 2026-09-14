@@ -1,0 +1,340 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Favorite {
+  id         String   @id @default(uuid())
+  tenantId   String?
+  entityId   String
+  pluginId   String
+  label      String
+  pluginName String
+  lastSeen   DateTime @default(now())
+  userId     String
+  notes      String?
+  user       BetterAuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entityId])
+  @@index([tenantId])
+  @@map("favorites")
+}
+
+model InstalledPlugin {
+  id          String   @id @default(uuid())
+  tenantId    String?
+  pluginId    String
+  version     String
+  config      String   @default("{}")
+  enabled     Boolean  @default(true)
+  installedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, pluginId])
+  @@index([tenantId])
+  @@map("installed_plugins")
+}
+
+model Setting {
+  id       String  @id @default(uuid())
+  tenantId String?
+  key      String
+  value    String
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+  @@map("settings")
+}
+
+model Workspace {
+  id            String            @id @default(uuid())
+  name          String
+  subdomain     String            @unique
+  ownerId       String?
+  status        String            @default("trialing")
+  plan          String            @default("basic")
+  tier          String            @default("free")
+  locked        Boolean           @default(false)
+  lockedReason  String?
+  lockedAt      DateTime?
+  tierStampedAt DateTime?
+  trialEndsAt   DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  members       WorkspaceMember[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String    @id @default(uuid())
+  userId      String
+  workspaceId String
+  role        String    @default("member")
+  joinedAt    DateTime  @default(now())
+  user        BetterAuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@map("workspace_members")
+}
+
+model MarketplaceCredential {
+  id         String   @id @default(uuid())
+  tenantId   String?
+  version    String
+  salt       String
+  nonce      String
+  ciphertext String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([tenantId])
+  @@index([tenantId])
+  @@map("marketplace_credentials")
+}
+
+model UserApiKey {
+  id           String    @id @default(uuid())
+  userId       String
+  tenantId     String?
+  prefix       String    @unique
+  hashedSecret String
+  name         String
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
+  user         BetterAuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("user_api_keys")
+}
+
+/// Legacy NextAuth user table — migration source only. See ADR-0008 Phase 1.8. Do NOT add relations.
+model User {
+  id             String   @id @default(uuid())
+  email          String
+  name           String
+  hashedPassword String
+  role           String   @default("user")
+  sessionVersion Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  @@unique([email])
+  @@map("users")
+}
+
+// -----------------------------------------------------------------------
+// Better Auth tables (lowercase @@map — coexist with NextAuth uppercase)
+// -----------------------------------------------------------------------
+
+model BetterAuthUser {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          String    @default("user")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      BetterAuthSession[]
+  accounts      BetterAuthAccount[]
+  favorites     Favorite[]
+  memberships   WorkspaceMember[]
+  apiKeys       UserApiKey[]
+  setupTokens   SetupToken[]
+  alertRules    AlertRule[]
+
+  @@map("user")
+}
+
+model BetterAuthSession {
+  id                    String    @id @default(uuid())
+  userId                String
+  token                 String    @unique
+  expiresAt             DateTime
+  ipAddress             String?
+  userAgent             String?
+  activeOrganizationId  String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  BetterAuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model BetterAuthAccount {
+  id                      String    @id @default(uuid())
+  userId                  String
+  accountId               String
+  providerId              String
+  accessToken             String?
+  refreshToken            String?
+  accessTokenExpiresAt    DateTime?
+  refreshTokenExpiresAt   DateTime?
+  scope                   String?
+  idToken                 String?
+  password                String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  user                    BetterAuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model BetterAuthVerification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// -----------------------------------------------------------------------
+// Better Auth Plugin tables (Phase 72 — all lowercase @@map)
+// -----------------------------------------------------------------------
+
+model PluginOrganization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  logo      String?
+  metadata  String?
+  createdAt DateTime @default(now())
+  orgTier   OrgTier?
+
+  @@map("organization")
+}
+
+model OrgTier {
+  id             String             @id @default(uuid())
+  organizationId String             @unique
+  organization   PluginOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tier           String             @default("free")
+  status         String             @default("active")
+  trialEndsAt    DateTime?
+  updatedAt      DateTime           @updatedAt
+  createdAt      DateTime           @default(now())
+
+  @@map("org_tiers")
+}
+
+model PluginMember {
+  id             String @id @default(uuid())
+  organizationId String
+  userId         String
+  role           String
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([userId])
+  @@map("member")
+}
+
+model PluginInvitation {
+  id             String   @id @default(uuid())
+  organizationId String
+  email          String
+  role           String
+  status         String
+  expiresAt      DateTime
+  inviterId      String
+
+  @@index([organizationId])
+  @@map("invitation")
+}
+
+model PluginApiKey {
+  id                  String    @id @default(uuid())
+  userId              String?
+  organizationId      String?
+  name                String?
+  key                 String    @unique
+  prefix              String?
+  metadata            String?
+  expiresAt           DateTime?
+  remaining           Int?
+  refillAmount        Int?
+  refillInterval      Int?
+  rateLimitEnabled    Boolean   @default(false)
+  rateLimitTimeWindow Int?
+  rateLimitMax        Int?
+  permissions         String?
+  enabled             Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  lastUsedAt          DateTime?
+
+  @@index([userId])
+  @@index([organizationId])
+  @@map("apiKey")
+}
+
+model PluginJwks {
+  id         String    @id @default(uuid())
+  publicKey  String
+  privateKey String
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime?
+
+  @@map("jwks")
+}
+
+model SetupToken {
+  id             String         @id @default(uuid())
+  tokenHash      String         @unique
+  userId         String
+  user           BetterAuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String?
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime       @default(now())
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@map("setup_tokens")
+}
+
+// -----------------------------------------------------------------------
+// Alerts (P2, app-side rules — see .planning, never committed)
+// -----------------------------------------------------------------------
+
+model AlertRule {
+  id        String   @id @default(cuid())
+  userId    String
+  pluginId  String
+  name      String
+  condition Json
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      BetterAuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events    AlertEvent[]
+
+  @@index([userId])
+  @@map("alert_rules")
+}
+
+model AlertEvent {
+  id        String    @id @default(cuid())
+  ruleId    String
+  pluginId  String
+  entityId  String?
+  summary   String
+  matchedAt DateTime  @default(now())
+  rule      AlertRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId])
+  @@map("alert_events")
+}

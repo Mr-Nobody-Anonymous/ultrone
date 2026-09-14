@@ -1,0 +1,61 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "@/lib/ba-session";
+import { authenticateApiKey } from "@/lib/apiKeyAuth";
+import { searchEntities } from "@/lib/data-query/service";
+import { resolveEdition as getEdition } from "@/core/edition";
+
+export async function GET(request: NextRequest) {
+    const currentEdition = getEdition();
+    if (currentEdition === "demo") {
+        return NextResponse.json({ error: "Demo mode" }, { status: 403 });
+    }
+
+    // Dual-auth: Better Auth session cookie PRIMARY, Bearer API key FALLBACK.
+    // userId is resolved exclusively from the auth result -- never from the URL.
+    let userId: string | null = null;
+
+    const session = await getServerSession();
+    if (session?.user?.id) {
+        userId = session.user.id;
+    } else {
+        const apiKeyAuth = await authenticateApiKey(request);
+        if (apiKeyAuth) {
+            userId = apiKeyAuth.userId;
+        }
+    }
+
+    if (!userId) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Entity data is global/public (plugin-sourced, shared across all users), so userId
+    // gates access (authn) but is intentionally not a query filter -- there is no per-user
+    // entity ownership to scope by.
+
+    const { searchParams } = request.nextUrl;
+    const q = searchParams.get("q");
+    if (!q || q.trim() === "") {
+        return NextResponse.json({ error: "Missing query parameter: q" }, { status: 400 });
+    }
+
+    const pluginId = searchParams.get("pluginId") ?? undefined;
+    const rawLimit = searchParams.get("limit");
+    const parsed = rawLimit !== null ? parseInt(rawLimit, 10) : NaN;
+    const limit = Math.min(Number.isNaN(parsed) ? 20 : parsed, 100);
+
+    try {
+        const result = await searchEntities(q, pluginId, limit);
+        return NextResponse.json({
+            entities: result.entities,
+            count: result.entities.length,
+            query: q,
+            ...(pluginId !== undefined && { pluginId }),
+            ...(result.emptyReason !== undefined && { emptyReason: result.emptyReason }),
+        });
+    } catch (err) {
+        console.error("[entities/search] GET error:", err);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    }
+}
+
+export const runtime = "nodejs";

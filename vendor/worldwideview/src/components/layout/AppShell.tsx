@@ -1,0 +1,247 @@
+/**
+ * @file AppShell.tsx
+ * @description The root layout and orchestration component for WorldWideView.
+ * Responsible for platform initialization, plugin registration, global state hydration,
+ * and managing the transition from boot sequence to interactive state.
+ * @module src/components/layout
+ */
+
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { LayerPanel } from "@/components/panels/LayerPanel";
+import { EntityInfoCard } from "@/components/panels/EntityInfoCard";
+import { DataConfigPanel } from "@/components/panels/DataConfig";
+import CameraStatsPanel from "@/components/panels/CameraStatsPanel";
+import { BottomPanelManager } from "@/components/layout/BottomPanelManager";
+import { TimelineSync } from "@/core/globe/TimelineSync";
+import { isGlobeSupported } from "@/core/globe/globeSupport";
+import { pluginManager } from "@/core/plugins/PluginManager";
+import { pluginRegistry } from "@/core/plugins/PluginRegistry";
+
+import { useStore } from "@/core/state/store";
+import { dataBus } from "@/core/data/DataBus";
+import { useAlertEngine } from "@/lib/alerts/engine";
+import { AlertToasts } from "@/components/alerts/AlertToasts";
+import { PanelToggleArrows } from "@/components/layout/PanelToggleArrows";
+import { FloatingVideoManager } from "@/components/video/FloatingVideoManager";
+import { BootOverlay } from "@/components/common/BootOverlay";
+
+import { useBootSequence } from "@/core/hooks/useBootSequence";
+import { useIsMobile } from "@/core/hooks/useIsMobile";
+import { useMarketplaceSync } from "@/core/hooks/useMarketplaceSync";
+import dynamic from "next/dynamic";
+import { trackEvent } from "@/lib/analytics";
+import ReloadToast from "@/components/ui/ReloadToast";
+import ErrorToast from "@/components/ui/ErrorToast";
+import UnverifiedPluginBatchDialog from "@/components/marketplace/UnverifiedPluginBatchDialog";
+import { FeedbackDialog } from "@/components/common/FeedbackDialog";
+import { isDemo } from "@/core/edition";
+
+import { injectHostGlobals } from "@/core/plugins/hostGlobals";
+import { getDisabledPluginIds } from "@/core/plugins/pluginPreferences";
+import { initLogCatcher } from "@/lib/logCatcher";
+import { MobileCameraStats } from "./MobileCameraStats";
+import { MobileHudBar } from "./MobileHudBar";
+import { AgentBusSubscriber } from "./AgentBusSubscriber";
+import { DataBusSubscriber } from "./DataBusSubscriber";
+import { Header } from "./Header";
+
+const GlobeView = dynamic(() => import("@/core/globe/GlobeView"), {
+    ssr: false,
+});
+
+/**
+ * @component AppShell
+ * @description The primary application wrapper.
+ *
+ * Orchestrates the following:
+ * 1. Theme hydration from localStorage.
+ * 2. Injection of host globals for dynamic ES module plugins.
+ * 3. Loading of marketplace and built-in plugins.
+ * 4. Synchronization with the Cesium globe lifecycle.
+ * 5. Managing the "Boot" animation sequence and HUD entry.
+ */
+// Module-level guard: React 18 StrictMode double-mounts effects in dev, so
+// startPlatform would otherwise run twice (two pluginManager.init() calls and
+// a double registry walk on remount). Mirrors the bootStarted/startBootOnce
+// pattern used inside the effect below.
+let platformBootStarted = false;
+
+export function AppShell() {
+    const initLayer = useStore((s) => s.initLayer);
+    const boot = useBootSequence();
+    const isMobile = useIsMobile();
+    const [bootStart] = useState(() => Date.now());
+    const [hostReady, setHostReady] = useState(false);
+    const {
+ needsReload, pendingUnverified, approveSelected, denyAll
+} = useMarketplaceSync(hostReady);
+    const setTheme = useStore((s) => s.setTheme);
+    const theme = useStore((s) => s.theme);
+
+    // Hydrate theme on mount
+    useEffect(() => {
+        try {
+            const storedTheme = localStorage.getItem("wwv-theme");
+            if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "tactical") {
+                setTheme(storedTheme);
+            }
+        } catch { /* ignore hydration errors */ }
+    }, [setTheme]);
+
+    useEffect(() => {
+        const startPlatform = async () => {
+            // StrictMode double-invoke guard: the second mount of a dev
+            // double-mount would re-init the plugin manager mid-boot.
+            // Mirrors the bootStarted/startBootOnce pattern below.
+            if (platformBootStarted) return;
+            platformBootStarted = true;
+
+            initLogCatcher();
+            console.log("[AppShell] Initializing Platform...");
+
+            // Independent boot I/O runs concurrently. Dependency edges are
+            // preserved: host globals must be ready before any dynamic
+            // plugin import (hostReady gates useMarketplaceSync), and
+            // pluginManager.init() is awaited before the first
+            // registerPlugin. Only mutually independent work (env parsing,
+            // disabled-ids snapshot, registry iteration setup) is fanned out.
+            const [, disabledIds, demoDefaultPlugins] = await Promise.all([
+                injectHostGlobals().then(() => {
+                    setHostReady(true);
+                }),
+                Promise.resolve().then(() => getDisabledPluginIds()),
+                Promise.resolve().then(() => {
+                    // Setup demo defaults (independent env parsing)
+                    const defaults = new Set<string>();
+                    if (isDemo) {
+                        const envVar = process.env.NEXT_PUBLIC_DEMO_DEFAULT_PLUGINS || "";
+                        envVar.split(",").forEach((s) => {
+                            const clean = s.trim();
+                            if (clean) defaults.add(clean);
+                        });
+                    }
+                    return defaults;
+                }),
+                pluginManager.init(),
+            ]);
+
+            // Per-plugin register+enable stays sequential: the plugin
+            // manager holds shared state, so interleaving registrations
+            // across plugins is not safe.
+            for (const plugin of pluginRegistry.getAll()) {
+                await pluginManager.registerPlugin(plugin);
+                let shouldEnable = false;
+                if (isDemo) {
+                    shouldEnable = demoDefaultPlugins.has(plugin.id);
+                } else {
+                    shouldEnable = !disabledIds.has(plugin.id);
+                }
+                initLayer(plugin.id, shouldEnable);
+                if (shouldEnable) {
+                    await pluginManager.enablePlugin(plugin.id);
+                }
+            }
+
+            console.log("[AppShell] Platform Ready. Waiting for globe tiles...");
+        };
+
+        // Guard so boot only starts once regardless of which trigger fires first.
+        let bootStarted = false;
+        const startBootOnce = (reason: string) => {
+            if (bootStarted) return;
+            bootStarted = true;
+            console.log(`[AppShell] Starting boot sequence (${reason}).`);
+            boot.startBoot();
+        };
+
+        // Primary trigger: globe signals it is ready.
+        const unsubGlobe = dataBus.on("globeReady", () => startBootOnce("globeReady"));
+
+        // Safety fallback: if the globe never initialises (e.g. WebGL unavailable
+        // in headless CI environments), force the boot sequence after 20 s so the
+        // app still reaches the "ready" state and tests are not left hanging.
+        // Fail fast when the environment cannot construct a Cesium viewer at all
+        // (headless WebKit lacks OffscreenCanvas): the viewer fails instantly, so
+        // waiting the full 20 s would only delay app-ready without any chance of
+        // the globeReady event firing.
+        const safetyTimeoutMs = isGlobeSupported() ? 20_000 : 2_000;
+        const safetyTimer = setTimeout(() => startBootOnce("safety-timeout"), safetyTimeoutMs);
+
+        startPlatform();
+
+        return () => {
+            clearTimeout(safetyTimer);
+            unsubGlobe();
+            boot.cleanup();
+            pluginManager.destroy();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initLayer]);
+
+    // Boot-* classes drive entrance animations.
+    // Once phase is "ready" we remove them so normal CSS
+    // (e.g. .sidebar--closed { opacity:0 }) takes over.
+    const isBooting = boot.phase !== "ready";
+
+    // Track when boot completes
+    useEffect(() => {
+        if (boot.phase === "ready") {
+            const duration = Date.now() - bootStart;
+            trackEvent("platform-boot", { duration });
+        }
+    }, [boot.phase, bootStart]);
+    const activeBottomPanel = useStore((s) => s.activeBottomPanel);
+
+    // Alert engine (P2 backend core): evaluates enabled alert rules against
+    // live dataBus updates and emits `alertFired`. Headless — the UI agent
+    // builds the bell/badge/panel/toasts on top of the alertFired event.
+    useAlertEngine();
+
+    const rootClasses = [
+        "app-shell",
+        isBooting && boot.headerReady ? "boot-header" : "",
+        isBooting && boot.sidebarReady ? "boot-sidebar" : "",
+        isBooting && boot.timelineReady ? "boot-timeline" : "",
+        isBooting && boot.controlsReady ? "boot-controls" : "",
+        !isBooting ? "boot-done" : "",
+        !activeBottomPanel ? "timeline-closed" : "",
+    ].filter(Boolean).join(" ");
+
+    return (
+        <div className={rootClasses} data-testid={!isBooting ? "app-ready" : undefined}>
+            <BootOverlay visible={boot.phase === "loading"} />
+
+            <div className={`app-shell__globe ${theme === "tactical" ? "tactical-scanlines" : ""}`}>
+                <GlobeView />
+            </div>
+
+        <TimelineSync />
+        <DataBusSubscriber />
+        <AgentBusSubscriber />
+
+        <Header />
+        {isMobile && <MobileHudBar />}
+        {isMobile && <MobileCameraStats />}
+        <PanelToggleArrows />
+        <LayerPanel />
+        <DataConfigPanel />
+        {!isMobile && <CameraStatsPanel />}
+        <EntityInfoCard />
+        <BottomPanelManager />
+        <FloatingVideoManager />
+        {needsReload && <ReloadToast />}
+        <ErrorToast />
+        <AlertToasts />
+        <FeedbackDialog />
+        {pendingUnverified.length > 0 && (
+        <UnverifiedPluginBatchDialog
+          manifests={pendingUnverified}
+          onApproveSelected={approveSelected}
+          onDenyAll={denyAll}
+        />
+            )}
+      </div>
+    );
+}
