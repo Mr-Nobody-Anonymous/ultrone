@@ -64,7 +64,7 @@ ultrone/
 │   │   ├── entities/          # ★ Canonical Entity type (entity_id, position, provenance, ...)
 │   │   ├── events/            # ★ Canonical Event system (EventType, Event, EventBus)
 │   │   ├── extension_log/     # Audit and extension stores
-│   │   ├── types/             # ★ Shared enums, type aliases, protocols
+│   │   ├── ultrone_types/     # ★ Shared enums, type aliases, protocols
 │   │   ├── utils/             # Utilities (geo, helpers, intent, LLM orchestrator, sanitizer, ...)
 │   │   ├── world/             # ★ World module re-export (bridges world_model + entities + events)
 │   │   └── world_model/       # World model implementation
