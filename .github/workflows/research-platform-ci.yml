@@ -10,12 +10,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Monorepo: packages keep their original import names but live in buckets
-# (see _ultrone_paths.py). PYTHONPATH exposes every bucket to pytest, flake8,
-# black and the docker smoke test.
-env:
-  PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/apps:${{ github.workspace }}/packages/core:${{ github.workspace }}/packages/knowledge:${{ github.workspace }}/packages/agents:${{ github.workspace }}/packages/cognition:${{ github.workspace }}/research:${{ github.workspace }}/simulation
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -37,11 +31,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Stdlib-shadowing regression guard
+        run: |
+          python -c "import types, json, logging, math, time; assert hasattr(types, 'ModuleType'), 'stdlib types shadowed'"
+
       - name: Run tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/apps:${{ github.workspace }}/packages/core:${{ github.workspace }}/packages/cognition:${{ github.workspace }}/packages/agents:${{ github.workspace }}/packages/knowledge:${{ github.workspace }}/packages/orchestration:${{ github.workspace }}/packages/runtime:${{ github.workspace }}/packages/safety:${{ github.workspace }}/packages/observability:${{ github.workspace }}/packages/transport:${{ github.workspace }}/research:${{ github.workspace }}/simulation:${{ github.workspace }}/vendor:${{ github.workspace }}/data
         run: |
           python -m pytest tests/ --tb=short -q
 
       - name: Generate coverage report
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/apps:${{ github.workspace }}/packages/core:${{ github.workspace }}/packages/cognition:${{ github.workspace }}/packages/agents:${{ github.workspace }}/packages/knowledge:${{ github.workspace }}/packages/orchestration:${{ github.workspace }}/packages/runtime:${{ github.workspace }}/packages/safety:${{ github.workspace }}/packages/observability:${{ github.workspace }}/packages/transport:${{ github.workspace }}/research:${{ github.workspace }}/simulation:${{ github.workspace }}/vendor:${{ github.workspace }}/data
         run: |
           python -m pytest --cov=packages/knowledge/knowledge_engine --cov=research/research_db --cov=research/research_division --cov=packages/cognition/self_improvement --cov=packages/agents/plugin_sdk --cov=packages/core/extension_log --cov-report=xml
 
@@ -62,7 +64,10 @@ jobs:
           python-version: "3.11"
           cache: pip
       - name: Install linter
-        run: pip install flake8 black mypy
+        run: pip install flake8==7.3.0 black==26.5.1 mypy
+      - name: Stdlib-shadowing regression guard
+        run: |
+          python -c "import types, json, logging, math, time; assert hasattr(types, 'ModuleType'), 'stdlib types shadowed'"
       - name: Run flake8
         run: flake8 packages/knowledge/knowledge_engine/ research/research_db/ research/research_division/ packages/cognition/self_improvement/ packages/agents/plugin_sdk/ packages/core/extension_log/ --max-line-length=120 --extend-ignore=E203,W503
       - name: Run black check

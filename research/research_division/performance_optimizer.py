@@ -24,7 +24,9 @@ class PerformanceOptimizer(ResearchAgent):
             role=ResearchAgentRole.OPTIMIZER,
             **kwargs,
         )
-        self.message_handlers[MessageType.RESEARCH_PERFORMANCE_OPTIMIZATION] = self._on_optimization_request
+        self.message_handlers[MessageType.RESEARCH_PERFORMANCE_OPTIMIZATION] = (
+            self._on_optimization_request
+        )
 
     async def run(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Analyze performance of all experiments and suggest optimizations."""
@@ -40,7 +42,9 @@ class PerformanceOptimizer(ResearchAgent):
 
     def _on_optimization_request(self, message: Any) -> Any:
         experiment_id = message.content.get("experiment_id")
-        experiment = self.research_db.get_experiment(experiment_id) if experiment_id else None
+        experiment = (
+            self.research_db.get_experiment(experiment_id) if experiment_id else None
+        )
         if experiment:
             return self._analyze_experiment_performance(experiment)
         return None
@@ -54,7 +58,9 @@ class PerformanceOptimizer(ResearchAgent):
         if gpu_util < 0.5:
             suggestions.append("GPU underutilized - consider increasing batch size")
         elif gpu_util > 0.95:
-            suggestions.append("GPU overutilized - consider reducing batch size or using gradient accumulation")
+            suggestions.append(
+                "GPU overutilized - consider reducing batch size or using gradient accumulation"
+            )
 
         memory_gb = usage.get("memory_gb", 0)
         if memory_gb > 20:
@@ -62,7 +68,9 @@ class PerformanceOptimizer(ResearchAgent):
 
         cpu_util = usage.get("cpu_utilization", 0)
         if cpu_util > 0.8:
-            suggestions.append("High CPU usage - consider using more workers for data loading")
+            suggestions.append(
+                "High CPU usage - consider using more workers for data loading"
+            )
 
         if not suggestions:
             suggestions.append("Performance is well-balanced")
@@ -71,11 +79,14 @@ class PerformanceOptimizer(ResearchAgent):
             "experiment_id": experiment.experiment_id,
             "resource_usage": usage,
             "suggestions": suggestions,
-            "efficiency_score": min(1.0, gpu_util * 0.5 + (1.0 - min(1.0, memory_gb / 32)) * 0.3 + 0.2),
+            "efficiency_score": min(
+                1.0, gpu_util * 0.5 + (1.0 - min(1.0, memory_gb / 32)) * 0.3 + 0.2
+            ),
         }
 
         self.knowledge.store_auto_categorized(
-            content=f"Performance analysis for experiment '{experiment.experiment_id}': " f"suggestions={suggestions}",
+            content=f"Performance analysis for experiment '{experiment.experiment_id}': "
+            f"suggestions={suggestions}",
             source=KnowledgeSource.ANALYSIS,
             tags=["performance", "optimization"],
             entities=[experiment.experiment_id],
@@ -84,5 +95,9 @@ class PerformanceOptimizer(ResearchAgent):
             metadata={"experiment_id": experiment.experiment_id, "analysis": analysis},
         )
 
-        self._log_action("performance_analyzed", {"experiment_id": experiment.experiment_id}, analysis)
+        self._log_action(
+            "performance_analyzed",
+            {"experiment_id": experiment.experiment_id},
+            analysis,
+        )
         return analysis

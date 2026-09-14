@@ -34,10 +34,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from self_improvement.neural.adapters import (
     MockNeuralAdapter,
@@ -45,7 +44,6 @@ from self_improvement.neural.adapters import (
     NeuralGenerationStats,
 )
 from self_improvement.self_training.adapters import ModelOutput
-
 
 # --- Data types ----------------------------------------------------------- #
 
@@ -76,8 +74,7 @@ class TokenizerSpec:
             "eos_token_id": self.eos_token_id,
             "max_length": self.max_length,
         }
-        return hashlib.sha256(
-            str(payload).encode("utf-8")).hexdigest()[:16]
+        return hashlib.sha256(str(payload).encode("utf-8")).hexdigest()[:16]
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -185,8 +182,7 @@ class ModelPipeline:
     cheap and unit-test-friendly.
     """
 
-    def __init__(self, config: NeuralAdapterConfig,
-                 tokenizer: TokenizerSpec) -> None:
+    def __init__(self, config: NeuralAdapterConfig, tokenizer: TokenizerSpec) -> None:
         self.config = config
         self.tokenizer_spec = tokenizer
         self._loaded = False
@@ -201,16 +197,17 @@ class ModelPipeline:
         return self._loaded
 
     # -- core ops -------------------------------------------------------- #
-    def tokenize(self, example_id: str, text: str, *,
-                 label: str = "") -> TokenizedExample:
+    def tokenize(
+        self, example_id: str, text: str, *, label: str = ""
+    ) -> TokenizedExample:
         raise NotImplementedError
 
     def batch(self, examples: Sequence[TokenizedExample]) -> Batch:
         raise NotImplementedError
 
-    def generate_batch(self, batch: Batch, *,
-                       max_new_tokens: Optional[int] = None
-                       ) -> List[GenerationResult]:
+    def generate_batch(
+        self, batch: Batch, *, max_new_tokens: Optional[int] = None
+    ) -> List[GenerationResult]:
         raise NotImplementedError
 
     # -- checkpoints ----------------------------------------------------- #
@@ -265,11 +262,15 @@ class DeterministicTestPipeline(ModelPipeline):
     any of the consumers (LoRATrainer, NeuralCapabilityBenchmark).
     """
 
-    def __init__(self, config: NeuralAdapterConfig, *,
-                 base_weights: Optional[Dict[str, float]] = None,
-                 adapter: Optional[MockNeuralAdapter] = None,
-                 extra_vocab: Optional[Sequence[str]] = None,
-                 max_length: int = 128) -> None:
+    def __init__(
+        self,
+        config: NeuralAdapterConfig,
+        *,
+        base_weights: Optional[Dict[str, float]] = None,
+        adapter: Optional[MockNeuralAdapter] = None,
+        extra_vocab: Optional[Sequence[str]] = None,
+        max_length: int = 128,
+    ) -> None:
         tokenizer = TokenizerSpec(
             tokenizer_id="whitespace-v1",
             pad_token_id=0,
@@ -282,7 +283,8 @@ class DeterministicTestPipeline(ModelPipeline):
         self._vocab: Dict[str, int] = {}
         self._extra_vocab = list(extra_vocab or [])
         self._adapter = adapter or MockNeuralAdapter(
-            config=config, base_weights=base_weights)
+            config=config, base_weights=base_weights
+        )
         self._base_weights = dict(base_weights or self._adapter.weights())
         self._generation_count = 0
 
@@ -302,8 +304,9 @@ class DeterministicTestPipeline(ModelPipeline):
             max_length=self.tokenizer_spec.max_length,
         )
 
-    def tokenize(self, example_id: str, text: str, *,
-                 label: str = "") -> TokenizedExample:
+    def tokenize(
+        self, example_id: str, text: str, *, label: str = ""
+    ) -> TokenizedExample:
         self._ensure_vocab(text)
         ids: List[int] = []
         for tok in _whitespace_tokenize(text):
@@ -315,32 +318,34 @@ class DeterministicTestPipeline(ModelPipeline):
         ids = ids[: self.tokenizer_spec.max_length]
         mask = [1] * len(ids)
         return TokenizedExample(
-            example_id=example_id, input_ids=ids,
-            attention_mask=mask, label_text=label)
+            example_id=example_id, input_ids=ids, attention_mask=mask, label_text=label
+        )
 
     def batch(self, examples: Sequence[TokenizedExample]) -> Batch:
         if not examples:
-            return Batch(example_ids=[], input_ids=[],
-                         attention_mask=[],
-                         pad_token_id=self.tokenizer_spec.pad_token_id)
+            return Batch(
+                example_ids=[],
+                input_ids=[],
+                attention_mask=[],
+                pad_token_id=self.tokenizer_spec.pad_token_id,
+            )
         # Right-pad to the longest example in the batch.
         target = max(ex.length() for ex in examples)
         ids: List[List[int]] = []
         masks: List[List[int]] = []
         for ex in examples:
             pad_n = target - ex.length()
-            ids.append(list(ex.input_ids)
-                       + [self.tokenizer_spec.pad_token_id] * pad_n)
+            ids.append(list(ex.input_ids) + [self.tokenizer_spec.pad_token_id] * pad_n)
             masks.append(list(ex.attention_mask) + [0] * pad_n)
         return Batch(
             example_ids=[ex.example_id for ex in examples],
             input_ids=ids,
             attention_mask=masks,
-            pad_token_id=self.tokenizer_spec.pad_token_id)
+            pad_token_id=self.tokenizer_spec.pad_token_id,
+        )
 
     # -- inference ------------------------------------------------------- #
-    def _ids_to_text(self, ids: Sequence[int],
-                     mask: Sequence[int]) -> str:
+    def _ids_to_text(self, ids: Sequence[int], mask: Sequence[int]) -> str:
         inv = {v: k for k, v in self._vocab.items()}
         tokens: List[str] = []
         for i, m in zip(ids, mask):
@@ -348,27 +353,28 @@ class DeterministicTestPipeline(ModelPipeline):
                 tokens.append(inv[i])
         return " ".join(tokens)
 
-    def generate_batch(self, batch: Batch, *,
-                       max_new_tokens: Optional[int] = None
-                       ) -> List[GenerationResult]:
+    def generate_batch(
+        self, batch: Batch, *, max_new_tokens: Optional[int] = None
+    ) -> List[GenerationResult]:
         if not batch.size():
             return []
         results: List[GenerationResult] = []
-        for ex_id, ids, mask in zip(batch.example_ids,
-                                    batch.input_ids,
-                                    batch.attention_mask):
+        for ex_id, ids, mask in zip(
+            batch.example_ids, batch.input_ids, batch.attention_mask
+        ):
             text = self._ids_to_text(ids, mask)
             output: ModelOutput = self._adapter.generate(text, context="")
             self._generation_count += 1
-            stats = (self._adapter.stats()[-1]
-                     if self._adapter.stats() else None)
-            results.append(GenerationResult(
-                example_id=ex_id,
-                output_text=output.text,
-                output_token_ids=[],  # no real decoder in test pipeline
-                score=float(output.meta.get("score", 0.0)),
-                stats=stats,
-            ))
+            stats = self._adapter.stats()[-1] if self._adapter.stats() else None
+            results.append(
+                GenerationResult(
+                    example_id=ex_id,
+                    output_text=output.text,
+                    output_token_ids=[],  # no real decoder in test pipeline
+                    score=float(output.meta.get("score", 0.0)),
+                    stats=stats,
+                )
+            )
         return results
 
     # -- adapter injection (for LoRATrainer) ----------------------------- #
@@ -398,8 +404,9 @@ class DeterministicTestPipeline(ModelPipeline):
             "adapter_delta": dict(self._adapter._state.adapter_delta),
             "model_hash": self._compute_model_hash(),
         }
-        target.write_text(json.dumps(payload, sort_keys=True, indent=2),
-                          encoding="utf-8")
+        target.write_text(
+            json.dumps(payload, sort_keys=True, indent=2), encoding="utf-8"
+        )
         return str(target)
 
     def load_checkpoint(self, path: str) -> CheckpointLoadResult:
@@ -408,18 +415,20 @@ class DeterministicTestPipeline(ModelPipeline):
         if payload.get("kind") != "neural_pipeline_v1":
             raise ValueError(
                 f"checkpoint kind {payload.get('kind')!r} is not "
-                f"'neural_pipeline_v1'")
+                f"'neural_pipeline_v1'"
+            )
         # Restore the adapter delta on the live pipeline.
         delta = payload.get("adapter_delta", {})
         self._adapter.set_adapter_delta(delta)
         return CheckpointLoadResult(
             path=str(target),
             model_hash=payload.get("model_hash", ""),
-            config_fingerprint=payload.get("config", {}).get(
-                "fingerprint", ""),
-            extra={"base_weights": payload.get("base_weights", {}),
-                   "tokenizer": payload.get("tokenizer", {}),
-                   "adapter_delta": dict(delta)},
+            config_fingerprint=payload.get("config", {}).get("fingerprint", ""),
+            extra={
+                "base_weights": payload.get("base_weights", {}),
+                "tokenizer": payload.get("tokenizer", {}),
+                "adapter_delta": dict(delta),
+            },
         )
 
     def _compute_model_hash(self) -> str:
@@ -429,9 +438,6 @@ class DeterministicTestPipeline(ModelPipeline):
         snap = {
             "config_fp": self.config.fingerprint(),
             "base_weights": dict(sorted(self._base_weights.items())),
-            "adapter_delta": dict(sorted(
-                self._adapter._state.adapter_delta.items())),
+            "adapter_delta": dict(sorted(self._adapter._state.adapter_delta.items())),
         }
-        return hashlib.sha256(
-            str(snap).encode("utf-8")).hexdigest()[:16]
-
+        return hashlib.sha256(str(snap).encode("utf-8")).hexdigest()[:16]

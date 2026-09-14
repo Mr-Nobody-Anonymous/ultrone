@@ -48,7 +48,10 @@ class BenchmarkAgent(ResearchAgent):
                 benchmarks.append(self._run_benchmark_for_plan(plan))
 
         self._log_action("benchmark_cycle", {"benchmarks_run": len(benchmarks)}, None)
-        return {"benchmarks_run": len(benchmarks), "benchmark_ids": [b.benchmark_id for b in benchmarks]}
+        return {
+            "benchmarks_run": len(benchmarks),
+            "benchmark_ids": [b.benchmark_id for b in benchmarks],
+        }
 
     def _run_benchmark_for_plan(self, plan: Any) -> BenchmarkRecord:
         """Run a benchmark for an implementation plan."""
@@ -77,7 +80,9 @@ class BenchmarkAgent(ResearchAgent):
             metadata={"benchmark_id": benchmark.benchmark_id, "plan_id": plan.plan_id},
         )
 
-        self._log_action("benchmark_completed", {"benchmark_id": benchmark.benchmark_id}, None)
+        self._log_action(
+            "benchmark_completed", {"benchmark_id": benchmark.benchmark_id}, None
+        )
         return stored
 
     def _run_benchmark_for_paper(self, paper: Any) -> BenchmarkRecord:
@@ -95,7 +100,9 @@ class BenchmarkAgent(ResearchAgent):
         )
         stored = self.research_db.save_benchmark(benchmark)
         self._benchmarks_run += 1
-        self._log_action("benchmark_completed", {"benchmark_id": benchmark.benchmark_id}, None)
+        self._log_action(
+            "benchmark_completed", {"benchmark_id": benchmark.benchmark_id}, None
+        )
         return stored
 
     def get_benchmarks_run(self) -> int:

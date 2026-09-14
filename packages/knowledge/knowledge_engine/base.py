@@ -229,7 +229,9 @@ class KnowledgeMemoryBase:
     def _enforce_capacity(self) -> None:
         if len(self._entries) > self.capacity:
             # Remove lowest-confidence entries first.
-            ordered = sorted(self._entries.values(), key=lambda e: (e.confidence_score, e.updated_at))
+            ordered = sorted(
+                self._entries.values(), key=lambda e: (e.confidence_score, e.updated_at)
+            )
             for e in ordered[: len(self._entries) - self.capacity]:
                 del self._entries[e.entry_id]
 

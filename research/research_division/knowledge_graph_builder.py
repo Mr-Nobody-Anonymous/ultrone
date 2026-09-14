@@ -24,7 +24,9 @@ class KnowledgeGraphBuilder(ResearchAgent):
             role=ResearchAgentRole.GRAPH_BUILDER,
             **kwargs,
         )
-        self.message_handlers[MessageType.RESEARCH_KNOWLEDGE_UPDATED] = self._on_knowledge_updated
+        self.message_handlers[MessageType.RESEARCH_KNOWLEDGE_UPDATED] = (
+            self._on_knowledge_updated
+        )
 
     async def run(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Build knowledge graph from all research records."""
@@ -76,7 +78,9 @@ class KnowledgeGraphBuilder(ResearchAgent):
 
         # Link algorithms
         for algo in paper.algorithms:
-            algo_node = self.knowledge.knowledge_graph.lookup_node(algo, NodeType.ALGORITHM)
+            algo_node = self.knowledge.knowledge_graph.lookup_node(
+                algo, NodeType.ALGORITHM
+            )
             if algo_node is None:
                 algo_node_id = self.knowledge.add_graph_node(
                     label=algo,
@@ -85,11 +89,15 @@ class KnowledgeGraphBuilder(ResearchAgent):
                 )
             else:
                 algo_node_id = algo_node.node_id
-            self.knowledge.add_graph_edge(node_id, algo_node_id, edge_type=EdgeType.USES)
+            self.knowledge.add_graph_edge(
+                node_id, algo_node_id, edge_type=EdgeType.USES
+            )
 
         # Link authors
         for author in paper.authors:
-            author_node = self.knowledge.knowledge_graph.lookup_node(author, NodeType.AUTHOR)
+            author_node = self.knowledge.knowledge_graph.lookup_node(
+                author, NodeType.AUTHOR
+            )
             if author_node is None:
                 author_node_id = self.knowledge.add_graph_node(
                     label=author,
@@ -98,7 +106,9 @@ class KnowledgeGraphBuilder(ResearchAgent):
                 )
             else:
                 author_node_id = author_node.node_id
-            self.knowledge.add_graph_edge(node_id, author_node_id, edge_type=EdgeType.AUTHORS)
+            self.knowledge.add_graph_edge(
+                node_id, author_node_id, edge_type=EdgeType.AUTHORS
+            )
 
         return node_id
 

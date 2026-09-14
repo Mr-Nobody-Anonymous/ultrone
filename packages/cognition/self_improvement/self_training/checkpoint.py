@@ -60,8 +60,7 @@ class CheckpointManager:
 
     def __init__(self, root: str) -> None:
         self._root = Path(root)
-        self._channels = {
-            status: self._root / status for status in STATUSES}
+        self._channels = {status: self._root / status for status in STATUSES}
         for directory in self._channels.values():
             directory.mkdir(parents=True, exist_ok=True)
         self._registry_path = self._root / "registry.jsonl"
@@ -72,23 +71,28 @@ class CheckpointManager:
         if not self._registry_path.exists():
             return []
         records: List[ModelRecord] = []
-        for line in self._registry_path.read_text(
-                encoding="utf-8").splitlines():
+        for line in self._registry_path.read_text(encoding="utf-8").splitlines():
             if line.strip():
                 records.append(ModelRecord(**json.loads(line)))
         return records
 
     def _flush(self) -> None:
-        lines = "\n".join(json.dumps(r.to_dict(), sort_keys=True)
-                          for r in self._records)
+        lines = "\n".join(
+            json.dumps(r.to_dict(), sort_keys=True) for r in self._records
+        )
         self._registry_path.write_text(lines + "\n", encoding="utf-8")
 
     # -- write paths ----------------------------------------------------- #
     def register_candidate(
-            self, weights: LearnedWeights, *,
-            dataset_hash: str, configuration_hash: str,
-            training_seed: str, parent_model: str,
-            duration_seconds: float) -> ModelRecord:
+        self,
+        weights: LearnedWeights,
+        *,
+        dataset_hash: str,
+        configuration_hash: str,
+        training_seed: str,
+        parent_model: str,
+        duration_seconds: float,
+    ) -> ModelRecord:
         record = ModelRecord(
             model_id=f"m{len(self._records) + 1:04d}",
             model_hash=weights.model_hash,
@@ -97,19 +101,20 @@ class CheckpointManager:
             training_seed=str(training_seed),
             parent_model=parent_model,
             duration_seconds=float(duration_seconds),
-            status="candidate")
+            status="candidate",
+        )
         self._write_weights(record.model_id, weights, "candidate")
         self._records.append(record)
         self._flush()
         return record
 
-    def evaluate(self, model_id: str,
-                 scores: Dict[str, float]) -> ModelRecord:
+    def evaluate(self, model_id: str, scores: Dict[str, float]) -> ModelRecord:
         record = self._get(model_id)
         record.evaluation_scores = dict(scores)
         record.status = "evaluated"
-        self._write_weights(model_id, self._read_weights(
-            model_id, "candidate"), "evaluated")
+        self._write_weights(
+            model_id, self._read_weights(model_id, "candidate"), "evaluated"
+        )
         self._flush()
         return record
 
@@ -119,14 +124,19 @@ class CheckpointManager:
         if record.status != "evaluated":
             raise ValueError(
                 f"cannot promote '{model_id}' (status {record.status!r}) "
-                f"-- only evaluated candidates enter production")
+                f"-- only evaluated candidates enter production"
+            )
         record.status = "production"
-        self._write_weights(model_id, self._read_weights(
-            model_id, "evaluated"), "production")
+        self._write_weights(
+            model_id, self._read_weights(model_id, "evaluated"), "production"
+        )
         if record.parent_model:
             parent = self._get(record.parent_model)
-            self._write_weights(parent.model_id, self._read_weights(
-                parent.model_id, "candidate"), "baseline")
+            self._write_weights(
+                parent.model_id,
+                self._read_weights(parent.model_id, "candidate"),
+                "baseline",
+            )
         self._flush()
         return record
 
@@ -135,8 +145,9 @@ class CheckpointManager:
         return self._get(model_id)
 
     def production(self) -> Optional[ModelRecord]:
-        return next((r for r in reversed(self._records)
-                     if r.status == "production"), None)
+        return next(
+            (r for r in reversed(self._records) if r.status == "production"), None
+        )
 
     def production_weights(self) -> Optional[LearnedWeights]:
         record = self.production()
@@ -154,11 +165,13 @@ class CheckpointManager:
                 return record
         raise KeyError(f"no model '{model_id}'")
 
-    def _write_weights(self, model_id: str, weights: LearnedWeights,
-                       channel: str) -> None:
+    def _write_weights(
+        self, model_id: str, weights: LearnedWeights, channel: str
+    ) -> None:
         path = self._channels[channel] / model_id
-        path.write_text(json.dumps(weights.to_config(), sort_keys=True),
-                        encoding="utf-8")
+        path.write_text(
+            json.dumps(weights.to_config(), sort_keys=True), encoding="utf-8"
+        )
 
     def _read_weights(self, model_id: str, channel: str) -> LearnedWeights:
         path = self._channels[channel] / model_id

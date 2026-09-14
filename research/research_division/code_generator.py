@@ -25,7 +25,9 @@ class CodeGeneratorAgent(ResearchAgent):
             role=ResearchAgentRole.CODER,
             **kwargs,
         )
-        self.message_handlers[MessageType.RESEARCH_IMPLEMENTATION_PLAN] = self._on_plan_created
+        self.message_handlers[MessageType.RESEARCH_IMPLEMENTATION_PLAN] = (
+            self._on_plan_created
+        )
         self._generated_modules: List[str] = []
 
     async def run(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:

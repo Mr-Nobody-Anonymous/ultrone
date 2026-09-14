@@ -51,7 +51,9 @@ class LiteratureSearch:
                 results.append(plan)
         return results[:limit]
 
-    def find_related_research(self, hypothesis: Dict[str, Any], limit: int = 5) -> Dict[str, Any]:
+    def find_related_research(
+        self, hypothesis: Dict[str, Any], limit: int = 5
+    ) -> Dict[str, Any]:
         """Find related research for a hypothesis."""
         title = hypothesis.get("title", "")
         description = hypothesis.get("description", "")

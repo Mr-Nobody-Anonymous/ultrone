@@ -91,9 +91,9 @@ class DatasetBuilder:
         self._workdir = Path(workdir)
         self._workdir.mkdir(parents=True, exist_ok=True)
 
-    def build_from_traces(self, good_traces, *, tag: str,
-                          desired_ceiling: float = DEFAULT_CEILING
-                          ) -> Optional[DatasetArtifact]:
+    def build_from_traces(
+        self, good_traces, *, tag: str, desired_ceiling: float = DEFAULT_CEILING
+    ) -> Optional[DatasetArtifact]:
         if not 0.0 <= desired_ceiling <= 1.0:
             raise ValueError("desired_ceiling must be within [0, 1]")
         examples: List[TrainingExample] = []
@@ -120,31 +120,34 @@ class DatasetBuilder:
                 duplicates += 1
                 continue
             seen.add(key)
-            quality = float(trace.result.get("quality", 0.0)) \
-                if trace.result else 0.0
+            quality = float(trace.result.get("quality", 0.0)) if trace.result else 0.0
             target = min(1.0, max(quality, desired_ceiling))
-            examples.append(TrainingExample(
-                example_id=f"{tag}-{content_hash(payload_input)}",
-                input=payload_input,
-                context={
-                    "model": trace.selected_model,
-                    "memory": trace.selected_memory,
-                    "skills": list(trace.selected_skills),
-                    "parameters": dict(trace.parameters),
-                },
-                desired_behavior={
-                    "accepted": True,
-                    "quality": round(quality, 6),
-                    "target": round(target, 6),
-                },
-                outcome_score=round(target, 6)))
+            examples.append(
+                TrainingExample(
+                    example_id=f"{tag}-{content_hash(payload_input)}",
+                    input=payload_input,
+                    context={
+                        "model": trace.selected_model,
+                        "memory": trace.selected_memory,
+                        "skills": list(trace.selected_skills),
+                        "parameters": dict(trace.parameters),
+                    },
+                    desired_behavior={
+                        "accepted": True,
+                        "quality": round(quality, 6),
+                        "target": round(target, 6),
+                    },
+                    outcome_score=round(target, 6),
+                )
+            )
 
         if not examples:
             return None
         path = self._workdir / f"dataset_{tag}.jsonl"
-        lines = "\n".join(json.dumps(e.to_dict(), sort_keys=True)
-                          for e in sorted(examples,
-                                          key=lambda e: e.example_id))
+        lines = "\n".join(
+            json.dumps(e.to_dict(), sort_keys=True)
+            for e in sorted(examples, key=lambda e: e.example_id)
+        )
         path.write_text(lines + "\n", encoding="utf-8")
         blob = path.read_bytes()
         return DatasetArtifact(
@@ -152,7 +155,8 @@ class DatasetBuilder:
             content_hash=hashlib.sha256(blob).hexdigest()[:16],
             num_examples=len(examples),
             source_counts={"good": len(examples)},
-            duplicates_removed=duplicates)
+            duplicates_removed=duplicates,
+        )
 
 
 class ContinualMixture:
@@ -165,22 +169,32 @@ class ContinualMixture:
     ``source_counts`` rather than silently normalized away.
     """
 
-    def __init__(self, ratios=(DEFAULT_MIXTURE_RATIOS[0],
-                               DEFAULT_MIXTURE_RATIOS[1],
-                               DEFAULT_MIXTURE_RATIOS[2])) -> None:
+    def __init__(
+        self,
+        ratios=(
+            DEFAULT_MIXTURE_RATIOS[0],
+            DEFAULT_MIXTURE_RATIOS[1],
+            DEFAULT_MIXTURE_RATIOS[2],
+        ),
+    ) -> None:
         if abs(sum(ratios) - 1.0) > 1e-6 or any(r < 0 for r in ratios):
-            raise ValueError(
-                "ratios must be non-negative and sum to 1.0")
+            raise ValueError("ratios must be non-negative and sum to 1.0")
         self.ratios = tuple(float(r) for r in ratios)
 
-    def merge(self, historical: Optional[DatasetArtifact],
-              recent: Optional[DatasetArtifact],
-              synthesized: List[Dict[str, Any]],
-              *, workdir: str, tag: str) -> Optional[DatasetArtifact]:
+    def merge(
+        self,
+        historical: Optional[DatasetArtifact],
+        recent: Optional[DatasetArtifact],
+        synthesized: List[Dict[str, Any]],
+        *,
+        workdir: str,
+        tag: str,
+    ) -> Optional[DatasetArtifact]:
         parts = (
             historical.load() if historical else [],
             recent.load() if recent else [],
-            list(synthesized))
+            list(synthesized),
+        )
         total_available = sum(len(p) for p in parts)
         if total_available == 0:
             return None
@@ -189,11 +203,9 @@ class ContinualMixture:
         provenance: Dict[str, int] = {}
         labels = ("historical", "recent", "weakness_targeted")
         for label, pool, ratio in zip(labels, parts, self.ratios):
-            share = min(len(pool),
-                        int(round(ratio * max(total_available, 1))))
+            share = min(len(pool), int(round(ratio * max(total_available, 1))))
             # Deterministic take: lowest example_ids first.
-            take = sorted(pool,
-                          key=lambda e: e.get("example_id", ""))[:share]
+            take = sorted(pool, key=lambda e: e.get("example_id", ""))[:share]
             picked.extend(take)
             provenance[label] = len(take)
 
@@ -211,13 +223,12 @@ class ContinualMixture:
         out_dir.mkdir(parents=True, exist_ok=True)
         path = out_dir / f"mixture_{tag}.jsonl"
         ordered = [unique[k] for k in sorted(unique)]
-        payload = "\n".join(json.dumps(e, sort_keys=True)
-                            for e in ordered)
-        path.write_text(payload + ("\n" if payload else ""),
-                        encoding="utf-8")
+        payload = "\n".join(json.dumps(e, sort_keys=True) for e in ordered)
+        path.write_text(payload + ("\n" if payload else ""), encoding="utf-8")
         blob = path.read_bytes()
         return DatasetArtifact(
             path=str(path),
             content_hash=hashlib.sha256(blob).hexdigest()[:16],
             num_examples=len(ordered),
-            source_counts={**provenance, "duplicates_removed": removed})
+            source_counts={**provenance, "duplicates_removed": removed},
+        )

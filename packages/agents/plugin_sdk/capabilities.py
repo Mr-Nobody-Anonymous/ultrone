@@ -50,7 +50,9 @@ class PluginCapabilities:
 
     def __init__(self, plugin: Plugin):
         self.plugin = plugin
-        self._capabilities: Set[Capability] = set(self.DEFAULT_CAPABILITIES.get(plugin.plugin_type, set()))
+        self._capabilities: Set[Capability] = set(
+            self.DEFAULT_CAPABILITIES.get(plugin.plugin_type, set())
+        )
 
     def add_capability(self, capability: Capability) -> None:
         """Add a capability to the plugin."""

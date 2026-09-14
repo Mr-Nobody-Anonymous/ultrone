@@ -27,7 +27,7 @@ neural/hosted backend behind the same ``make_executor`` seam tomorrow.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from orchestration.router import Orchestrator, RoutingPolicy
 
@@ -47,9 +47,15 @@ _CAP_FIELD: Dict[str, str] = {
     "tool_use": "tool_requirement",
 }
 
-_COMPOSITE_DIMS = ("reasoning", "planning", "memory", "tool_use",
-                   "generalization", "robustness",
-                   "simulation_performance")
+_COMPOSITE_DIMS = (
+    "reasoning",
+    "planning",
+    "memory",
+    "tool_use",
+    "generalization",
+    "robustness",
+    "simulation_performance",
+)
 
 
 def _clamp01(v: float) -> float:
@@ -76,16 +82,22 @@ class CapabilityMetrics:
     tool_use: float = 0.0
     generalization: float = 0.0
     robustness: float = 0.0
-    regression_risk: float = 0.0      # most negative family delta (<= 0 = safe)
+    regression_risk: float = 0.0  # most negative family delta (<= 0 = safe)
     latency_ms: float = 0.0
     resource_cost: float = 0.0
     capability_source: str = "simulated"
 
     def composite(self) -> float:
         """Equal-weight mean of the capability dimensions (scale ~ utility)."""
-        core = [self.reasoning, self.planning, self.memory, self.tool_use,
-                self.generalization, self.robustness,
-                self.simulation_performance]
+        core = [
+            self.reasoning,
+            self.planning,
+            self.memory,
+            self.tool_use,
+            self.generalization,
+            self.robustness,
+            self.simulation_performance,
+        ]
         return round(sum(core) / len(core), 6)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -105,20 +117,22 @@ class CapabilityMetrics:
         }
 
 
-def _run_outcomes(weights: LearnedWeights, profiles,
-                  *, policy=None) -> Dict[str, Any]:
+def _run_outcomes(weights: LearnedWeights, profiles, *, policy=None) -> Dict[str, Any]:
     """task_id -> OrchestrationOutcome under a weights-built executor."""
-    orchestrator = Orchestrator(policy or RoutingPolicy(),
-                                executor=make_executor(weights))
+    orchestrator = Orchestrator(
+        policy or RoutingPolicy(), executor=make_executor(weights)
+    )
     outcomes = orchestrator.run_many(profiles)
     return {o.task_id: o for o in outcomes}
 
 
 def evaluate_capabilities(
-        weights: LearnedWeights,
-        families: Dict[str, List[Any]],
-        *, policy=None,
-        capability_source: str = "simulated") -> CapabilityMetrics:
+    weights: LearnedWeights,
+    families: Dict[str, List[Any]],
+    *,
+    policy=None,
+    capability_source: str = "simulated",
+) -> CapabilityMetrics:
     """Score one model across every family; aggregate into capabilities.
 
     ``capability_source`` tokens the report as ``"simulated"`` or
@@ -149,9 +163,10 @@ def evaluate_capabilities(
             den += weight
         return round(num / den, 6) if den else 0.0
 
-    family_mean = {name: mean(
-        [score_of[p.task_id] for p in p_list])
-        for name, p_list in families.items()}
+    family_mean = {
+        name: mean([score_of[p.task_id] for p in p_list])
+        for name, p_list in families.items()
+    }
 
     return CapabilityMetrics(
         simulation_performance=family_mean.get("normal", 0.0),
@@ -164,7 +179,8 @@ def evaluate_capabilities(
         regression_risk=0.0,
         latency_ms=round(sum(latencies) / len(latencies), 4),
         resource_cost=round(sum(costs) / len(costs), 6),
-        capability_source=capability_source)
+        capability_source=capability_source,
+    )
 
 
 @dataclass
@@ -183,7 +199,7 @@ class CapabilityComparison:
     candidate: CapabilityMetrics
     deltas: Dict[str, float]
     regression: Optional[RegressionReport] = None
-    regression_risk: float = 0.0          # most negative family mean delta
+    regression_risk: float = 0.0  # most negative family mean delta
     overall: bool = False
     no_critical_regression: bool = True
     holdout_improvement: bool = False
@@ -191,8 +207,12 @@ class CapabilityComparison:
 
     @property
     def measurably_better(self) -> bool:
-        return (self.overall and self.no_critical_regression
-                and self.holdout_improvement and self.reproducible)
+        return (
+            self.overall
+            and self.no_critical_regression
+            and self.holdout_improvement
+            and self.reproducible
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -206,65 +226,69 @@ class CapabilityComparison:
             "reproducible": self.reproducible,
             "measurably_better": self.measurably_better,
             "regression_families": (
-                list(self.regression.family_regressions)
-                if self.regression else []),
+                list(self.regression.family_regressions) if self.regression else []
+            ),
         }
 
 
-def _run_family_means(weights: LearnedWeights,
-                      families: Dict[str, List[Any]],
-                      *, policy=None) -> Dict[str, float]:
+def _run_family_means(
+    weights: LearnedWeights, families: Dict[str, List[Any]], *, policy=None
+) -> Dict[str, float]:
     """Mean orchestrator score per family under one weights executor."""
     outcomes = {}
     for name, profiles in families.items():
         runs = _run_outcomes(weights, profiles, policy=policy)
         scores = [o.score for o in runs.values()]
-        outcomes[name] = round(sum(scores) / len(scores), 6) if scores \
-            else 0.0
+        outcomes[name] = round(sum(scores) / len(scores), 6) if scores else 0.0
     return outcomes
 
 
 def compare_capabilities(
-        baseline: LearnedWeights,
-        candidate: LearnedWeights,
-        families: Dict[str, List[Any]],
-        *, policy=None,
-        regression: Optional[RegressionReport] = None,
-        reproducible: bool = True,
-        baseline_source: str = "simulated",
-        candidate_source: str = "simulated") -> CapabilityComparison:
+    baseline: LearnedWeights,
+    candidate: LearnedWeights,
+    families: Dict[str, List[Any]],
+    *,
+    policy=None,
+    regression: Optional[RegressionReport] = None,
+    reproducible: bool = True,
+    baseline_source: str = "simulated",
+    candidate_source: str = "simulated",
+) -> CapabilityComparison:
     """Measure candidate against baseline and apply the verdict criteria."""
     base_metrics = evaluate_capabilities(
-        baseline, families, policy=policy,
-        capability_source=baseline_source)
+        baseline, families, policy=policy, capability_source=baseline_source
+    )
     cand_metrics = evaluate_capabilities(
-        candidate, families, policy=policy,
-        capability_source=candidate_source)
+        candidate, families, policy=policy, capability_source=candidate_source
+    )
     base_scores = _run_family_means(baseline, families, policy=policy)
     cand_scores = _run_family_means(candidate, families, policy=policy)
-    family_deltas = {name: round(cand_scores[name] - base_scores[name], 6)
-                     for name in cand_scores}
+    family_deltas = {
+        name: round(cand_scores[name] - base_scores[name], 6) for name in cand_scores
+    }
 
-    deltas = {name: round(getattr(cand_metrics, name)
-                          - getattr(base_metrics, name), 6)
-              for name in _COMPOSITE_DIMS}
+    deltas = {
+        name: round(getattr(cand_metrics, name) - getattr(base_metrics, name), 6)
+        for name in _COMPOSITE_DIMS
+    }
 
     overall = cand_metrics.composite() > base_metrics.composite()
     holdout_up = family_deltas.get("unseen", 0.0) > 0
     if regression is not None:
         no_critical = regression.passed
     else:
-        no_critical = min(family_deltas.values()) >= -1e-6 \
-            if family_deltas else True
+        no_critical = min(family_deltas.values()) >= -1e-6 if family_deltas else True
 
     return CapabilityComparison(
         baseline=base_metrics,
         candidate=cand_metrics,
         deltas=deltas,
         regression=regression,
-        regression_risk=(round(min(family_deltas.values()), 6)
-                         if family_deltas else 0.0),
+        regression_risk=(
+            round(min(family_deltas.values()), 6) if family_deltas else 0.0
+        ),
         overall=overall,
         no_critical_regression=no_critical,
         holdout_improvement=holdout_up,
-        reproducible=reproducible)
+        reproducible=reproducible,
+    )

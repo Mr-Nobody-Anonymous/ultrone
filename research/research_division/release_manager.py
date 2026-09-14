@@ -25,14 +25,19 @@ class ReleaseManager(ResearchAgent):
             role=ResearchAgentRole.RELEASER,
             **kwargs,
         )
-        self.message_handlers[MessageType.RESEARCH_RELEASE_PROPOSAL] = self._on_release_request
+        self.message_handlers[MessageType.RESEARCH_RELEASE_PROPOSAL] = (
+            self._on_release_request
+        )
 
     async def run(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Evaluate experiments and propose releases for adopted improvements."""
         experiments = self.research_db.list_experiments()
         proposals = []
         for experiment in experiments:
-            if experiment.status == "completed" and experiment.recommendation == "adopt":
+            if (
+                experiment.status == "completed"
+                and experiment.recommendation == "adopt"
+            ):
                 proposal = self._create_release_proposal(experiment)
                 proposals.append(proposal)
 
@@ -41,7 +46,9 @@ class ReleaseManager(ResearchAgent):
 
     def _on_release_request(self, message: Any) -> Any:
         experiment_id = message.content.get("experiment_id")
-        experiment = self.research_db.get_experiment(experiment_id) if experiment_id else None
+        experiment = (
+            self.research_db.get_experiment(experiment_id) if experiment_id else None
+        )
         if experiment:
             return self._create_release_proposal(experiment)
         return None
@@ -71,5 +78,7 @@ class ReleaseManager(ResearchAgent):
             metadata={"experiment_id": experiment.experiment_id, "proposal": proposal},
         )
 
-        self._log_action("release_proposed", {"experiment_id": experiment.experiment_id}, proposal)
+        self._log_action(
+            "release_proposed", {"experiment_id": experiment.experiment_id}, proposal
+        )
         return proposal

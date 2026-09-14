@@ -15,7 +15,7 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from self_improvement.lab.evaluator import CapabilitySnapshot
 
@@ -31,7 +31,8 @@ class GateReport:
 
 
 def evaluate_promotion(
-    parent: CapabilitySnapshot, child: CapabilitySnapshot,
+    parent: CapabilitySnapshot,
+    child: CapabilitySnapshot,
     *,
     min_generalization: Optional[float] = None,
     min_robustness: Optional[float] = None,
@@ -81,39 +82,46 @@ def evaluate_promotion(
     if min_generalization is not None:
         val = child.capabilities.get("generalization", 0.0)
         if val < min_generalization:
-            reasons.append(
-                f"generalization {val} below required {min_generalization}")
+            reasons.append(f"generalization {val} below required {min_generalization}")
     if min_robustness is not None:
         val = child.capabilities.get("robustness", 0.0)
         if val < min_robustness:
-            reasons.append(
-                f"robustness {val} below required {min_robustness}")
+            reasons.append(f"robustness {val} below required {min_robustness}")
     if min_efficiency is not None and child.efficiency < min_efficiency:
         reasons.append(
-            f"efficiency {child.efficiency} below required "
-            f"{min_efficiency}")
+            f"efficiency {child.efficiency} below required " f"{min_efficiency}"
+        )
 
     # -- sealed-holdout clause ------------------------------------------ #
     if holdout_report is not None:
         child_holdout = float(holdout_report.get("mean_index", 0.0))
         parent_holdout = parent.resource.get("holdout_mean_index")
-        if parent_holdout is not None \
-                and child_holdout < float(parent_holdout) - PROMOTION_TOLERANCE:
+        if (
+            parent_holdout is not None
+            and child_holdout < float(parent_holdout) - PROMOTION_TOLERANCE
+        ):
             reasons.append(
                 f"holdout regression (parent {parent_holdout} vs "
-                f"child {child_holdout}) -- benchmark overfitting")
+                f"child {child_holdout}) -- benchmark overfitting"
+            )
 
     # -- Pareto escape hatch -------------------------------------------- #
-    if pareto_ok and reasons == [
-        f"no overall improvement "
-        f"(parent {parent.capability_index} vs child "
-        f"{child.capability_index})"
-    ] and not regressions:
+    if (
+        pareto_ok
+        and reasons
+        == [
+            f"no overall improvement "
+            f"(parent {parent.capability_index} vs child "
+            f"{child.capability_index})"
+        ]
+        and not regressions
+    ):
         # A genuine tradeoff point: keep it without scalar dominance.
         reasons = []
 
     return GateReport(
-        passed=not reasons, regressions=tuple(sorted(regressions)),
+        passed=not reasons,
+        regressions=tuple(sorted(regressions)),
         reasons=reasons,
     )
 
@@ -121,7 +129,7 @@ def evaluate_promotion(
 @dataclass
 class CandidateRecord:
     snapshot: CapabilitySnapshot
-    status: str                       # "experimental" | "promoted"
+    status: str  # "experimental" | "promoted"
     gate: Optional[GateReport] = None
 
 
@@ -132,8 +140,9 @@ class CandidateRegistry:
         self._records: Dict[str, CandidateRecord] = {}
         self.canonical_id: Optional[str] = None
 
-    def register(self, snapshot: CapabilitySnapshot,
-                 status: str = "experimental") -> CandidateRecord:
+    def register(
+        self, snapshot: CapabilitySnapshot, status: str = "experimental"
+    ) -> CandidateRecord:
         if snapshot.candidate_id in self._records:
             raise ValueError(
                 f"candidate {snapshot.candidate_id} already registered; "
@@ -143,8 +152,9 @@ class CandidateRegistry:
         self._records[snapshot.candidate_id] = record
         return record
 
-    def promote(self, candidate_id: str,
-                audit_store=None, actor: str = "bob") -> GateReport:
+    def promote(
+        self, candidate_id: str, audit_store=None, actor: str = "bob"
+    ) -> GateReport:
         """Advance the canonical pointer through the promotion gate.
 
         The parent is the current canonical (or the candidate itself if it
@@ -158,7 +168,7 @@ class CandidateRegistry:
         if self.canonical_id and self.canonical_id != candidate_id:
             parent_snap = self._records[self.canonical_id].snapshot
         if parent_snap is not None and parent_snap.parent_id == "":
-            parent_snap = parent_snap          # keep as-is
+            parent_snap = parent_snap  # keep as-is
         if parent_snap is None:
             gate = GateReport(True, (), [])
         else:
@@ -173,9 +183,14 @@ class CandidateRegistry:
         self.canonical_id = candidate_id
         if audit_store is not None:
             audit_store.append_event(
-                "lab-promotion", candidate_id, "PROMOTED", actor,
-                {"gate_reasons": gate.reasons,
-                 "fingerprint": record.snapshot.fingerprint},
+                "lab-promotion",
+                candidate_id,
+                "PROMOTED",
+                actor,
+                {
+                    "gate_reasons": gate.reasons,
+                    "fingerprint": record.snapshot.fingerprint,
+                },
             )
         return gate
 
@@ -195,7 +210,11 @@ class EliteArchive:
     """One elite per tradeoff niche; leaders change only when beaten."""
 
     niches: Tuple[str, ...] = (
-        "overall", "efficiency", "robustness", "planning", "adaptation",
+        "overall",
+        "efficiency",
+        "robustness",
+        "planning",
+        "adaptation",
     )
     leaders: Dict[str, CapabilitySnapshot] = field(default_factory=dict)
 
@@ -211,7 +230,9 @@ class EliteArchive:
         won = []
         for niche in self.niches:
             leader = self.leaders.get(niche)
-            if leader is None or self._metric(snapshot, niche) > self._metric(leader, niche):
+            if leader is None or self._metric(snapshot, niche) > self._metric(
+                leader, niche
+            ):
                 self.leaders[niche] = snapshot
                 won.append(niche)
         return won

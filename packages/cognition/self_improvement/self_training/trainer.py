@@ -48,8 +48,7 @@ class LearnedWeights:
         extra = [d for d in self.values if d not in DIMENSIONS]
         if extra:
             raise ValueError(f"unknown dimensions: {extra}")
-        self.values = {d: round(_clamp01(v), 6)
-                       for d, v in sorted(self.values.items())}
+        self.values = {d: round(_clamp01(v), 6) for d, v in sorted(self.values.items())}
 
     # -- serialization -------------------------------------------------- #
     def to_config(self) -> Dict[str, Any]:
@@ -58,8 +57,9 @@ class LearnedWeights:
     @classmethod
     def from_config(cls, config: Dict[str, Any]) -> "LearnedWeights":
         if config.get("kind") != CONFIG_KIND:
-            raise ValueError(f"config kind {config.get('kind')!r} "
-                             f"is not {CONFIG_KIND!r}")
+            raise ValueError(
+                f"config kind {config.get('kind')!r} " f"is not {CONFIG_KIND!r}"
+            )
         return cls(values=dict(config.get("weights", {})))
 
     @classmethod
@@ -70,13 +70,13 @@ class LearnedWeights:
     def model_hash(self) -> str:
         return config_hash(self.to_config())
 
-    def blend(self, target: "LearnedWeights",
-              alpha: float) -> "LearnedWeights":
+    def blend(self, target: "LearnedWeights", alpha: float) -> "LearnedWeights":
         if not 0.0 <= alpha <= 1.0:
             raise ValueError("alpha must be within [0, 1]")
-        blended = {d: _clamp01((1 - alpha) * self.values[d]
-                               + alpha * target.values[d])
-                   for d in DIMENSIONS}
+        blended = {
+            d: _clamp01((1 - alpha) * self.values[d] + alpha * target.values[d])
+            for d in DIMENSIONS
+        }
         return LearnedWeights(values=blended)
 
 
@@ -89,14 +89,14 @@ class FitResult:
 
 def _example_mix(example: Dict[str, Any]) -> Dict[str, float]:
     fields = example["input"]
-    profile = TaskProfile(domain=fields["domain"],
-                          difficulty=fields["difficulty"],
-                          reasoning_depth=fields["reasoning_depth"],
-                          context_requirement=fields[
-                              "context_requirement"],
-                          tool_requirement=fields["tool_requirement"],
-                          latency_sensitivity=fields[
-                              "latency_sensitivity"])
+    profile = TaskProfile(
+        domain=fields["domain"],
+        difficulty=fields["difficulty"],
+        reasoning_depth=fields["reasoning_depth"],
+        context_requirement=fields["context_requirement"],
+        tool_requirement=fields["tool_requirement"],
+        latency_sensitivity=fields["latency_sensitivity"],
+    )
     return capability_mix(profile)
 
 
@@ -108,11 +108,9 @@ class StatisticalTrainer:
             raise ValueError("prior_strength must be positive")
         self.prior_strength = float(prior_strength)
 
-    def fit(self, examples: List[Dict[str, Any]],
-            current: LearnedWeights) -> FitResult:
+    def fit(self, examples: List[Dict[str, Any]], current: LearnedWeights) -> FitResult:
         if not examples:
-            return FitResult(weights=current, loss_history=[0.0],
-                             examples_used=0)
+            return FitResult(weights=current, loss_history=[0.0], examples_used=0)
 
         def residual(w: LearnedWeights) -> float:
             errs = []
@@ -124,8 +122,7 @@ class StatisticalTrainer:
             return round(sum(errs) / len(errs), 6)
 
         before = residual(current)
-        numerator = {d: self.prior_strength * current.values[d]
-                     for d in DIMENSIONS}
+        numerator = {d: self.prior_strength * current.values[d] for d in DIMENSIONS}
         denominator = {d: self.prior_strength for d in DIMENSIONS}
         for example in examples:
             mix = _example_mix(example)
@@ -133,13 +130,13 @@ class StatisticalTrainer:
             for d in DIMENSIONS:
                 numerator[d] += score * mix[d]
                 denominator[d] += mix[d]
-        updated = LearnedWeights(values={
-            d: numerator[d] / max(denominator[d], 1e-9)
-            for d in DIMENSIONS})
+        updated = LearnedWeights(
+            values={d: numerator[d] / max(denominator[d], 1e-9) for d in DIMENSIONS}
+        )
         after = residual(updated)
-        return FitResult(weights=updated,
-                         loss_history=[before, after],
-                         examples_used=len(examples))
+        return FitResult(
+            weights=updated, loss_history=[before, after], examples_used=len(examples)
+        )
 
 
 def make_executor(weights: LearnedWeights) -> Callable:

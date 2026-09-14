@@ -23,7 +23,6 @@ from self_improvement.self_training.adapters import (
 )
 from self_improvement.self_training.checkpoint import (
     CheckpointManager,
-    ModelRecord,
 )
 from self_improvement.self_training.curriculum_manager import (
     CurriculumManager,

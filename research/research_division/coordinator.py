@@ -55,49 +55,94 @@ class ResearchDivisionCoordinator(ResearchAgent):
         # Create all specialized agents
         self.agents: Dict[str, ResearchAgent] = {
             "scout": ResearchScout(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
             "analyzer": PaperAnalyzer(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
             "extractor": AlgorithmExtractor(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
             "planner": ImplementationPlanner(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
             "codegen": CodeGeneratorAgent(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
             "benchmark": BenchmarkAgent(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
             "experiment": ExperimentManagerAgent(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
             "graph": KnowledgeGraphBuilder(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
             "citation": CitationManager(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
             "memory": ResearchMemoryManagerAgent(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
             "reviewer": QualityReviewer(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
             "safety": SafetyValidator(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
             "optimizer": PerformanceOptimizer(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
             "writer": DocumentationWriter(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
             "release": ReleaseManager(
-                message_bus=message_bus, knowledge=knowledge, research_db=research_db, config=config
+                message_bus=message_bus,
+                knowledge=knowledge,
+                research_db=research_db,
+                config=config,
             ),
         }
 

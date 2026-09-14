@@ -15,12 +15,6 @@ on:
       - "research/benchmarks/canonical/**"
       - "simulation/sim/fault_injection.py"
 
-# Monorepo: packages keep their original import names but live in buckets
-# (see _ultrone_paths.py). PYTHONPATH exposes every bucket to pytest and the
-# ``python -m benchmarks.canonical`` entry point.
-env:
-  PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/apps:${{ github.workspace }}/packages/core:${{ github.workspace }}/research:${{ github.workspace }}/simulation
-
 jobs:
   benchmark-regression:
     runs-on: ubuntu-latest
@@ -35,7 +29,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install numpy pytest
       - name: Run HITL lifecycle + fault injection tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/apps:${{ github.workspace }}/packages/core:${{ github.workspace }}/packages/cognition:${{ github.workspace }}/packages/agents:${{ github.workspace }}/packages/knowledge:${{ github.workspace }}/packages/orchestration:${{ github.workspace }}/packages/runtime:${{ github.workspace }}/packages/safety:${{ github.workspace }}/packages/observability:${{ github.workspace }}/packages/transport:${{ github.workspace }}/research:${{ github.workspace }}/simulation:${{ github.workspace }}/vendor:${{ github.workspace }}/data
         run: |
           python -m pytest tests/test_hitl_lifecycle.py tests/test_fault_injection.py tests/test_core_pipeline.py tests/test_audit_store.py -q
       - name: Canonical benchmark regression gate (fails on regression)
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/apps:${{ github.workspace }}/packages/core:${{ github.workspace }}/packages/cognition:${{ github.workspace }}/packages/agents:${{ github.workspace }}/packages/knowledge:${{ github.workspace }}/packages/orchestration:${{ github.workspace }}/packages/runtime:${{ github.workspace }}/packages/safety:${{ github.workspace }}/packages/observability:${{ github.workspace }}/packages/transport:${{ github.workspace }}/research:${{ github.workspace }}/simulation:${{ github.workspace }}/vendor:${{ github.workspace }}/data
         run: python -m benchmarks.canonical --output results.json

@@ -25,7 +25,9 @@ class TelemetryCollector:
         self._warnings: List[Dict[str, Any]] = []
         self._start_time = time.time()
 
-    def record_metric(self, name: str, value: float, timestamp: Optional[float] = None) -> None:
+    def record_metric(
+        self, name: str, value: float, timestamp: Optional[float] = None
+    ) -> None:
         """Record a metric value."""
         self._metrics[name].append(value)
 
@@ -39,7 +41,9 @@ class TelemetryCollector:
             }
         )
 
-    def record_failure(self, component: str, error: str, details: Dict[str, Any] = None) -> None:
+    def record_failure(
+        self, component: str, error: str, details: Dict[str, Any] = None
+    ) -> None:
         """Record a failure."""
         self._failures.append(
             {
@@ -50,7 +54,9 @@ class TelemetryCollector:
             }
         )
 
-    def record_warning(self, component: str, message: str, details: Dict[str, Any] = None) -> None:
+    def record_warning(
+        self, component: str, message: str, details: Dict[str, Any] = None
+    ) -> None:
         """Record a warning."""
         self._warnings.append(
             {

@@ -30,7 +30,9 @@ class PaperAnalyzer(ResearchAgent):
             **kwargs,
         )
         # Register message handler for discovered papers
-        self.message_handlers[MessageType.RESEARCH_PAPER_DISCOVERED] = self._on_paper_discovered
+        self.message_handlers[MessageType.RESEARCH_PAPER_DISCOVERED] = (
+            self._on_paper_discovered
+        )
 
     async def run(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Analyze papers from the research database.
@@ -133,7 +135,11 @@ class PaperAnalyzer(ResearchAgent):
                 loop = None
 
             if loop and loop.is_running():
-                loop.create_task(self._async_publish_analyzed(paper, summary, algorithms, architectures))
+                loop.create_task(
+                    self._async_publish_analyzed(
+                        paper, summary, algorithms, architectures
+                    )
+                )
             else:
                 coro = self.publish(
                     MessageType.RESEARCH_PAPER_ANALYZED,
@@ -168,7 +174,11 @@ class PaperAnalyzer(ResearchAgent):
         return result
 
     async def _async_publish_analyzed(
-        self, paper: PaperRecord, summary: str, algorithms: List[str], architectures: List[str]
+        self,
+        paper: PaperRecord,
+        summary: str,
+        algorithms: List[str],
+        architectures: List[str],
     ) -> None:
         """Async helper for publishing analysis event."""
         await self.publish(
@@ -213,14 +223,32 @@ class PaperAnalyzer(ResearchAgent):
     def _extract_architectures(title: str, abstract: str) -> List[str]:
         """Extract architecture names from text."""
         text = f"{title} {abstract}".lower()
-        known = ["encoder-decoder", "transformer", "cnn", "rnn", "lstm", "graph attention", "resnet", "u-net"]
+        known = [
+            "encoder-decoder",
+            "transformer",
+            "cnn",
+            "rnn",
+            "lstm",
+            "graph attention",
+            "resnet",
+            "u-net",
+        ]
         return [a.upper() for a in known if a in text]
 
     @staticmethod
     def _extract_datasets(title: str, abstract: str) -> List[str]:
         """Extract dataset names from text."""
         text = f"{title} {abstract}".lower()
-        known = ["imagenet", "cifar", "mnist", "glue", "squad", "commoncrawl", "wikipedia", "atari"]
+        known = [
+            "imagenet",
+            "cifar",
+            "mnist",
+            "glue",
+            "squad",
+            "commoncrawl",
+            "wikipedia",
+            "atari",
+        ]
         return [d for d in known if d in text]
 
     @staticmethod

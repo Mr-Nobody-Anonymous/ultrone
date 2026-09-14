@@ -43,7 +43,6 @@ from self_improvement.self_training.adapters import (
     ModelOutput,
 )
 
-
 # --- Config & stats -------------------------------------------------------- #
 
 
@@ -182,10 +181,14 @@ class MockNeuralAdapter(ModelAdapter):
 
     name: str = "mock-neural"
 
-    def __init__(self, config: NeuralAdapterConfig, *,
-                 base_weights: Optional[Dict[str, float]] = None,
-                 adapter_delta: Optional[Dict[str, float]] = None,
-                 max_delta: float = 0.30) -> None:
+    def __init__(
+        self,
+        config: NeuralAdapterConfig,
+        *,
+        base_weights: Optional[Dict[str, float]] = None,
+        adapter_delta: Optional[Dict[str, float]] = None,
+        max_delta: float = 0.30,
+    ) -> None:
         if not 0.0 <= max_delta <= 1.0:
             raise ValueError("max_delta must be within [0, 1]")
         self.config = config
@@ -204,8 +207,7 @@ class MockNeuralAdapter(ModelAdapter):
         delta = self._state.adapter_delta.get(dimension, 0.0)
         # Clamp the delta to the configured safety bound, then clamp
         # the resulting capability to [0, 1].
-        delta = max(-self._state.max_delta,
-                    min(self._state.max_delta, delta))
+        delta = max(-self._state.max_delta, min(self._state.max_delta, delta))
         value = base + delta
         return max(0.0, min(1.0, value))
 
@@ -214,8 +216,7 @@ class MockNeuralAdapter(ModelAdapter):
         return {d: self.capability(d) for d in self._dimensions()}
 
     def _dimensions(self) -> List[str]:
-        dims = sorted(set(self._state.base_weights)
-                      | set(self._state.adapter_delta))
+        dims = sorted(set(self._state.base_weights) | set(self._state.adapter_delta))
         return dims
 
     # -- adapter injection ---------------------------------------------- #
@@ -229,7 +230,8 @@ class MockNeuralAdapter(ModelAdapter):
             if not 0.0 <= abs(value) <= self._state.max_delta:
                 raise ValueError(
                     f"delta[{dim!r}]={value} exceeds max_delta="
-                    f"{self._state.max_delta}")
+                    f"{self._state.max_delta}"
+                )
         self._state.adapter_delta = dict(delta)
 
     def reset_adapter(self) -> None:
@@ -251,29 +253,39 @@ class MockNeuralAdapter(ModelAdapter):
         # weights) so the adapter delta is observable in the output
         # bytes, not just in the capability vector.
         digest = hashlib.sha256(
-            (f"{self.config.fingerprint()}\n{context}\x1f{prompt}\n"
-             f"{sorted(caps.items())}").encode("utf-8")
+            (
+                f"{self.config.fingerprint()}\n{context}\x1f{prompt}\n"
+                f"{sorted(caps.items())}"
+            ).encode("utf-8")
         ).hexdigest()
-        text = (f"[{self.config.model_id}] "
-                f"score={score:.4f} prob={prob:.4f} "
-                f"sha={digest[:12]}")
+        text = (
+            f"[{self.config.model_id}] "
+            f"score={score:.4f} prob={prob:.4f} "
+            f"sha={digest[:12]}"
+        )
         latency_ms = (time.time() - start) * 1000.0
         stats = NeuralGenerationStats(
             latency_ms=latency_ms,
             tokens_in=max(1, len((context + prompt).split())),
             tokens_out=max(1, len(text.split())),
-            memory_mb=120.0,           # plausible "small model" size
-            extra={"adapter_active": bool(self._state.adapter_delta),
-                   "config_fp": self.config.fingerprint()})
+            memory_mb=120.0,  # plausible "small model" size
+            extra={
+                "adapter_active": bool(self._state.adapter_delta),
+                "config_fp": self.config.fingerprint(),
+            },
+        )
         self._stats.append(stats)
-        return ModelOutput(text=text, meta={
-            "adapter": self.name,
-            "config_fp": self.config.fingerprint(),
-            "score": round(score, 6),
-            "prob": round(prob, 6),
-            "caps": {k: round(v, 6) for k, v in caps.items()},
-            "stats": stats.to_dict(),
-        })
+        return ModelOutput(
+            text=text,
+            meta={
+                "adapter": self.name,
+                "config_fp": self.config.fingerprint(),
+                "score": round(score, 6),
+                "prob": round(prob, 6),
+                "caps": {k: round(v, 6) for k, v in caps.items()},
+                "stats": stats.to_dict(),
+            },
+        )
 
     # -- bookkeeping ----------------------------------------------------- #
     def stats(self) -> List[NeuralGenerationStats]:
@@ -293,4 +305,3 @@ class MockNeuralAdapter(ModelAdapter):
 
     # Tell pytest this is an implementation class.
     __test__ = False
-

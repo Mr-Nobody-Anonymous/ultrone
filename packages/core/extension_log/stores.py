@@ -164,7 +164,11 @@ class VectorLogStore(BaseLogStore):
     def write(self, entry: LogEntry) -> None:
         self._entries.append(entry)
         # Index in vector memory for semantic search
-        from knowledge_engine.base import KnowledgeEntry, KnowledgeSource, KnowledgeCategory
+        from knowledge_engine.base import (
+            KnowledgeEntry,
+            KnowledgeSource,
+            KnowledgeCategory,
+        )
 
         ke = KnowledgeEntry(
             content=f"{entry.message} {json.dumps(entry.details, default=str)}",
@@ -197,7 +201,9 @@ class KnowledgeGraphLogStore(BaseLogStore):
         from knowledge_engine.knowledge_graph import KnowledgeGraph, NodeType
 
         self._NodeType = NodeType
-        self.knowledge_graph = knowledge.knowledge_graph if knowledge else KnowledgeGraph()
+        self.knowledge_graph = (
+            knowledge.knowledge_graph if knowledge else KnowledgeGraph()
+        )
         self._entries: List[LogEntry] = []
 
     def write(self, entry: LogEntry) -> None:

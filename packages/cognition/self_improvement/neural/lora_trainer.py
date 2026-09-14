@@ -37,30 +37,18 @@ No orchestration code is touched.
 from __future__ import annotations
 
 import hashlib
-import json
-import math
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Sequence
 
 from orchestration.model_registry import DIMENSIONS
 from orchestration.router import capability_mix
 from orchestration.task_classifier import TaskProfile
-
-from self_improvement.neural.adapters import (
-    MockNeuralAdapter,
-    NeuralAdapterConfig,
-)
-from self_improvement.neural.pipeline import (
-    DeterministicTestPipeline,
-    ModelPipeline,
-)
 from self_improvement.self_training.trainer import (
     CONFIG_KIND,
     LearnedWeights,
     _clamp01,
 )
-
 
 # --- Data types ----------------------------------------------------------- #
 
@@ -108,12 +96,13 @@ class TrainingRun:
             "base_model_hash": self.base_model_hash,
             "dataset_hash": self.dataset_hash,
             "config_fingerprint": self.config_fingerprint,
-            "rank": self.rank, "alpha": self.alpha,
-            "learning_rate": self.learning_rate, "steps": self.steps,
+            "rank": self.rank,
+            "alpha": self.alpha,
+            "learning_rate": self.learning_rate,
+            "steps": self.steps,
             "seed": self.seed,
         }
-        return hashlib.sha256(
-            str(payload).encode("utf-8")).hexdigest()[:16]
+        return hashlib.sha256(str(payload).encode("utf-8")).hexdigest()[:16]
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -121,9 +110,11 @@ class TrainingRun:
             "base_model_hash": self.base_model_hash,
             "dataset_hash": self.dataset_hash,
             "config_fingerprint": self.config_fingerprint,
-            "rank": self.rank, "alpha": self.alpha,
+            "rank": self.rank,
+            "alpha": self.alpha,
             "learning_rate": self.learning_rate,
-            "steps": self.steps, "seed": self.seed,
+            "steps": self.steps,
+            "seed": self.seed,
             "duration_seconds": self.duration_seconds,
             "fingerprint": self.fingerprint(),
             "extra": dict(self.extra),
@@ -159,8 +150,7 @@ class NeuralLearnedWeights(LearnedWeights):
         # configured safety bound and end up in a checkpoint.
         for dim, value in self.adapter_delta.items():
             if not -1.0 <= value <= 1.0:
-                raise ValueError(
-                    f"adapter_delta[{dim!r}]={value} outside [-1, 1]")
+                raise ValueError(f"adapter_delta[{dim!r}]={value} outside [-1, 1]")
 
     def to_config(self) -> Dict[str, Any]:
         return {
@@ -176,8 +166,10 @@ class NeuralLearnedWeights(LearnedWeights):
     def from_config(cls, config: Dict[str, Any]) -> "NeuralLearnedWeights":
         kind = config.get("kind")
         if kind not in (NEURAL_CONFIG_KIND, CONFIG_KIND):
-            raise ValueError(f"config kind {kind!r} is not "
-                             f"{NEURAL_CONFIG_KIND!r} or {CONFIG_KIND!r}")
+            raise ValueError(
+                f"config kind {kind!r} is not "
+                f"{NEURAL_CONFIG_KIND!r} or {CONFIG_KIND!r}"
+            )
         values = dict(config.get("weights", {}))
         # When the kind is the parent kind we still have a valid
         # weights dict; the neural extras default to empty.
@@ -197,8 +189,7 @@ class NeuralLearnedWeights(LearnedWeights):
         # "neural" candidate from a "statistical" one even when the
         # values dict happens to coincide.
         payload = self.to_config()
-        return hashlib.sha256(
-            str(payload).encode("utf-8")).hexdigest()[:16]
+        return hashlib.sha256(str(payload).encode("utf-8")).hexdigest()[:16]
 
     def to_learned_weights(self) -> LearnedWeights:
         """Downcast to a plain ``LearnedWeights`` (values only).
@@ -256,11 +247,17 @@ class LoRATrainer:
       toward zero. Higher = more conservative (closer to base).
     """
 
-    def __init__(self, *, rank: int = 8, alpha: float = 16.0,
-                 learning_rate: float = 0.05, steps: int = 3,
-                 prior_strength: float = 4.0,
-                 max_delta: float = 0.30,
-                 seed: int = 0) -> None:
+    def __init__(
+        self,
+        *,
+        rank: int = 8,
+        alpha: float = 16.0,
+        learning_rate: float = 0.05,
+        steps: int = 3,
+        prior_strength: float = 4.0,
+        max_delta: float = 0.30,
+        seed: int = 0,
+    ) -> None:
         if rank < 1:
             raise ValueError("rank must be >= 1")
         if alpha <= 0:
@@ -282,11 +279,14 @@ class LoRATrainer:
         self.seed = int(seed)
 
     # -- main fit -------------------------------------------------------- #
-    def fit(self, base: NeuralLearnedWeights,
-            examples: Sequence[Dict[str, Any]],
-            *, dataset_hash: str = "",
-            config_fingerprint: str = ""
-            ) -> NeuralFitResult:
+    def fit(
+        self,
+        base: NeuralLearnedWeights,
+        examples: Sequence[Dict[str, Any]],
+        *,
+        dataset_hash: str = "",
+        config_fingerprint: str = "",
+    ) -> NeuralFitResult:
         """Fit an adapter delta on top of ``base``.
 
         ``examples`` is the same JSONL-format list the existing
@@ -300,15 +300,21 @@ class LoRATrainer:
                 run_id=f"run-{self.seed:04d}-empty",
                 base_model_hash=base.model_hash,
                 dataset_hash=dataset_hash or "",
-                config_fingerprint=(config_fingerprint
-                                    or base.config_fingerprint),
-                rank=self.rank, alpha=self.alpha,
-                learning_rate=self.learning_rate, steps=0,
-                seed=self.seed, duration_seconds=0.0)
-            return NeuralFitResult(weights=base, run=run,
-                                   loss_history=[0.0],
-                                   examples_used=0,
-                                   per_dimension_delta={})
+                config_fingerprint=(config_fingerprint or base.config_fingerprint),
+                rank=self.rank,
+                alpha=self.alpha,
+                learning_rate=self.learning_rate,
+                steps=0,
+                seed=self.seed,
+                duration_seconds=0.0,
+            )
+            return NeuralFitResult(
+                weights=base,
+                run=run,
+                loss_history=[0.0],
+                examples_used=0,
+                per_dimension_delta={},
+            )
 
         start = time.time()
         eff_lr = self.alpha * self.learning_rate / max(self.rank, 1)
@@ -317,8 +323,7 @@ class LoRATrainer:
 
         for _ in range(self.steps):
             # Prior-shrunk Bayesian-style update on the demand mix.
-            numerator = {d: self.prior_strength * delta[d]
-                         for d in DIMENSIONS}
+            numerator = {d: self.prior_strength * delta[d] for d in DIMENSIONS}
             denom = {d: self.prior_strength for d in DIMENSIONS}
             for ex in examples:
                 mix = _demand_mix(ex)
@@ -326,19 +331,16 @@ class LoRATrainer:
                 for d in DIMENSIONS:
                     numerator[d] += target * mix[d]
                     denom[d] += mix[d]
-            proposed = {d: numerator[d] / max(denom[d], 1e-9)
-                        for d in DIMENSIONS}
+            proposed = {d: numerator[d] / max(denom[d], 1e-9) for d in DIMENSIONS}
             # Effective step: pull delta toward the proposed value
             # by eff_lr (a small fraction so a tiny dataset cannot
             # yank the model around).
             for d in DIMENSIONS:
-                delta[d] = ((1.0 - eff_lr) * delta[d]
-                            + eff_lr * proposed[d])
+                delta[d] = (1.0 - eff_lr) * delta[d] + eff_lr * proposed[d]
             # Clamp to the safety bound. Without this, a long run
             # could push the model into nonsense.
             for d in DIMENSIONS:
-                delta[d] = max(-self.max_delta,
-                               min(self.max_delta, delta[d]))
+                delta[d] = max(-self.max_delta, min(self.max_delta, delta[d]))
             loss = self._loss(base, delta, examples)
             loss_history.append(round(loss, 6))
 
@@ -351,10 +353,10 @@ class LoRATrainer:
             new_values[d] = _clamp01(base_v + delta[d])
         weights = NeuralLearnedWeights(
             values=new_values,
-            adapter_delta={d: round(delta[d], 6) for d in DIMENSIONS
-                           if abs(delta[d]) > 1e-9},
-            config_fingerprint=(config_fingerprint
-                                or base.config_fingerprint),
+            adapter_delta={
+                d: round(delta[d], 6) for d in DIMENSIONS if abs(delta[d]) > 1e-9
+            },
+            config_fingerprint=(config_fingerprint or base.config_fingerprint),
             base_model_hash=base.model_hash,
             run_fingerprint="",  # filled below
         )
@@ -363,21 +365,29 @@ class LoRATrainer:
             base_model_hash=base.model_hash,
             dataset_hash=dataset_hash or "",
             config_fingerprint=weights.config_fingerprint,
-            rank=self.rank, alpha=self.alpha,
-            learning_rate=self.learning_rate, steps=self.steps,
+            rank=self.rank,
+            alpha=self.alpha,
+            learning_rate=self.learning_rate,
+            steps=self.steps,
             seed=self.seed,
-            duration_seconds=round(time.time() - start, 6))
+            duration_seconds=round(time.time() - start, 6),
+        )
         weights.run_fingerprint = run.fingerprint()
         return NeuralFitResult(
-            weights=weights, run=run,
+            weights=weights,
+            run=run,
             loss_history=loss_history,
             examples_used=len(examples),
-            per_dimension_delta=dict(weights.adapter_delta))
+            per_dimension_delta=dict(weights.adapter_delta),
+        )
 
     # -- helpers --------------------------------------------------------- #
-    def _loss(self, base: NeuralLearnedWeights,
-              delta: Dict[str, float],
-              examples: Sequence[Dict[str, Any]]) -> float:
+    def _loss(
+        self,
+        base: NeuralLearnedWeights,
+        delta: Dict[str, float],
+        examples: Sequence[Dict[str, Any]],
+    ) -> float:
         """Mean absolute error of the candidate over ``examples``."""
         if not examples:
             return 0.0
@@ -385,8 +395,9 @@ class LoRATrainer:
         for ex in examples:
             mix = _demand_mix(ex)
             target = _clamp01(float(ex["outcome_score"]))
-            fit = sum((base.values.get(d, 0.5) + delta.get(d, 0.0))
-                      * mix[d]
-                      for d in DIMENSIONS)
+            fit = sum(
+                (base.values.get(d, 0.5) + delta.get(d, 0.0)) * mix[d]
+                for d in DIMENSIONS
+            )
             errs.append(abs(target - fit))
         return round(sum(errs) / len(errs), 6)

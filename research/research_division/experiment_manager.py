@@ -26,13 +26,17 @@ class ExperimentManagerAgent(ResearchAgent):
             role=ResearchAgentRole.EXPERIMENTER,
             **kwargs,
         )
-        self.message_handlers[MessageType.RESEARCH_EXPERIMENT_PROPOSAL] = self._on_experiment_proposal
+        self.message_handlers[MessageType.RESEARCH_EXPERIMENT_PROPOSAL] = (
+            self._on_experiment_proposal
+        )
 
     async def run(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Process experiment proposals and run experiments."""
         experiment_ids = kwargs.get("experiment_ids")
         if experiment_ids:
-            experiments = [self.research_db.get_experiment(eid) for eid in experiment_ids]
+            experiments = [
+                self.research_db.get_experiment(eid) for eid in experiment_ids
+            ]
             experiments = [e for e in experiments if e is not None]
         else:
             experiments = self.research_db.list_experiments()
@@ -48,7 +52,9 @@ class ExperimentManagerAgent(ResearchAgent):
 
     def _on_experiment_proposal(self, message: Any) -> Any:
         experiment_id = message.content.get("experiment_id")
-        experiment = self.research_db.get_experiment(experiment_id) if experiment_id else None
+        experiment = (
+            self.research_db.get_experiment(experiment_id) if experiment_id else None
+        )
         if experiment:
             return self._run_experiment(experiment)
         return None
@@ -78,7 +84,9 @@ class ExperimentManagerAgent(ResearchAgent):
         experiment.status = "completed"
         experiment.evaluation_metrics = metrics
         experiment.resource_usage = resource_usage
-        experiment.execution_logs.append(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Experiment completed successfully")
+        experiment.execution_logs.append(
+            f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Experiment completed successfully"
+        )
         experiment.conclusion = (
             f"Experiment validated hypothesis with accuracy {metrics['accuracy']:.2%}. "
             f"Results are reproducible and consistent with expectations."
@@ -140,7 +148,9 @@ class ExperimentManagerAgent(ResearchAgent):
             "metrics": metrics,
             "recommendation": experiment.recommendation,
         }
-        self._log_action("experiment_completed", {"experiment_id": experiment.experiment_id}, result)
+        self._log_action(
+            "experiment_completed", {"experiment_id": experiment.experiment_id}, result
+        )
         return result
 
     def create_experiment(
@@ -161,5 +171,7 @@ class ExperimentManagerAgent(ResearchAgent):
             status="proposed",
         )
         stored = self.research_db.save_experiment(experiment)
-        self._log_action("experiment_created", {"experiment_id": stored.experiment_id}, None)
+        self._log_action(
+            "experiment_created", {"experiment_id": stored.experiment_id}, None
+        )
         return stored

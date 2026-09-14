@@ -194,7 +194,9 @@ class KnowledgeGraph:
     def get_node(self, node_id: str) -> Optional[KnowledgeNode]:
         return self._nodes.get(node_id)
 
-    def lookup_node(self, label: str, node_type: Optional[NodeType] = None) -> Optional[KnowledgeNode]:
+    def lookup_node(
+        self, label: str, node_type: Optional[NodeType] = None
+    ) -> Optional[KnowledgeNode]:
         """Find a node by exact label match (optionally filtered by type)."""
         for node in self._nodes.values():
             if node.label == label:
@@ -221,7 +223,11 @@ class KnowledgeGraph:
             return False
         del self._nodes[node_id]
         # Remove edges connected to this node
-        edge_ids = [eid for eid, e in self._edges.items() if e.source_id == node_id or e.target_id == node_id]
+        edge_ids = [
+            eid
+            for eid, e in self._edges.items()
+            if e.source_id == node_id or e.target_id == node_id
+        ]
         for eid in edge_ids:
             del self._edges[eid]
         self._adjacency.pop(node_id, None)
@@ -276,12 +282,18 @@ class KnowledgeGraph:
         """Return edges optionally filtered by incident node."""
         if node_id is None:
             return list(self._edges.values())
-        return [e for e in self._edges.values() if e.source_id == node_id or e.target_id == node_id]
+        return [
+            e
+            for e in self._edges.values()
+            if e.source_id == node_id or e.target_id == node_id
+        ]
 
     # ------------------------------------------------------------------
     # Traversal
     # ------------------------------------------------------------------
-    def neighbors(self, node_id: str, edge_type: Optional[EdgeType] = None) -> List[str]:
+    def neighbors(
+        self, node_id: str, edge_type: Optional[EdgeType] = None
+    ) -> List[str]:
         """Return neighbor node IDs (optionally filtered by edge type)."""
         result = []
         for e in self._edges.values():
@@ -368,7 +380,9 @@ class KnowledgeGraph:
     # ------------------------------------------------------------------
     # Cross-reference discovery
     # ------------------------------------------------------------------
-    def find_related(self, node_id: str, min_confidence: float = 0.0) -> List[KnowledgeNode]:
+    def find_related(
+        self, node_id: str, min_confidence: float = 0.0
+    ) -> List[KnowledgeNode]:
         """Find related nodes through shared neighbors (2-hop)."""
         if node_id not in self._nodes:
             return []

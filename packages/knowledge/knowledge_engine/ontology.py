@@ -125,7 +125,9 @@ class OntologyEngine:
                 return self._concepts.get(cid)
         return None
 
-    def add_relationship(self, source_id: str, target_id: str, rel_type: str = "related") -> bool:
+    def add_relationship(
+        self, source_id: str, target_id: str, rel_type: str = "related"
+    ) -> bool:
         """Add a relationship between two concepts."""
         if source_id not in self._concepts or target_id not in self._concepts:
             logger.warning("Cannot add relationship: missing concept(s)")
@@ -151,7 +153,11 @@ class OntologyEngine:
         result = []
         visited: Set[str] = set()
         current = self._concepts.get(concept_id)
-        while current is not None and current.parent_id and current.parent_id not in visited:
+        while (
+            current is not None
+            and current.parent_id
+            and current.parent_id not in visited
+        ):
             visited.add(current.parent_id)
             parent = self._concepts.get(current.parent_id)
             if parent:
@@ -179,9 +185,15 @@ class OntologyEngine:
         concept = self._concepts.get(concept_id)
         if concept is None or concept.parent_id is None:
             return []
-        return [c for c in self._concepts.values() if c.parent_id == concept.parent_id and c.concept_id != concept_id]
+        return [
+            c
+            for c in self._concepts.values()
+            if c.parent_id == concept.parent_id and c.concept_id != concept_id
+        ]
 
-    def most_specific_common_ancestor(self, id_a: str, id_b: str) -> Optional[OntologyConcept]:
+    def most_specific_common_ancestor(
+        self, id_a: str, id_b: str
+    ) -> Optional[OntologyConcept]:
         """Find the most specific common ancestor of two concepts."""
         anc_a = set(a.concept_id for a in self.ancestors(id_a))
         common = [a for a in self.ancestors(id_b) if a.concept_id in anc_a]

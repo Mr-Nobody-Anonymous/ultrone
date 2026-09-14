@@ -64,7 +64,9 @@ class CrossReferenceEngine:
                 if pair in compared:
                     continue
                 compared.add(pair)
-                score = self.vector_memory.similarity_between(entry_a.entry_id, entry_b.entry_id)
+                score = self.vector_memory.similarity_between(
+                    entry_a.entry_id, entry_b.entry_id
+                )
                 if score >= threshold:
                     results.append((entry_a, entry_b, score))
         return results
@@ -136,7 +138,9 @@ class CrossReferenceEngine:
         references: Dict[str, List[str]] = {}
         for entry in entries:
             related = self.find_complementary(entry, entries, limit=limit_per_entry)
-            tag_related = self.find_related_by_tags(entry, entries, limit=limit_per_entry)
+            tag_related = self.find_related_by_tags(
+                entry, entries, limit=limit_per_entry
+            )
             # Merge by entry_id
             merged: Dict[str, float] = {}
             for cand, score in related:
@@ -145,7 +149,9 @@ class CrossReferenceEngine:
                 merged[cand.entry_id] = max(score, merged.get(cand.entry_id, 0.0))
             # Sort by score
             sorted_ids = sorted(merged.items(), key=lambda x: x[1], reverse=True)
-            references[entry.entry_id] = [eid for eid, _ in sorted_ids[:limit_per_entry]]
+            references[entry.entry_id] = [
+                eid for eid, _ in sorted_ids[:limit_per_entry]
+            ]
         return references
 
     def get_stats(self) -> Dict[str, Any]:

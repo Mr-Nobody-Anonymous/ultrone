@@ -22,6 +22,7 @@ turns "ULTRONE is getting smarter" into an empirical statement.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -35,7 +36,7 @@ class DimensionDelta:
     dimension: str
     before: float
     after: float
-    delta: float                       # after - before, signed
+    delta: float  # after - before, signed
 
     @property
     def direction(self) -> str:
@@ -50,10 +51,10 @@ class DimensionDelta:
 class Diagnosis:
     """A cross-dimension finding from comparing consecutive snapshots."""
 
-    kind: str                          # "coupling" | "tradeoff" | "plateau"
-    dimensions: tuple                  # involved dimensions
-    statement: str                     # human-readable finding
-    confidence: float                  # 0..1, transparent formula
+    kind: str  # "coupling" | "tradeoff" | "plateau"
+    dimensions: tuple  # involved dimensions
+    statement: str  # human-readable finding
+    confidence: float  # 0..1, transparent formula
 
 
 @dataclass(frozen=True)
@@ -64,7 +65,7 @@ class AnalysisReport:
     to_candidate: str
     deltas: List[DimensionDelta]
     diagnoses: List[Diagnosis]
-    recommended_change: Optional[Dict[str, Any]]   # for the designer
+    recommended_change: Optional[Dict[str, Any]]  # for the designer
     rationale: str = ""
 
     @property
@@ -84,12 +85,12 @@ class AnalysisReport:
 _COUPLING_RULES: Dict[tuple, Dict[str, Any]] = {
     ("reasoning", "memory"): {
         "statement": "new reasoning module increases context consumption "
-                     "and causes memory retrieval degradation",
+        "and causes memory retrieval degradation",
         "recommended_change": {"memory_capacity": "+16"},
     },
     ("planning", "prediction"): {
         "statement": "deeper planning extends horizon assumptions that "
-                     "the belief model cannot track",
+        "the belief model cannot track",
         "recommended_change": {"noise_floor": "x0.75"},
     },
     ("tool_use", "robustness"): {
@@ -126,8 +127,11 @@ class ResearchAnalyst:
                 dimension=dim,
                 before=before.capabilities.get(dim, 0.0),
                 after=after.capabilities.get(dim, 0.0),
-                delta=round(after.capabilities.get(dim, 0.0)
-                            - before.capabilities.get(dim, 0.0), 4),
+                delta=round(
+                    after.capabilities.get(dim, 0.0)
+                    - before.capabilities.get(dim, 0.0),
+                    4,
+                ),
             )
             for dim in sorted(before.capabilities)
         ]
@@ -167,13 +171,16 @@ class ResearchAnalyst:
                 rule = _COUPLING_RULES.get(pair)
                 if rule:
                     matched_pairs.add(pair)
-                    out.append(Diagnosis(
-                        kind="coupling",
-                        dimensions=pair,
-                        statement=rule["statement"],
-                        confidence=round(min(1.0, abs(up.delta)
-                                             + abs(down.delta)), 3),
-                    ))
+                    out.append(
+                        Diagnosis(
+                            kind="coupling",
+                            dimensions=pair,
+                            statement=rule["statement"],
+                            confidence=round(
+                                min(1.0, abs(up.delta) + abs(down.delta)), 3
+                            ),
+                        )
+                    )
                     break
 
         # 2) Plain tradeoffs: any remaining improvement/regression pair.
@@ -183,26 +190,32 @@ class ResearchAnalyst:
                 if pair in matched_pairs:
                     continue
                 matched_pairs.add(pair)
-                out.append(Diagnosis(
-                    kind="tradeoff",
-                    dimensions=pair,
-                    statement=(
-                        f"{up.dimension} +{up.delta:.3f} came at the cost "
-                        f"of {down.dimension} {down.delta:.3f}"),
-                    confidence=round(
-                        min(1.0, abs(up.delta) / max(abs(down.delta), 1e-9))
-                        * 0.5, 3),
-                ))
+                out.append(
+                    Diagnosis(
+                        kind="tradeoff",
+                        dimensions=pair,
+                        statement=(
+                            f"{up.dimension} +{up.delta:.3f} came at the cost "
+                            f"of {down.dimension} {down.delta:.3f}"
+                        ),
+                        confidence=round(
+                            min(1.0, abs(up.delta) / max(abs(down.delta), 1e-9)) * 0.5,
+                            3,
+                        ),
+                    )
+                )
 
         # 3) Plateau: nothing moved meaningfully.
         if not ups and not downs:
-            out.append(Diagnosis(
-                kind="plateau",
-                dimensions=tuple(),
-                statement="no dimension moved beyond epsilon; the current "
-                          "knobs are exhausted -- mutate more aggressively",
-                confidence=0.9,
-            ))
+            out.append(
+                Diagnosis(
+                    kind="plateau",
+                    dimensions=tuple(),
+                    statement="no dimension moved beyond epsilon; the current "
+                    "knobs are exhausted -- mutate more aggressively",
+                    confidence=0.9,
+                )
+            )
         return out
 
 
@@ -232,10 +245,11 @@ class NoveltyAssessment:
 
     parent_id: str
     child_id: str
-    architectural_distance: float          # 0..1, knob-space L1 / range
-    behavioral_distance: float             # 0..sqrt(n), capability L2
-    performance_delta: float               # signed index delta
+    architectural_distance: float  # 0..1, knob-space L1 / range
+    behavioral_distance: float  # 0..sqrt(n), capability L2
+    performance_delta: float  # signed index delta
     label: str
+
 
 def assess_novelty(
     parent: CapabilitySnapshot,
@@ -245,6 +259,7 @@ def assess_novelty(
 ) -> NoveltyAssessment:
     """Classify whether the candidate is new wine or old wine."""
     from self_improvement.lab.genome import KNOB_BOUNDS
+
     arch_d = 0.0
     if parent_knobs and child_knobs:
         total, span = 0.0, 0.0
@@ -261,9 +276,19 @@ def assess_novelty(
         arch_d = round(min(1.0, total / span), 4)
 
     common = sorted(set(parent.capabilities) & set(child.capabilities))
-    behav_d = round(
-        math.sqrt(sum((child.capabilities[d] - parent.capabilities[d]) ** 2
-                      for d in common)), 4) if common else 0.0
+    behav_d = (
+        round(
+            math.sqrt(
+                sum(
+                    (child.capabilities[d] - parent.capabilities[d]) ** 2
+                    for d in common
+                )
+            ),
+            4,
+        )
+        if common
+        else 0.0
+    )
     perf_d = round(child.capability_index - parent.capability_index, 6)
 
     if perf_d < -1e-4:
@@ -284,8 +309,7 @@ def assess_novelty(
     )
 
 
-def analyze_history(history: List[CapabilitySnapshot]
-                    ) -> Optional[AnalysisReport]:
+def analyze_history(history: List[CapabilitySnapshot]) -> Optional[AnalysisReport]:
     """Convenience wrapper: analyze the final transition of a history."""
     analyst = ResearchAnalyst()
     for snap in history:
@@ -293,12 +317,16 @@ def analyze_history(history: List[CapabilitySnapshot]
     return analyst.compare()
 
 
-def capability_trajectory(history: Sequence[CapabilitySnapshot]
-                          ) -> Dict[str, Any]:
+def capability_trajectory(history: Sequence[CapabilitySnapshot]) -> Dict[str, Any]:
     """Plot-ready series: 'is ULTRONE getting smarter' as empirical data."""
     if not history:
-        return {"candidates": [], "generations": [], "capability_index": [],
-                "efficiency": [], "dimensions": {}}
+        return {
+            "candidates": [],
+            "generations": [],
+            "capability_index": [],
+            "efficiency": [],
+            "dimensions": {},
+        }
     dims = sorted(history[0].capabilities)
     return {
         "candidates": [s.candidate_id for s in history],

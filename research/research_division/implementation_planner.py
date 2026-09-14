@@ -25,7 +25,9 @@ class ImplementationPlanner(ResearchAgent):
             role=ResearchAgentRole.PLANNER,
             **kwargs,
         )
-        self.message_handlers[MessageType.RESEARCH_ALGORITHM_EXTRACTED] = self._on_algorithm_extracted
+        self.message_handlers[MessageType.RESEARCH_ALGORITHM_EXTRACTED] = (
+            self._on_algorithm_extracted
+        )
 
     async def run(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Generate implementation plans for papers."""
@@ -55,7 +57,9 @@ class ImplementationPlanner(ResearchAgent):
 
     def _create_plan(self, paper: PaperRecord) -> ImplementationPlan:
         """Create an implementation plan from a paper's algorithms."""
-        algorithms = ", ".join(paper.algorithms) if paper.algorithms else "novel approach"
+        algorithms = (
+            ", ".join(paper.algorithms) if paper.algorithms else "novel approach"
+        )
         steps = []
 
         for i, algo in enumerate(paper.algorithms or ["Core approach"]):
@@ -87,7 +91,11 @@ class ImplementationPlanner(ResearchAgent):
             steps=steps,
             estimated_effort=f"{sum(s.get('estimated_hours', 4) for s in steps)} hours",
             dependencies=[],
-            risks=["Performance regression risk", "Integration complexity", "Numerical instability"],
+            risks=[
+                "Performance regression risk",
+                "Integration complexity",
+                "Numerical instability",
+            ],
             expected_improvements=[f"Incorporate {algo}" for algo in paper.algorithms],
         )
         self.research_db.save_implementation_plan(plan)
@@ -103,7 +111,9 @@ class ImplementationPlanner(ResearchAgent):
             metadata={"plan_id": plan.plan_id, "paper_id": paper.paper_id},
         )
 
-        self._log_action("plan_created", {"plan_id": plan.plan_id, "paper_id": paper.paper_id}, None)
+        self._log_action(
+            "plan_created", {"plan_id": plan.plan_id, "paper_id": paper.paper_id}, None
+        )
         return plan
 
     def create_experiment_proposal(
@@ -126,5 +136,7 @@ class ImplementationPlanner(ResearchAgent):
             status="proposed",
         )
         stored = self.research_db.save_experiment(experiment)
-        self._log_action("experiment_proposal", {"experiment_id": stored.experiment_id}, None)
+        self._log_action(
+            "experiment_proposal", {"experiment_id": stored.experiment_id}, None
+        )
         return stored

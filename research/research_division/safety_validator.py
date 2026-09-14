@@ -24,7 +24,9 @@ class SafetyValidator(ResearchAgent):
             role=ResearchAgentRole.SAFETY,
             **kwargs,
         )
-        self.message_handlers[MessageType.RESEARCH_SAFETY_VALIDATION] = self._on_safety_request
+        self.message_handlers[MessageType.RESEARCH_SAFETY_VALIDATION] = (
+            self._on_safety_request
+        )
 
     async def run(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Validate all experiments for safety."""
@@ -39,7 +41,9 @@ class SafetyValidator(ResearchAgent):
 
     def _on_safety_request(self, message: Any) -> Any:
         experiment_id = message.content.get("experiment_id")
-        experiment = self.research_db.get_experiment(experiment_id) if experiment_id else None
+        experiment = (
+            self.research_db.get_experiment(experiment_id) if experiment_id else None
+        )
         if experiment:
             return self._validate_experiment(experiment)
         return None
@@ -82,8 +86,15 @@ class SafetyValidator(ResearchAgent):
             entities=[experiment.experiment_id],
             confidence_score=0.9 if passed else 0.5,
             layer="experiment",
-            metadata={"experiment_id": experiment.experiment_id, "validation": validation},
+            metadata={
+                "experiment_id": experiment.experiment_id,
+                "validation": validation,
+            },
         )
 
-        self._log_action("experiment_validated", {"experiment_id": experiment.experiment_id}, validation)
+        self._log_action(
+            "experiment_validated",
+            {"experiment_id": experiment.experiment_id},
+            validation,
+        )
         return validation

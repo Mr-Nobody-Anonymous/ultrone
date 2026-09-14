@@ -20,11 +20,10 @@ The benchmark reports two ``CapabilitySourceReport``s side by side
 
 from __future__ import annotations
 
-import json
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional
 
 from self_improvement.neural.adapters import (
     MockNeuralAdapter,
@@ -42,13 +41,10 @@ from self_improvement.neural.pipeline import (
     DeterministicTestPipeline,
 )
 from self_improvement.self_training.evaluation import (
-    CapabilityComparison,
     CapabilityMetrics,
-    compare_capabilities,
     evaluate_capabilities,
 )
 from self_improvement.self_training.regression import (
-    RegressionReport,
     RegressionSuite,
     build_families,
 )
@@ -57,7 +53,6 @@ from self_improvement.self_training.trainer import (
     make_executor,
 )
 from orchestration.model_registry import DIMENSIONS
-
 
 # --- Data types ----------------------------------------------------------- #
 
@@ -71,7 +66,7 @@ class CapabilitySourceReport:
     ``capability_source="neural"``. They are never merged.
     """
 
-    capability_source: str               # "simulated" | "neural"
+    capability_source: str  # "simulated" | "neural"
     baseline: CapabilityMetrics
     candidate: CapabilityMetrics
     deltas: Dict[str, float] = field(default_factory=dict)
@@ -83,10 +78,12 @@ class CapabilitySourceReport:
 
     @property
     def measurably_better(self) -> bool:
-        return (self.overall
-                and self.no_critical_regression
-                and self.holdout_improvement
-                and self.reproducible)
+        return (
+            self.overall
+            and self.no_critical_regression
+            and self.holdout_improvement
+            and self.reproducible
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -158,7 +155,8 @@ class NeuralCapabilityReport:
             neu_d = nc - nb
             lines.append(
                 f"{dim:<22}{sb:>10.4f}{sc:>10.4f}{sim_d:>+10.4f}"
-                f"{nb:>10.4f}{nc:>10.4f}{neu_d:>+10.4f}")
+                f"{nb:>10.4f}{nc:>10.4f}{neu_d:>+10.4f}"
+            )
         return "\n".join(lines)
 
 
@@ -167,10 +165,14 @@ class NeuralCapabilityReport:
 
 def _default_starter() -> NeuralLearnedWeights:
     """Default neural starter mirrors the simulated starter shape."""
-    return NeuralLearnedWeights(values={
-        "reasoning": 0.62, "coding": 0.66,
-        "retrieval": 0.56, "tool_use": 0.68,
-    })
+    return NeuralLearnedWeights(
+        values={
+            "reasoning": 0.62,
+            "coding": 0.66,
+            "retrieval": 0.56,
+            "tool_use": 0.68,
+        }
+    )
 
 
 def _default_config() -> NeuralAdapterConfig:
@@ -193,43 +195,50 @@ def _default_corpus() -> ExternalCorpus:
     """
     examples = []
     for index in range(8):
-        examples.append({
-            "example_id": f"curated-{index:02d}",
-            "input": {
-                "domain": "analysis",
-                "difficulty": 0.55,
-                "reasoning_depth": 0.65,
-                "context_requirement": 0.45,
-                "tool_requirement": 0.20,
-                "latency_sensitivity": 0.30,
-                "privacy_required": False,
-                "summary": "curated analytical reasoning",
-            },
-            "context": {"source": "curated", "weight": 1.0},
-            "desired_behavior": {"accepted": True, "quality": 0.80},
-            "outcome_score": 0.80,
-        })
+        examples.append(
+            {
+                "example_id": f"curated-{index:02d}",
+                "input": {
+                    "domain": "analysis",
+                    "difficulty": 0.55,
+                    "reasoning_depth": 0.65,
+                    "context_requirement": 0.45,
+                    "tool_requirement": 0.20,
+                    "latency_sensitivity": 0.30,
+                    "privacy_required": False,
+                    "summary": "curated analytical reasoning",
+                },
+                "context": {"source": "curated", "weight": 1.0},
+                "desired_behavior": {"accepted": True, "quality": 0.80},
+                "outcome_score": 0.80,
+            }
+        )
     for index in range(4):
-        examples.append({
-            "example_id": f"curated-code-{index:02d}",
-            "input": {
-                "domain": "coding",
-                "difficulty": 0.50,
-                "reasoning_depth": 0.45,
-                "context_requirement": 0.35,
-                "tool_requirement": 0.65,
-                "latency_sensitivity": 0.40,
-                "privacy_required": False,
-                "summary": "curated coding task",
-            },
-            "context": {"source": "curated", "weight": 1.0},
-            "desired_behavior": {"accepted": True, "quality": 0.78},
-            "outcome_score": 0.78,
-        })
+        examples.append(
+            {
+                "example_id": f"curated-code-{index:02d}",
+                "input": {
+                    "domain": "coding",
+                    "difficulty": 0.50,
+                    "reasoning_depth": 0.45,
+                    "context_requirement": 0.35,
+                    "tool_requirement": 0.65,
+                    "latency_sensitivity": 0.40,
+                    "privacy_required": False,
+                    "summary": "curated coding task",
+                },
+                "context": {"source": "curated", "weight": 1.0},
+                "desired_behavior": {"accepted": True, "quality": 0.78},
+                "outcome_score": 0.78,
+            }
+        )
     return ExternalCorpus(
         name="default-curated",
-        kind="curated", examples=examples, split="train",
-        source="self_improvement.neural.benchmark")
+        kind="curated",
+        examples=examples,
+        split="train",
+        source="self_improvement.neural.benchmark",
+    )
 
 
 class NeuralCapabilityBenchmark:
@@ -250,13 +259,18 @@ class NeuralCapabilityBenchmark:
        per-source ``CapabilitySourceReport`` -- never merged.
     """
 
-    def __init__(self, *, cycles: int = 1, family_each: int = 4,
-                 workdir: Optional[str] = None,
-                 config: Optional[NeuralAdapterConfig] = None,
-                 corpus: Optional[ExternalCorpus] = None,
-                 starter: Optional[NeuralLearnedWeights] = None,
-                 split_seed: int = 0, split_ratio: float = 0.75
-                 ) -> None:
+    def __init__(
+        self,
+        *,
+        cycles: int = 1,
+        family_each: int = 4,
+        workdir: Optional[str] = None,
+        config: Optional[NeuralAdapterConfig] = None,
+        corpus: Optional[ExternalCorpus] = None,
+        starter: Optional[NeuralLearnedWeights] = None,
+        split_seed: int = 0,
+        split_ratio: float = 0.75,
+    ) -> None:
         self.cycles = int(cycles)
         self.family_each = int(family_each)
         if workdir:
@@ -274,41 +288,53 @@ class NeuralCapabilityBenchmark:
         # --- base model + adapter ------------------------------------- #
         base_weights = dict(self.starter.values)
         base_neural = NeuralLearnedWeights(
-            values=base_weights, adapter_delta={},
+            values=base_weights,
+            adapter_delta={},
             config_fingerprint=self.config.fingerprint(),
             base_model_hash=self.starter.model_hash,
             run_fingerprint="",
         )
         adapter = MockNeuralAdapter(
-            config=self.config, base_weights=base_weights,
-            adapter_delta={})
+            config=self.config, base_weights=base_weights, adapter_delta={}
+        )
         # Pipeline is built so the full tokenize / batch / generate
         # chain is exercised end-to-end, but the per-family
         # evaluation below uses the adapter directly (the family
         # "tasks" are synthetic profiles, not strings).
         DeterministicTestPipeline(
-            config=self.config, base_weights=base_weights,
-            adapter=adapter)
+            config=self.config, base_weights=base_weights, adapter=adapter
+        )
 
         # --- train/holdout split -------------------------------------- #
         splitter = DatasetSplitter(
-            train_ratio=self.split_ratio, seed=self.split_seed,
-            workdir=str(self._workdir / "splits"))
+            train_ratio=self.split_ratio,
+            seed=self.split_seed,
+            workdir=str(self._workdir / "splits"),
+        )
         split = splitter.split(self.corpus.records(), tag="run")
         if not split.leakage_checked:
             raise RuntimeError(
                 f"train/holdout split leaked {len(split.leaked_ids)} "
-                f"examples: refusing to run benchmark")
+                f"examples: refusing to run benchmark"
+            )
         train_examples = split.pair.train.load()
 
         # --- LoRA training -------------------------------------------- #
         trainer = LoRATrainer(
-            rank=8, alpha=16.0, learning_rate=0.10, steps=self.cycles,
-            prior_strength=4.0, max_delta=0.30, seed=0)
+            rank=8,
+            alpha=16.0,
+            learning_rate=0.10,
+            steps=self.cycles,
+            prior_strength=4.0,
+            max_delta=0.30,
+            seed=0,
+        )
         fit = trainer.fit(
-            base=base_neural, examples=train_examples,
+            base=base_neural,
+            examples=train_examples,
             dataset_hash=split.pair.train.content_hash,
-            config_fingerprint=self.config.fingerprint())
+            config_fingerprint=self.config.fingerprint(),
+        )
         candidate = fit.weights
         # The candidate drives the neural adapter directly. The
         # *values* field already contains the base + delta, so the
@@ -317,95 +343,132 @@ class NeuralCapabilityBenchmark:
 
         # --- evaluate on the same task families ---------------------- #
         families = build_families(n_each=self.family_each)
-        baseline_lw = self.starter.to_learned_weights() \
-            if hasattr(self.starter, "to_learned_weights") \
+        baseline_lw = (
+            self.starter.to_learned_weights()
+            if hasattr(self.starter, "to_learned_weights")
             else LearnedWeights(values=dict(self.starter.values))
+        )
         candidate_lw = candidate.to_learned_weights()
 
         # Simulated source: the existing capability learner.
         sim_baseline_metrics = evaluate_capabilities(
-            baseline_lw, families, capability_source="simulated")
+            baseline_lw, families, capability_source="simulated"
+        )
         sim_candidate_metrics = evaluate_capabilities(
-            candidate_lw, families, capability_source="simulated")
+            candidate_lw, families, capability_source="simulated"
+        )
         sim_baseline_scores = _family_means(baseline_lw, families)
         sim_candidate_scores = _family_means(candidate_lw, families)
-        sim_deltas = {name: round(
-            sim_candidate_scores[name] - sim_baseline_scores[name], 6)
-            for name in sim_candidate_scores}
+        sim_deltas = {
+            name: round(sim_candidate_scores[name] - sim_baseline_scores[name], 6)
+            for name in sim_candidate_scores
+        }
         sim_regression = RegressionSuite(families=families).run(
-            candidate_lw, baseline_lw)
+            candidate_lw, baseline_lw
+        )
         sim = CapabilitySourceReport(
             capability_source="simulated",
             baseline=sim_baseline_metrics,
             candidate=sim_candidate_metrics,
-            deltas={name: round(
-                getattr(sim_candidate_metrics, name)
-                - getattr(sim_baseline_metrics, name), 6)
-                for name in ("reasoning", "planning", "memory",
-                             "tool_use", "generalization",
-                             "robustness", "simulation_performance")},
+            deltas={
+                name: round(
+                    getattr(sim_candidate_metrics, name)
+                    - getattr(sim_baseline_metrics, name),
+                    6,
+                )
+                for name in (
+                    "reasoning",
+                    "planning",
+                    "memory",
+                    "tool_use",
+                    "generalization",
+                    "robustness",
+                    "simulation_performance",
+                )
+            },
             overall=sim_candidate_metrics.composite()
-                    > sim_baseline_metrics.composite(),
+            > sim_baseline_metrics.composite(),
             holdout_improvement=sim_deltas.get("unseen", 0.0) > 0,
             no_critical_regression=sim_regression.passed,
             reproducible=True,
-            regression_risk=(round(min(sim_deltas.values()), 6)
-                             if sim_deltas else 0.0))
+            regression_risk=(round(min(sim_deltas.values()), 6) if sim_deltas else 0.0),
+        )
 
         # Neural source: the mock neural adapter with the candidate
         # delta. The same family-mean score is computed by running
         # a fresh adapter per family (no cross-family stat leakage).
         def base_adapter():
             return MockNeuralAdapter(
-                config=self.config, base_weights=base_weights,
-                adapter_delta={})
+                config=self.config, base_weights=base_weights, adapter_delta={}
+            )
+
         def candidate_adapter():
             return MockNeuralAdapter(
-                config=self.config, base_weights=base_weights,
-                adapter_delta=dict(candidate.adapter_delta))
+                config=self.config,
+                base_weights=base_weights,
+                adapter_delta=dict(candidate.adapter_delta),
+            )
+
         neu_baseline_scores = _adapter_family_means(
-            adapter_factory=base_adapter, families=families)
+            adapter_factory=base_adapter, families=families
+        )
         neu_candidate_scores = _adapter_family_means(
-            adapter_factory=candidate_adapter, families=families)
-        neu_deltas = {name: round(
-            neu_candidate_scores[name] - neu_baseline_scores[name], 6)
-            for name in neu_candidate_scores}
+            adapter_factory=candidate_adapter, families=families
+        )
+        neu_deltas = {
+            name: round(neu_candidate_scores[name] - neu_baseline_scores[name], 6)
+            for name in neu_candidate_scores
+        }
         # Build neural CapabilityMetrics: per-dimension capability
         # is the *adapter's* effective capability, not the same
         # simulated mapping. The 'simulation_performance' field
         # carries the mean of family means so the two reports are
         # comparable.
         neu_baseline_metrics = _adapter_capability_metrics(
-            adapter_factory=base_adapter, families=families,
-            scores=neu_baseline_scores)
+            adapter_factory=base_adapter, families=families, scores=neu_baseline_scores
+        )
         neu_candidate_metrics = _adapter_capability_metrics(
-            adapter_factory=candidate_adapter, families=families,
-            scores=neu_candidate_scores)
+            adapter_factory=candidate_adapter,
+            families=families,
+            scores=neu_candidate_scores,
+        )
         neu = CapabilitySourceReport(
             capability_source="neural",
             baseline=neu_baseline_metrics,
             candidate=neu_candidate_metrics,
-            deltas={name: round(
-                neu_candidate_metrics.__dict__[name]
-                - neu_baseline_metrics.__dict__[name], 6)
-                for name in ("reasoning", "planning", "memory",
-                             "tool_use", "generalization",
-                             "robustness", "simulation_performance")
-                if name in neu_baseline_metrics.__dict__},
+            deltas={
+                name: round(
+                    neu_candidate_metrics.__dict__[name]
+                    - neu_baseline_metrics.__dict__[name],
+                    6,
+                )
+                for name in (
+                    "reasoning",
+                    "planning",
+                    "memory",
+                    "tool_use",
+                    "generalization",
+                    "robustness",
+                    "simulation_performance",
+                )
+                if name in neu_baseline_metrics.__dict__
+            },
             overall=neu_candidate_metrics.composite()
-                    > neu_baseline_metrics.composite(),
+            > neu_baseline_metrics.composite(),
             holdout_improvement=neu_deltas.get("unseen", 0.0) > 0,
             no_critical_regression=sim_regression.passed,
             reproducible=True,
-            regression_risk=(round(min(neu_deltas.values()), 6)
-                             if neu_deltas else 0.0))
+            regression_risk=(round(min(neu_deltas.values()), 6) if neu_deltas else 0.0),
+        )
 
         return NeuralCapabilityReport(
             baseline_model_hash=self.starter.model_hash,
             candidate_model_hash=candidate.model_hash,
             base_config_fingerprint=self.config.fingerprint(),
-            simulated=sim, neural=neu,
-            cycles=self.cycles, family_each=self.family_each,
+            simulated=sim,
+            neural=neu,
+            cycles=self.cycles,
+            family_each=self.family_each,
             train_corpus_hash=split.pair.train.content_hash,
             holdout_corpus_hash=split.pair.holdout.content_hash,
         )
@@ -417,6 +480,7 @@ class NeuralCapabilityBenchmark:
 def _family_means(weights: LearnedWeights, families) -> Dict[str, float]:
     """Mean orchestrator score per family for one weights set."""
     from orchestration.router import Orchestrator, RoutingPolicy
+
     policy = RoutingPolicy()
     out: Dict[str, float] = {}
     for name, profiles in families.items():
@@ -440,15 +504,17 @@ def _adapter_family_means(adapter_factory, families) -> Dict[str, float]:
         adapter = adapter_factory()
         scores: List[float] = []
         for _ in profiles:
-            out_text = adapter.generate(
-                f"family={name} profile=sim", context="").meta["score"]
+            out_text = adapter.generate(f"family={name} profile=sim", context="").meta[
+                "score"
+            ]
             scores.append(float(out_text))
         out[name] = round(sum(scores) / len(scores), 6) if scores else 0.0
     return out
 
 
-def _adapter_capability_metrics(*, adapter_factory, families,
-                                scores) -> CapabilityMetrics:
+def _adapter_capability_metrics(
+    *, adapter_factory, families, scores
+) -> CapabilityMetrics:
     """Translate adapter family means into a CapabilityMetrics record.
 
     The 'reasoning' / 'planning' / etc. dimensions are filled with
@@ -467,12 +533,11 @@ def _adapter_capability_metrics(*, adapter_factory, families,
     if unseen is not None:
         metrics.generalization = round(unseen, 6)
     else:
-        metrics.generalization = round(
-            min(scores.values()) if scores else 0.0, 6)
-    metrics.robustness = round(
-        min(scores.values()) if scores else 0.0, 6)
+        metrics.generalization = round(min(scores.values()) if scores else 0.0, 6)
+    metrics.robustness = round(min(scores.values()) if scores else 0.0, 6)
     metrics.simulation_performance = round(
-        sum(scores.values()) / max(len(scores), 1), 6)
+        sum(scores.values()) / max(len(scores), 1), 6
+    )
     fresh = adapter_factory()
     fresh.generate("warmup", context="")
     stats = fresh.stats()[-1] if fresh.stats() else None
@@ -480,4 +545,3 @@ def _adapter_capability_metrics(*, adapter_factory, families,
         metrics.latency_ms = stats.latency_ms
         metrics.resource_cost = stats.memory_mb
     return metrics
-

@@ -69,8 +69,13 @@ class RAGPipeline:
 
         # 1. Vector search (semantic)
         if self.vector_memory is not None:
-            for entry, score in self.vector_memory.search_with_entries(query, self._entries, limit=limit):
-                results[entry.entry_id] = (entry, max(score, results.get(entry.entry_id, (None, 0.0))[1]))
+            for entry, score in self.vector_memory.search_with_entries(
+                query, self._entries, limit=limit
+            ):
+                results[entry.entry_id] = (
+                    entry,
+                    max(score, results.get(entry.entry_id, (None, 0.0))[1]),
+                )
 
         # 2. Keyword search (lexical)
         if hybrid:
@@ -158,7 +163,11 @@ class RAGPipeline:
         return {
             "type": "RAGPipeline",
             "registered_entries": len(self._entries),
-            "vector_memory": self.vector_memory.get_stats() if self.vector_memory else None,
-            "knowledge_graph": self.knowledge_graph.get_stats() if self.knowledge_graph else None,
+            "vector_memory": (
+                self.vector_memory.get_stats() if self.vector_memory else None
+            ),
+            "knowledge_graph": (
+                self.knowledge_graph.get_stats() if self.knowledge_graph else None
+            ),
             "citation_db": self.citation_db.get_stats() if self.citation_db else None,
         }

@@ -45,9 +45,13 @@ class SelfImprovementLoop:
         self.research_db = research_db or ResearchDatabase()
         self.telemetry = TelemetryCollector()
         self.hypothesis_generator = HypothesisGenerator()
-        self.literature_search = LiteratureSearch(knowledge=self.knowledge, research_db=self.research_db)
+        self.literature_search = LiteratureSearch(
+            knowledge=self.knowledge, research_db=self.research_db
+        )
         self.min_benchmark_gain = min_benchmark_gain
-        self.experiment_runner = experiment_runner or ExperimentRunner(min_improvement=min_benchmark_gain)
+        self.experiment_runner = experiment_runner or ExperimentRunner(
+            min_improvement=min_benchmark_gain
+        )
         self._cycle_count = 0
         self._adopted: List[Dict[str, Any]] = []
         self._rejected: List[Dict[str, Any]] = []
@@ -147,7 +151,9 @@ class SelfImprovementLoop:
             # No real evaluation configured: record the experiment as needing
             # configuration rather than fabricating a result.
             experiment.status = "needs_configuration"
-            experiment.conclusion = f"Experiment requires real evaluation functions: {exc}"
+            experiment.conclusion = (
+                f"Experiment requires real evaluation functions: {exc}"
+            )
             experiment.recommendation = "reject"
             experiment.updated_at = time.time()
             self.research_db.save_experiment(experiment)

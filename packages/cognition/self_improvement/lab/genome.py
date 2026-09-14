@@ -31,11 +31,11 @@ class Genome:
     genome_id: str
     generation: int
     parents: tuple
-    parameter_count: int      # model-size budget for efficiency scoring
-    memory_capacity: int      # slots in the continual-learning associate
-    planning_depth: int       # max backward-chaining depth
-    tool_policy: str          # "greedy" (chain <= 2) | "deep" (chain <= 4)
-    noise_floor: float        # Bayesian belief floor (exploration of hypotheses)
+    parameter_count: int  # model-size budget for efficiency scoring
+    memory_capacity: int  # slots in the continual-learning associate
+    planning_depth: int  # max backward-chaining depth
+    tool_policy: str  # "greedy" (chain <= 2) | "deep" (chain <= 4)
+    noise_floor: float  # Bayesian belief floor (exploration of hypotheses)
 
     def knobs(self) -> Dict[str, object]:
         return {
@@ -49,18 +49,25 @@ class Genome:
     def stable_hash(self) -> str:
         payload = json.dumps(
             {"g": self.generation, **self.knobs()},
-            sort_keys=True, separators=(",", ":"),
+            sort_keys=True,
+            separators=(",", ":"),
         )
         return hashlib.sha256(payload.encode()).hexdigest()[:12]
 
 
 def make_genome(
-    parameter_count: int, memory_capacity: int, planning_depth: int,
-    tool_policy: str, noise_floor: float, generation: int = 0,
+    parameter_count: int,
+    memory_capacity: int,
+    planning_depth: int,
+    tool_policy: str,
+    noise_floor: float,
+    generation: int = 0,
     parents: tuple = (),
 ) -> Genome:
     g = Genome(
-        genome_id="", generation=generation, parents=tuple(parents),
+        genome_id="",
+        generation=generation,
+        parents=tuple(parents),
         parameter_count=int(parameter_count),
         memory_capacity=int(memory_capacity),
         planning_depth=int(planning_depth),
@@ -79,14 +86,16 @@ def seed_population(rng: random.Random, size: int, generation: int = 0):
     lo_f, hi_f = KNOB_BOUNDS["noise_floor"]
     for i in range(size):
         frac = i / max(1, size - 1)
-        pop.append(make_genome(
-            parameter_count=int(lo_p + (hi_p - lo_p) * frac),
-            memory_capacity=int(lo_m + (hi_m - lo_m) * frac),
-            planning_depth=int(lo_d + (hi_d - lo_d) * frac),
-            tool_policy="deep" if i % 2 == 0 else "greedy",
-            noise_floor=lo_f * (hi_f / lo_f) ** frac,
-            generation=generation,
-        ))
+        pop.append(
+            make_genome(
+                parameter_count=int(lo_p + (hi_p - lo_p) * frac),
+                memory_capacity=int(lo_m + (hi_m - lo_m) * frac),
+                planning_depth=int(lo_d + (hi_d - lo_d) * frac),
+                tool_policy="deep" if i % 2 == 0 else "greedy",
+                noise_floor=lo_f * (hi_f / lo_f) ** frac,
+                generation=generation,
+            )
+        )
     return pop
 
 
@@ -100,10 +109,14 @@ def mutate(genome: Genome, rng: random.Random, generation: int) -> Genome:
             knobs[knob] = int(min(hi, max(lo, knobs[knob] * rng.choice((0.7, 1.4)))))
         elif knob == "memory_capacity":
             lo, hi = KNOB_BOUNDS[knob]
-            knobs[knob] = int(min(hi, max(lo, knobs[knob] + rng.choice((-16, -8, 8, 16)))))
+            knobs[knob] = int(
+                min(hi, max(lo, knobs[knob] + rng.choice((-16, -8, 8, 16))))
+            )
         elif knob == "planning_depth":
             lo, hi = KNOB_BOUNDS[knob]
-            knobs[knob] = int(min(hi, max(lo, knobs[knob] + rng.choice((-2, -1, 1, 2)))))
+            knobs[knob] = int(
+                min(hi, max(lo, knobs[knob] + rng.choice((-2, -1, 1, 2))))
+            )
         elif knob == "tool_policy":
             knobs[knob] = "deep" if knobs[knob] == "greedy" else "greedy"
         elif knob == "noise_floor":

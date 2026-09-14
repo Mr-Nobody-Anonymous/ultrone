@@ -115,7 +115,9 @@ class AuditLogger:
             try:
                 store.write(entry)
             except Exception as e:
-                logger.error("Failed to write to log store %s: %s", type(store).__name__, e)
+                logger.error(
+                    "Failed to write to log store %s: %s", type(store).__name__, e
+                )
 
         return entry
 

@@ -10,11 +10,10 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("Ultrone.ResearchDB")
 
@@ -52,8 +51,13 @@ class JSONResearchStore(BaseStore):
         record_dict = record.to_dict()
         record_id = record_dict.get(
             f"{record_type}_id",
-            record_dict.get("paper_id", record_dict.get("experiment_id",
-                record_dict.get("benchmark_id", record_dict.get("plan_id", "")))),
+            record_dict.get(
+                "paper_id",
+                record_dict.get(
+                    "experiment_id",
+                    record_dict.get("benchmark_id", record_dict.get("plan_id", "")),
+                ),
+            ),
         )
         if not record_id:
             record_id = f"{record_type}-{uuid.uuid4().hex[:8]}"
@@ -72,7 +76,11 @@ class JSONResearchStore(BaseStore):
         if existing_file.exists():
             with open(existing_file, "r") as f:
                 old_data = json.load(f)
-            history_file = self.history_dir / record_type / f"{record_id}_v{old_data.get('version', 1)}.json"
+            history_file = (
+                self.history_dir
+                / record_type
+                / f"{record_id}_v{old_data.get('version', 1)}.json"
+            )
             history_file.parent.mkdir(parents=True, exist_ok=True)
             with open(history_file, "w") as f:
                 json.dump(old_data, f, indent=2, default=str)
@@ -88,6 +96,7 @@ class JSONResearchStore(BaseStore):
     def get(self, record_type: str, record_id: str) -> Optional[Any]:
         """Get a record by ID."""
         from .schema import ResearchDatabaseSchema
+
         file_path = self.records_dir / record_type / f"{record_id}.json"
         if not file_path.exists():
             return None
@@ -101,6 +110,7 @@ class JSONResearchStore(BaseStore):
     def list_all(self, record_type: str) -> List[Any]:
         """List all records of a type."""
         from .schema import ResearchDatabaseSchema
+
         record_cls = ResearchDatabaseSchema.RECORD_TYPES.get(record_type)
         if record_cls is None:
             return []
@@ -138,7 +148,6 @@ class SQLiteResearchStore(BaseStore):
     """SQLite-backed store for the research database."""
 
     def __init__(self, db_path: Optional[str] = None):
-        import sqlite3
         if db_path is None:
             db_path = str(Path(__file__).resolve().parent / "ultrone_research.db")
         self.db_path = db_path
@@ -147,6 +156,7 @@ class SQLiteResearchStore(BaseStore):
 
     def _connect(self):
         import sqlite3
+
         return sqlite3.connect(self.db_path)
 
     def _init_schema(self) -> None:
@@ -179,7 +189,6 @@ class SQLiteResearchStore(BaseStore):
 
     def save(self, record_type: str, record: Any) -> Any:
         """Save a record. Returns saved record."""
-        import sqlite3
         record_dict = record.to_dict()
         # Determine ID field based on type
         id_field = {
@@ -202,7 +211,9 @@ class SQLiteResearchStore(BaseStore):
                 # Archive history
                 old_data, old_version = row
                 conn.execute(
-                    "INSERT INTO record_history (record_type, record_id, data, version, archived_at) VALUES (?,?,?,?,?)",
+                    "INSERT INTO record_history "
+                    "(record_type, record_id, data, version, archived_at) "
+                    "VALUES (?,?,?,?,?)",
                     (record_type, record_id, old_data, old_version, time.time()),
                 )
                 # Update
@@ -213,8 +224,16 @@ class SQLiteResearchStore(BaseStore):
             else:
                 # Insert
                 conn.execute(
-                    "INSERT INTO records (record_type, record_id, data, version, created_at, updated_at) VALUES (?,?,?,1,?,?)",
-                    (record_type, record_id, json.dumps(record_dict), time.time(), time.time()),
+                    "INSERT INTO records "
+                    "(record_type, record_id, data, version, created_at, updated_at) "
+                    "VALUES (?,?,?,1,?,?)",
+                    (
+                        record_type,
+                        record_id,
+                        json.dumps(record_dict),
+                        time.time(),
+                        time.time(),
+                    ),
                 )
             conn.commit()
         finally:
@@ -224,6 +243,7 @@ class SQLiteResearchStore(BaseStore):
     def get(self, record_type: str, record_id: str) -> Optional[Any]:
         """Get a record by ID."""
         from .schema import ResearchDatabaseSchema
+
         conn = self._connect()
         try:
             cur = conn.execute(
@@ -244,6 +264,7 @@ class SQLiteResearchStore(BaseStore):
     def list_all(self, record_type: str) -> List[Any]:
         """List all records of a type."""
         from .schema import ResearchDatabaseSchema
+
         conn = self._connect()
         try:
             cur = conn.execute(
@@ -276,7 +297,8 @@ class SQLiteResearchStore(BaseStore):
         conn = self._connect()
         try:
             cur = conn.execute(
-                "SELECT data, version, archived_at FROM record_history WHERE record_type=? AND record_id=? ORDER BY version",
+                "SELECT data, version, archived_at FROM record_history "
+                "WHERE record_type=? AND record_id=? ORDER BY version",
                 (record_type, record_id),
             )
             rows = cur.fetchall()
@@ -290,7 +312,9 @@ class SQLiteResearchStore(BaseStore):
     def get_stats(self) -> Dict[str, Any]:
         conn = self._connect()
         try:
-            cur = conn.execute("SELECT record_type, COUNT(*) FROM records GROUP BY record_type")
+            cur = conn.execute(
+                "SELECT record_type, COUNT(*) FROM records GROUP BY record_type"
+            )
             rows = cur.fetchall()
         finally:
             conn.close()
@@ -398,7 +422,9 @@ class ResearchDatabase:
     # ------------------------------------------------------------------
     # History & stats
     # ------------------------------------------------------------------
-    def get_record_history(self, record_type: str, record_id: str) -> List[Dict[str, Any]]:
+    def get_record_history(
+        self, record_type: str, record_id: str
+    ) -> List[Dict[str, Any]]:
         """Get version history for a record (SQLite backend only)."""
         if isinstance(self.store, SQLiteResearchStore):
             return self.store.get_history(record_type, record_id)

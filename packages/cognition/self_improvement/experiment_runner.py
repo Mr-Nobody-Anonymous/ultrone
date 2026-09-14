@@ -13,9 +13,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
-
-from research_db.schema import ExperimentRecord
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger("Ultrone.SelfImprovement.ExperimentRunner")
 
@@ -140,8 +138,12 @@ class ExperimentRunner:
             candidate_scores.append(metrics.get(self.target_metric, 0.0))
 
         # Compute statistics
-        baseline_score = sum(baseline_scores) / len(baseline_scores) if baseline_scores else 0.0
-        candidate_score = sum(candidate_scores) / len(candidate_scores) if candidate_scores else 0.0
+        baseline_score = (
+            sum(baseline_scores) / len(baseline_scores) if baseline_scores else 0.0
+        )
+        candidate_score = (
+            sum(candidate_scores) / len(candidate_scores) if candidate_scores else 0.0
+        )
         improvement = candidate_score - baseline_score
         confidence = self._compute_confidence(baseline_scores, candidate_scores)
 
@@ -204,5 +206,9 @@ class ExperimentRunner:
             "experiments_run": len(self._results),
             "passed": sum(1 for r in self._results if r.passed),
             "failed": sum(1 for r in self._results if not r.passed),
-            "avg_improvement": sum(r.improvement for r in self._results) / len(self._results) if self._results else 0.0,
+            "avg_improvement": (
+                sum(r.improvement for r in self._results) / len(self._results)
+                if self._results
+                else 0.0
+            ),
         }
