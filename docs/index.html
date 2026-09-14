@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="ULTRONE - Self-evolving swarm intelligence controlling machines across Air, Land, Sea, Space, and Cyber warfighting domains." />
+  <meta name="keywords" content="ULTRONE, swarm intelligence, artificial intelligence, multi-agent systems, autonomous defense, world model, reinforcement learning" />
+  <meta name="author" content="Mr-Nobody-Anonymous" />
+  <title>ULTRONE | Self-Evolving Swarm Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-radial-glow"></div>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="#" class="nav-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24">
+          <polygon points="12 2 2 22 12 17 22 22 12 2"></polygon>
+        </svg>
+      </div>
+      <span class="brand-name">ULTRONE</span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#theater">Command Theater</a></li>
+      <li><a href="#cognitive">Cognitive Loop</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#terminal">Live Telemetry</a></li>
+      <li><a href="https://github.com/Mr-Nobody-Anonymous/ultrone" target="_blank" rel="noopener">GitHub</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <div class="nav-status">
+        <div class="status-dot"></div>
+        <span>SWARM ONLINE</span>
+      </div>
+      <a href="https://github.com/Mr-Nobody-Anonymous/ultrone" class="btn btn-outline" target="_blank" rel="noopener">
+        ⭐ Star
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="hero-badge">
+      <span>● NEXT-GEN TACTICAL AUTONOMY v1.0.0</span>
+    </div>
+    <h1 class="hero-title">
+      INTELLIGENCE BECOMES<br />
+      <span class="hero-gradient">TACTICAL STRENGTH</span>
+    </h1>
+    <p class="hero-desc">
+      Self-evolving swarm intelligence controlling autonomous machines across all warfighting domains.
+      Decide faster. Adapt harder. Outlast everything.
+    </p>
+    <div class="hero-cta">
+      <a href="#theater" class="btn btn-primary">Launch Theater Simulator</a>
+      <a href="https://github.com/Mr-Nobody-Anonymous/ultrone" class="btn btn-outline" target="_blank" rel="noopener">Explore Codebase</a>
+    </div>
+
+    <!-- Stats Ribbon -->
+    <div class="stats-ribbon">
+      <div class="stat-box">
+        <div class="stat-val">5</div>
+        <div class="stat-lbl">Combat Domains</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val">&lt; 4.2ms</div>
+        <div class="stat-lbl">Inference Latency</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val">1,024</div>
+        <div class="stat-lbl">Swarm Mesh Nodes</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val">2,248</div>
+        <div class="stat-lbl">Verified Unit Tests</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Interactive 5-Domain Command Theater -->
+  <section class="section" id="theater">
+    <div class="section-header">
+      <span class="section-tag">Interactive Operations</span>
+      <h2 class="section-title">5-Domain Command Theater</h2>
+      <p class="section-desc">Real-time sensor fusion, autonomous trajectory generation, and swarm telemetry across physical and cyber spheres.</p>
+    </div>
+
+    <div class="theater-card">
+      <div class="theater-nav">
+        <button class="domain-btn active" data-domain="air">✈️ Air Domain</button>
+        <button class="domain-btn" data-domain="land">🛡️ Land Domain</button>
+        <button class="domain-btn" data-domain="sea">🚢 Sea Domain</button>
+        <button class="domain-btn" data-domain="space">🛰️ Space Domain</button>
+        <button class="domain-btn" data-domain="cyber">⚡ Cyber Domain</button>
+      </div>
+
+      <div class="theater-content">
+        <div class="radar-viewport">
+          <canvas id="radarCanvas"></canvas>
+          <div class="radar-overlay-hud">
+            <div>THEATER: <span id="hudDomain" style="font-weight: bold; color: #fff;">AIR DOMAIN</span></div>
+            <div>STATUS: <span style="color: var(--green);">OPERATIONAL</span></div>
+            <div>NODES: <span id="hudNodes">128 ACTIVE UAVS</span></div>
+            <div>SCAN: 360° BEAM FREQ 40GHz</div>
+          </div>
+        </div>
+
+        <div class="theater-panel">
+          <div>
+            <h3 class="panel-title" id="domTitle">✈️ Air Domain</h3>
+            <p class="panel-desc" id="domDesc">Multi-UAV supersonic swarm coordinated by Bayesian belief estimators and HTN backchaining.</p>
+
+            <div class="telemetry-grid">
+              <div class="telemetry-card">
+                <div class="telemetry-key">Tracked Vectors</div>
+                <div class="telemetry-val" id="domThreats" style="color: var(--cyan);">8 Tracked</div>
+              </div>
+              <div class="telemetry-card">
+                <div class="telemetry-key">Swarm Velocity</div>
+                <div class="telemetry-val" id="domVelocity">Mach 2.4</div>
+              </div>
+              <div class="telemetry-card">
+                <div class="telemetry-key">Posture Status</div>
+                <div class="telemetry-val" id="domPosture" style="color: var(--green);">Intercept Ready</div>
+              </div>
+              <div class="telemetry-card">
+                <div class="telemetry-key">Combat Strength</div>
+                <div class="telemetry-val" id="domNodes">128 Active UAVs</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-actions">
+            <button class="btn btn-primary" id="btnScramble">Scramble Intercept</button>
+            <button class="btn btn-outline" id="btnAdapt">Evolve COA Tactic</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cognitive Loop (OODA 2.0) -->
+  <section class="section" id="cognitive">
+    <div class="section-header">
+      <span class="section-tag">Autonomous Cognition</span>
+      <h2 class="section-title">The OODA 2.0 Evolutionary Engine</h2>
+      <p class="section-desc">Continuous feedback loops transforming multi-sensor observation into validated, self-adapting kinetic and cyber decisions.</p>
+    </div>
+
+    <div class="ooda-grid">
+      <div class="ooda-card">
+        <div class="ooda-step">PHASE 01</div>
+        <h3 class="ooda-name">Perceive</h3>
+        <p class="ooda-text">11 specialized sensor perception models (SatelliteImageAI, SIGINT, Radar, Acoustic) feeding the authoritative World Model with calibrated confidence ratings.</p>
+      </div>
+
+      <div class="ooda-card">
+        <div class="ooda-step">PHASE 02</div>
+        <h3 class="ooda-name">Orient</h3>
+        <p class="ooda-text">Cross-domain Bayesian entity correlation, topological terrain gradient analysis, and adversary capability estimation under high noise and jamming.</p>
+      </div>
+
+      <div class="ooda-card">
+        <div class="ooda-step">PHASE 03</div>
+        <h3 class="ooda-name">Decide</h3>
+        <p class="ooda-text">Combinatorial Course of Action (COA) generation pairing kinetic strikes with electronic disruption (JAM + STRIKE) and game-theoretic minimax equilibrium.</p>
+      </div>
+
+      <div class="ooda-card">
+        <div class="ooda-step">PHASE 04</div>
+        <h3 class="ooda-name">Act</h3>
+        <p class="ooda-text">Multi-agent consensus algorithms (Contract Net, Coalition, Raft) disaggregating commands to distributed autonomous edge actuators.</p>
+      </div>
+
+      <div class="ooda-card">
+        <div class="ooda-step">PHASE 05</div>
+        <h3 class="ooda-name">Learn</h3>
+        <p class="ooda-text">Neural LoRA fine-tuning and genetic architecture mutation based on engagement outcomes, preserving elite strategies in an immutable audit vault.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live Mission Event Log / Interactive Terminal -->
+  <section class="section" id="terminal">
+    <div class="section-header">
+      <span class="section-tag">Telemetry & Control</span>
+      <h2 class="section-title">Live Operational Console</h2>
+      <p class="section-desc">Inspect streaming swarm telemetry or interact directly via the embedded mission terminal.</p>
+    </div>
+
+    <div class="terminal-card">
+      <div class="terminal-header">
+        <div class="terminal-dots">
+          <div class="dot red"></div>
+          <div class="dot yellow"></div>
+          <div class="dot green"></div>
+        </div>
+        <div class="terminal-title">ultrone-agent-runtime ~ mesh-telemetry-feed</div>
+        <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--green);">● LIVE STREAM</div>
+      </div>
+
+      <div class="terminal-body" id="terminalBody">
+        <div class="log-entry">
+          <span class="log-time">[11:42:00]</span>
+          <span class="log-tag cyan">[BOOT]</span>
+          <span>ULTRONE Cognitive Mesh Subsystem initialized. 14 monorepo buckets verified.</span>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">[11:42:01]</span>
+          <span class="log-tag green">[WORLD]</span>
+          <span>Lattice WorldModel snapshot loaded: 148 tracked entities active.</span>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">[11:42:03]</span>
+          <span class="log-tag purple">[GATEWAY]</span>
+          <span>LLM Router operational across multi-provider endpoints.</span>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">[11:42:05]</span>
+          <span class="log-tag amber">[TACTIC]</span>
+          <span>COA Synergistic Generator: Novelty score 0.91 validated by safety gate.</span>
+        </div>
+      </div>
+
+      <div class="terminal-input-bar">
+        <span class="terminal-prompt">&gt;</span>
+        <input type="text" class="terminal-input" id="terminalInput" placeholder="Type a command (e.g. 'status', 'scramble', 'mutate', 'benchmarks', 'help')..." />
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture Highlights -->
+  <section class="section" id="architecture">
+    <div class="section-header">
+      <span class="section-tag">Platform Foundation</span>
+      <h2 class="section-title">Engineered for Defense Superiority</h2>
+      <p class="section-desc">Built with modularity, deterministic reproducibility, and zero-trust safety at every layer.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <h3 class="feature-title">Authoritative World Model</h3>
+        <p class="feature-desc">Centralized entity-component state system tracking position, velocity, and complete provenance across all sensor inputs.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <h3 class="feature-title">Context Budget Engine</h3>
+        <p class="feature-desc">Semantic compaction, token budgeting, and relevance scoring ensuring sub-second LLM inference even in high-density tactical scenarios.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3 class="feature-title">Audited Safety Gates</h3>
+        <p class="feature-desc">Human-in-the-loop decision checkpoints, cryptographically verified audit trails, and strict capability regression guards.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a href="#" class="nav-brand">
+          <div class="brand-icon">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 2 22 12 17 22 22 12 2"></polygon></svg>
+          </div>
+          <span class="brand-name">ULTRONE</span>
+        </a>
+        <p>Self-evolving swarm intelligence controlling autonomous machines across all warfighting domains.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Domains</h4>
+        <ul>
+          <li><a href="#theater">Air Operations</a></li>
+          <li><a href="#theater">Land Maneuver</a></li>
+          <li><a href="#theater">Maritime Fleet</a></li>
+          <li><a href="#theater">Space Constellation</a></li>
+          <li><a href="#theater">Cyber Defense</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Architecture</h4>
+        <ul>
+          <li><a href="#cognitive">Cognitive Loop</a></li>
+          <li><a href="#architecture">World Model</a></li>
+          <li><a href="#terminal">Mission Telemetry</a></li>
+          <li><a href="https://github.com/Mr-Nobody-Anonymous/ultrone/blob/main/DEPLOYMENT.md" target="_blank">Deployment</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Repository</h4>
+        <ul>
+          <li><a href="https://github.com/Mr-Nobody-Anonymous/ultrone" target="_blank">GitHub Repository</a></li>
+          <li><a href="https://github.com/Mr-Nobody-Anonymous/ultrone/blob/main/LICENSE" target="_blank">MIT License</a></li>
+          <li><a href="https://github.com/Mr-Nobody-Anonymous/ultrone/blob/main/SECURITY.md" target="_blank">Security Policy</a></li>
+          <li><a href="https://github.com/Mr-Nobody-Anonymous/ultrone/issues" target="_blank">Issue Tracker</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div>© 2026 ULTRONE Contributors. All rights reserved. Open source under MIT License.</div>
+      <div>Maintained by <a href="https://github.com/Mr-Nobody-Anonymous" style="color: var(--cyan); text-decoration: none;" target="_blank">Mr-Nobody-Anonymous</a></div>
+    </div>
+  </footer>
+
+  <script src="./app.js"></script>
+</body>
+</html>
