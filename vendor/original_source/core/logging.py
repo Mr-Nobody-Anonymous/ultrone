@@ -101,6 +101,8 @@ def setup_logging(
     """
     root = logging.getLogger("ultron")
     root.setLevel(getattr(logging, level.upper(), logging.INFO))
+    for handler in root.handlers:
+        handler.close()
     root.handlers.clear()
 
     if log_to_console:

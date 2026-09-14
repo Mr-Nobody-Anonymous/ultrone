@@ -375,7 +375,9 @@ class TestModelComparisonReport:
             report = ModelComparisonReport(output_dir=tmpdir)
             path = report.generate(candidate, baseline)
             assert os.path.exists(path)
-            assert "APPROVED" in open(path).read() or "REQUIRES REVIEW" in open(path).read()
+            with open(path, "r", encoding="utf-8") as f:
+                content = f.read()
+            assert "APPROVED" in content or "REQUIRES REVIEW" in content
 
     def test_compute_improvements(self):
         from research.reports.model_comparison import ModelComparisonReport

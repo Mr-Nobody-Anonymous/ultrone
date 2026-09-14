@@ -154,8 +154,10 @@ class TestSimulationSafetyBoundary:
     def test_module_imports_only_stdlib_and_sandbox(self):
         import pathlib
 
-        source = pathlib.Path(
-            __file__).resolve().parent.parent / "sandbox" / "ucl.py"
+        repo_root = pathlib.Path(__file__).resolve().parent.parent
+        source = repo_root / "packages" / "cognition" / "sandbox" / "ucl.py"
+        if not source.exists():
+            source = repo_root / "sandbox" / "ucl.py"
         forbidden_roots = ("agents", "brain", "core", "sim",
                            "ultrone_hitl", "research_db")
         bad = []
@@ -177,8 +179,10 @@ class TestSimulationSafetyBoundary:
     def test_no_realworld_transport_markers_in_ucl(self):
         import pathlib
 
-        source = pathlib.Path(
-            __file__).resolve().parent.parent / "sandbox" / "ucl.py"
+        repo_root = pathlib.Path(__file__).resolve().parent.parent
+        source = repo_root / "packages" / "cognition" / "sandbox" / "ucl.py"
+        if not source.exists():
+            source = repo_root / "sandbox" / "ucl.py"
         low = source.read_text(encoding="utf-8").lower()
         for marker in ("serial", "socket", "mqtt", "can_bus", "gpio",
                        "requests.", "urllib"):

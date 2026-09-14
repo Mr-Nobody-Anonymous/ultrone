@@ -222,6 +222,55 @@ class BaseAgent:
     def to_dict(self) -> dict:
         return self.unit.to_dict()
 
+    @classmethod
+    def from_dict(cls, data: dict, message_bus: Optional[Any] = None) -> 'BaseAgent':
+        """
+        Deserialize agent from state dictionary.
+        """
+        import inspect
+        
+        position_data = data.get("position", {"x": 0.0, "y": 0.0, "z": 0.0})
+        position = (position_data.get("x", 0.0), position_data.get("y", 0.0), position_data.get("z", 0.0))
+        
+        kwargs = {
+            "unit_id": data.get("unit_id", str(uuid.uuid4())),
+            "domain": DomainType(data.get("domain", "general")),
+            "unit_type": data.get("unit_type", "unknown"),
+            "position": position,
+            "team": data.get("team", "blue"),
+            "message_bus": message_bus,
+        }
+        
+        # Filter kwargs to match constructor signature
+        sig = inspect.signature(cls.__init__)
+        valid_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())}
+        
+        agent = cls(**valid_kwargs)
+        agent.unit.health = data.get("health", 1.0)
+        agent.unit.fuel = data.get("fuel", 1.0)
+        agent.unit.ammunition = data.get("ammunition", 100)
+        agent.unit.sensor_range = data.get("sensor_range", 50000.0)
+        agent.unit.role = data.get("role", "general")
+        
+        state_val = data.get("state")
+        if state_val:
+            try:
+                agent.unit.state = AgentState(state_val)
+            except ValueError:
+                pass
+                
+        return agent
+
+    def clone(self) -> 'BaseAgent':
+        """
+        Create an independent deep copy of this agent for research experiments.
+        Mutable state is not shared between original and clone.
+        """
+        # Create a new instance using from_dict to ensure clean state initialization
+        data = self.to_dict()
+        data["unit_id"] = f"{data['unit_id']}_clone_{uuid.uuid4().hex[:8]}"
+        return self.__class__.from_dict(data, message_bus=self.message_bus)
+
     @abstractmethod
     def take_turn(self, world_state: Any, messages: List[Message]) -> List[Message]:
         """

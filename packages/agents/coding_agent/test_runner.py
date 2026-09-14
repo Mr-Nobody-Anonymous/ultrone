@@ -23,6 +23,7 @@ logger = logging.getLogger("Ultrone.Coding.TestRunner")
 class TestResult:
     """The outcome of a single executed test."""
 
+    __test__ = False
     name: str
     status: str  # passed | failed | error | skipped
     duration_ms: float = 0.0
@@ -41,6 +42,7 @@ class TestResult:
 class TestRun:
     """The aggregate result of a test run."""
 
+    __test__ = False
     target: str
     tests: List[TestResult] = field(default_factory=list)
     passed: int = 0
@@ -67,6 +69,8 @@ class TestRun:
 
 class TestRunner:
     """Runs tests and parses structured results."""
+
+    __test__ = False
 
     def __init__(self, timeout_seconds: int = 120) -> None:
         self.timeout_seconds = timeout_seconds

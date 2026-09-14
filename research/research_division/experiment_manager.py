@@ -106,18 +106,32 @@ class ExperimentManagerAgent(ResearchAgent):
         import asyncio
 
         try:
-            asyncio.get_event_loop().run_until_complete(
-                self.publish(
-                    MessageType.RESEARCH_EXPERIMENT_RESULT,
-                    {
-                        "experiment_id": experiment.experiment_id,
-                        "metrics": metrics,
-                        "recommendation": experiment.recommendation,
-                    },
-                    priority=Priority.PRIORITY,
-                )
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            coro = self.publish(
+                MessageType.RESEARCH_EXPERIMENT_RESULT,
+                {
+                    "experiment_id": experiment.experiment_id,
+                    "metrics": metrics,
+                    "recommendation": experiment.recommendation,
+                },
+                priority=Priority.PRIORITY,
             )
-        except RuntimeError:
+            if loop and loop.is_running():
+                loop.create_task(coro)
+            else:
+                try:
+                    ev_loop = asyncio.get_event_loop()
+                    if ev_loop.is_running():
+                        ev_loop.create_task(coro)
+                    else:
+                        ev_loop.run_until_complete(coro)
+                except Exception:
+                    coro.close()
+        except Exception:
             pass
 
         result = {

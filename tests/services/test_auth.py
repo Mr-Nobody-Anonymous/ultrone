@@ -27,7 +27,7 @@ class TestAuthServicePassword(unittest.TestCase):
 
 class TestAuthServiceJWT(unittest.TestCase):
     def setUp(self):
-        self.svc = AuthService(secret="test-secret", expire_hours=1)
+        self.svc = AuthService(secret="test-secret-key-minimum-32-bytes-long!", expire_hours=1)
 
     def test_create_and_decode_token(self):
         token = self.svc.create_token("alice")
@@ -40,12 +40,12 @@ class TestAuthServiceJWT(unittest.TestCase):
 
     def test_wrong_secret_raises(self):
         token = self.svc.create_token("alice")
-        other_svc = AuthService(secret="different-secret")
+        other_svc = AuthService(secret="different-secret-key-32-bytes-long!!")
         with self.assertRaises(jwt.PyJWTError):
             other_svc.decode_token(token)
 
     def test_expired_token_raises(self):
-        svc = AuthService(secret="test-secret", expire_hours=0)
+        svc = AuthService(secret="test-secret-key-minimum-32-bytes-long!", expire_hours=0)
         token = svc.create_token("alice")
         with self.assertRaises(jwt.PyJWTError):
             svc.decode_token(token)

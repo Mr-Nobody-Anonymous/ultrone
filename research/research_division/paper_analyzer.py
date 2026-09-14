@@ -127,8 +127,15 @@ class PaperAnalyzer(ResearchAgent):
         import asyncio
 
         try:
-            asyncio.get_event_loop().run_until_complete(
-                self.publish(
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            if loop and loop.is_running():
+                loop.create_task(self._async_publish_analyzed(paper, summary, algorithms, architectures))
+            else:
+                coro = self.publish(
                     MessageType.RESEARCH_PAPER_ANALYZED,
                     {
                         "paper_id": paper.paper_id,
@@ -139,15 +146,16 @@ class PaperAnalyzer(ResearchAgent):
                     },
                     priority=Priority.ROUTINE,
                 )
-            )
-        except RuntimeError:
-            # Event loop already running - schedule
-            try:
-                loop = asyncio.get_running_loop()
-
-                loop.create_task(self._async_publish_analyzed(paper, summary, algorithms, architectures))
-            except RuntimeError:
-                pass
+                try:
+                    ev_loop = asyncio.get_event_loop()
+                    if ev_loop.is_running():
+                        ev_loop.create_task(coro)
+                    else:
+                        ev_loop.run_until_complete(coro)
+                except Exception:
+                    coro.close()
+        except Exception:
+            pass
 
         result = {
             "paper_id": paper.paper_id,

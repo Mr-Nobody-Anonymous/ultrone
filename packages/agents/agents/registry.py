@@ -231,13 +231,23 @@ class AgentFactory:
         
         # Create agent instance
         try:
-            agent = registration.agent_class(
-                unit_id=unit_id,
-                position=position,
-                team=team,
-                config=config,
-                **kwargs,
-            )
+            import inspect
+            sig = inspect.signature(registration.agent_class.__init__)
+            
+            init_kwargs = {
+                "unit_id": unit_id,
+                "position": position,
+                "team": team,
+            }
+            if "config" in sig.parameters or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()):
+                init_kwargs["config"] = config
+                
+            init_kwargs.update(kwargs)
+            
+            # Filter exactly for what it can accept
+            valid_kwargs = {k: v for k, v in init_kwargs.items() if k in sig.parameters or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())}
+            
+            agent = registration.agent_class(**valid_kwargs)
             logger.info(f"Created {agent_type} agent: {unit_id}")
             return agent
         except Exception as e:
