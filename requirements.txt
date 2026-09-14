@@ -38,6 +38,12 @@ prometheus-client>=0.19
 # ── HTTP / utilities ───────────────────────────────────────────────────────
 requests>=2.31
 
+# ── Auth / memory service (module-level imports in apps/ and vendored ultron) ─
+PyJWT>=2.8
+bcrypt>=4.0
+modelscope-hub>=0.4
+tiktoken>=0.5
+
 # ── Testing ────────────────────────────────────────────────────────────────
 pytest>=7.4
 pytest-asyncio>=0.23

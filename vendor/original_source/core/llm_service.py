@@ -9,7 +9,8 @@ from typing import Any, Callable, Optional
 try:
     from openai import OpenAI
     HAS_OPENAI = True
-except ImportError:
+except ImportError:  # pragma: no cover - depends on optional dependency
+    OpenAI = None  # type: ignore[assignment,misc]  # keep the name importable/patchable
     HAS_OPENAI = False
 
 from ..utils.token_budget import get_token_counter

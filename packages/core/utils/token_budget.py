@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 from functools import lru_cache
 from typing import Callable, List
 
@@ -17,6 +18,17 @@ except ImportError:
 
 TokenCounter = Callable[[str], int]
 
+logger = logging.getLogger(__name__)
+
+# Rough average used when tiktoken is unavailable (offline / not installed).
+_APPROX_CHARS_PER_TOKEN = 4
+
+
+def _approx_counter(text: str) -> int:
+    if not text:
+        return 0
+    return max(1, (len(text) + _APPROX_CHARS_PER_TOKEN - 1) // _APPROX_CHARS_PER_TOKEN)
+
 # Roles included when joining/splitting conversation text for LLM prompts.
 CONVERSATION_ROLES = ("user", "assistant", "tool", "system")
 
@@ -24,10 +36,21 @@ CONVERSATION_ROLES = ("user", "assistant", "tool", "system")
 @lru_cache(maxsize=8)
 def _tiktoken_counter(encoding_name: str) -> TokenCounter:
     if tiktoken is None:
-        raise RuntimeError(
-            "tiktoken is required for token counting (pip install tiktoken).",
+        logger.warning(
+            "tiktoken is not installed; falling back to approximate token counting "
+            "(pip install tiktoken for exact counts)."
         )
-    enc = tiktoken.get_encoding(encoding_name)
+        return _approx_counter
+    try:
+        enc = tiktoken.get_encoding(encoding_name)
+    except Exception as exc:  # e.g. offline: encoding file cannot be downloaded
+        logger.warning(
+            "tiktoken encoding %r unavailable (%s); falling back to approximate "
+            "token counting.",
+            encoding_name,
+            exc,
+        )
+        return _approx_counter
 
     def count(text: str) -> int:
         if not text:
