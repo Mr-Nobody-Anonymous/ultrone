@@ -1,0 +1,64 @@
+# Reusable compose for seeder smoke CI (consumed by wwv-seeders-* repos).
+#
+# Runs the REAL seeder against a MOCK upstream HTTP server. This isolates
+# "is the seeder code correct" from "is the upstream provider up" — a
+# NASA FIRMS / OpenSky / Overpass outage cannot fail seeder CI.
+#
+# Expected env vars from consuming workflow:
+#   SEEDER_NAME       — kebab-case name of the seeder under test
+#   SEEDER_DIST_DIR   — host path to the seeder's compiled dist/ + package.json
+#   FIXTURE_DIR       — host path to the seeder's __fixtures__ directory
+#   CI_IMAGE_TAG      — image tag to pull (default: ci)
+#
+# Plus any seeder-specific upstream env vars (e.g. OPENSKY_API_BASE)
+# already exported in the workflow shell, all pointing at http://mock-upstream:8080
+
+services:
+  wwv-redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  mock-upstream:
+    build:
+      context: ./mock-upstream
+    volumes:
+      - ${FIXTURE_DIR}:/fixtures:ro
+    environment:
+      FIXTURE_DIR: /fixtures
+      PORT: 8080
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:8080/__health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  wwv-data-engine:
+    image: ghcr.io/silvertakana/wwv-data-engine:${CI_IMAGE_TAG:-ci}
+    command: ["node", "dist/server.js"]
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount ONLY this seeder under /app/seeders/community/<name> — isolates
+      # the test from any cross-seeder dependencies or collisions.
+      - ${SEEDER_DIST_DIR}:/app/seeders/community/${SEEDER_NAME}:ro
+    environment:
+      PORT: 5000
+      REDIS_URL: redis://wwv-redis:6379
+      SEEDERS_DIR: /app/seeders
+      DB_PATH: /tmp/engine.db
+      # Seeder-specific upstream env vars are injected by the consuming
+      # workflow via `environment:` overrides or `env_file:`.
+    env_file:
+      - path: ./.seeder.env
+        required: false
+    depends_on:
+      wwv-redis:
+        condition: service_healthy
+      mock-upstream:
+        condition: service_healthy

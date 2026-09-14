@@ -1,0 +1,21 @@
+VENDORED SOFTWARE — DO NOT EDIT IN PLACE
+=========================================
+
+Package:      WorldWideView — plugin-driven geospatial intelligence engine
+Source:       https://github.com/silvertakana/worldwideview
+Commit:       41efdcde0294a1870e0bd9e4c2c9eebb297bac0f
+Vendored on:  2026-09-14
+Vendored by:  ULTRONE project (Mr-Nobody-Anonymous)
+
+License:      Elastic License 2.0 (see LICENSE in this directory).
+              This is NOT an OSI open-source licence. The Elastic-licensed
+              files in this directory keep their Elastic terms — notably the
+              managed-service restriction. Do NOT relicense them under the
+              ULTRONE MIT licence and do NOT strip copyright/license notices.
+
+Why vendored as-is:
+  ULTRONE integrates with WorldWideView at arm's length (reference
+  implementation, plugin-SDK patterns, Agent Bus control surface) rather
+  than copying its code into ULTRONE-owned packages. To refresh, replace
+  this directory with a newer upstream checkout (excluding .git) and
+  update the commit hash above.

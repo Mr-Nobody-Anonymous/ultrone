@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - "docs/**"
+      - "apps/globe/**"
+      - "packages/geospatial/**"
+      - "scripts/export_geo_snapshot.py"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -30,10 +33,41 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/globe/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Regenerate ULTRONE demo snapshot
+        run: |
+          pip install numpy
+          python scripts/export_geo_snapshot.py apps/globe/public/ultrone-demo-snapshot.json
+
+      - name: Build Global Eye globe
+        working-directory: apps/globe
+        run: |
+          npm ci
+          npm run build:pages
+
+      - name: Stage site (showcase + globe)
+        run: |
+          rm -rf site
+          cp -r docs site
+          mkdir -p site/globe
+          cp -r apps/globe/dist/* site/globe/
+          ls site site/globe | head -n 20
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "docs"
+          path: "site"
 
       - name: Deploy to GitHub Pages
         id: deployment

@@ -1,0 +1,160 @@
+name: Shared Docker Build
+
+on:
+  workflow_call:
+    inputs:
+      tags:
+        type: string
+        required: true
+      build-args:
+        type: string
+        default: ''
+      smoke-test-path:
+        type: string
+        default: /api/health
+      smoke-test-port:
+        type: string
+        default: '3000'
+      is-preview:
+        type: boolean
+        default: false
+      include-preview-secrets:
+        type: boolean
+        default: false
+      platforms:
+        type: string
+        default: 'linux/amd64'
+        description: 'Comma-separated build platforms. Default amd64-only; only the public globe app should pass linux/amd64,linux/arm64.'
+      ref:
+        type: string
+        default: ''
+        description: 'Git ref to check out (e.g. refs/pull/123/merge). Defaults to the triggering ref.'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          # Untrusted-content trigger (issue_comment -> PR merge ref): never
+          # persist the GITHUB_TOKEN into the checkout, so checked-out code
+          # cannot exfiltrate it (CodeQL privileged-workflow hardening).
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: ${{ inputs.tags }}
+
+      - name: Build and push
+        id: build-and-push
+        uses: docker/build-push-action@v7
+        env:
+          NEXT_PUBLIC_CESIUM_ION_TOKEN: ${{ secrets.NEXT_PUBLIC_CESIUM_ION_TOKEN }}
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          NEXT_PUBLIC_BING_MAPS_KEY: ${{ secrets.NEXT_PUBLIC_BING_MAPS_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        with:
+          context: .
+          push: true
+          platforms: ${{ inputs.platforms }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            ${{ inputs.build-args }}
+            ${{ inputs.include-preview-secrets && format('NEXT_PUBLIC_CESIUM_ION_TOKEN={0}', env.NEXT_PUBLIC_CESIUM_ION_TOKEN) || '' }}
+            ${{ inputs.include-preview-secrets && format('NEXT_PUBLIC_GOOGLE_MAPS_API_KEY={0}', env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) || '' }}
+            ${{ inputs.include-preview-secrets && format('NEXT_PUBLIC_BING_MAPS_KEY={0}', env.NEXT_PUBLIC_BING_MAPS_KEY) || '' }}
+            ${{ inputs.include-preview-secrets && format('NEXT_PUBLIC_SUPABASE_ANON_KEY={0}', env.NEXT_PUBLIC_SUPABASE_ANON_KEY) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner
+        id: trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          format: sarif
+          output: trivy-results.sarif
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+        continue-on-error: true
+
+      - name: Upload Trivy results to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4.37.3
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Fail build if Trivy found vulnerabilities (non-preview)
+        if: steps.trivy.outcome == 'failure' && !inputs.is-preview
+        run: exit 1
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Sign image with Cosign
+        if: ${{ !inputs.is-preview }}
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cosign sign --yes ghcr.io/${{ github.repository }}@${{ steps.build-and-push.outputs.digest }}
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.build-and-push.outputs.digest }}
+
+      - name: Smoke test
+        id: smoke
+        run: |
+          IMAGE="${{ fromJSON(steps.meta.outputs.json).tags[0] }}"
+          CONTAINER_NAME="smoke-${{ github.sha }}"
+          docker run -d --name $CONTAINER_NAME -p ${{ inputs.smoke-test-port }}:${{ inputs.smoke-test-port }} $IMAGE
+          sleep 15
+          curl -f --retry 5 --retry-delay 3 http://localhost:${{ inputs.smoke-test-port }}${{ inputs.smoke-test-path }} || EXIT=$?
+          docker stop $CONTAINER_NAME
+          docker rm $CONTAINER_NAME
+          exit ${EXIT:-0}
+        continue-on-error: true
+
+      - name: Fail build if smoke test failed (non-preview)
+        if: steps.smoke.outcome == 'failure' && !inputs.is-preview
+        run: exit 1
+
+      - name: Trigger Coolify deploy
+        if: ${{ !inputs.is-preview }}
+        env:
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+        run: |
+          [ -z "$COOLIFY_TOKEN" ] && exit 0
+          curl -s -X POST "https://coolify.serv.wwv.io/api/v1/deploy" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"force": false}'

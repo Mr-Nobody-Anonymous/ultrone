@@ -1,0 +1,177 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules/
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# agents
+/.agents/plans
+/.agents/research/
+/.agents/context/
+/.agents/settings.local.json
+
+# GSD tool install (vendored global tool, reinstall via the GSD installer; not committed)
+/.agents/get-shit-done/
+/.agents/commands/gsd/
+/.agents/agents/*
+!/.agents/agents/garbage-collector.md
+!/.agents/agents/security-reviewer.md
+/.agents/hooks/gsd-*
+/.agents/worktrees/
+/.agents/.gsd-profile
+/.agents/gsd-file-manifest.json
+/.agents/gsd-install-state.json
+/.agents/gsd-migration-journal/
+/.agents/scheduled_tasks.lock
+/.agents/VERSION
+/.agents/package.json
+# machine-specific (absolute hook paths); portable version TODO before open-source handoff
+/.agents/settings.json
+# stray Windows redirect artifact
+/nul
+
+# planning (private repo: github.com/silvertakana/wwv-planning)
+.planning/
+
+# performance
+/performance/
+
+# artifacts
+/artifacts/
+
+# gc bot — generated scan output, never commit
+gc-findings.json
+
+# scripts (tracked, but temporary scratchpads should go in /local-scripts/)
+
+
+# local database
+/data/
+packages/*/data/
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# temporary files and credentials
+/tmp/
+
+# generated prisma client
+/src/generated/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# Pact logs
+/logs/
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env
+.env.local
+.env.test
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Plugin build artifacts
+packages/*/dist/
+
+# Reference Reference Codebases
+/worldmonitor/
+
+# Developmental scripts & temporary sandbox
+/local-scripts/
+/public/plugins-local/
+
+# Local plugin development (gitignored workspace)
+local-plugins/*
+!local-plugins/.gitkeep
+!local-plugins/README.md
+
+# git worktrees
+/.worktrees/
+
+# proprietary extracted services
+packages/wwv-data-engine/
+
+# IDE workspace files
+*.code-workspace
+*.vscode
+
+# Build outputs and generated assets
+/public/cesium/
+build_output*.log
+build_output*.txt
+/build*.log
+
+# Root-level scratch scripts and agent artifacts
+tmp_*.js
+dump-*.js
+dump_*.py
+test*.js
+test*.mjs
+delete-dups.js
+commit.json
+skills-lock.json
+
+# Seeder repositories
+/local-seeders/
+/.local-seeders-dist/
+
+# WorldwideView Ecosystem Repositories (Development Structure)
+# The following ignores represent the different repositories related to the entire setup found in C:\dev
+/worldwideview-marketplace/
+/worldwideview-plugins/
+/worldwideview-web/
+/wwv-data-engine/
+/wwv-data-engine-public/
+/wwv-seeders/
+/wwv-seeders-private/
+/wwv-test/
+worldwideview.code-workspace
+
+# Playwright — organized under playwright/ subfolders
+/playwright/output/
+/playwright/report/
+/playwright/.auth/
+/test-results/
+/playwright-report/
+/.playwright-mcp/
+
+# MCP client config -- contains a live API key, never commit
+.mcp.json
+
+# Root-level UAT / debug scratch artifacts
+/uat-*.png
+/step*.png
+/mcp-test-*.png
+/api-keys-response.json
+graphify-out/

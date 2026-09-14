@@ -1,0 +1,64 @@
+/* ─── Seeder Empty Checklist ──────────────────────────────── */
+.seeder-empty-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.seeder-empty-checklist__toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 11px;
+    color: var(--accent-cyan);
+    cursor: pointer;
+    text-align: left;
+}
+
+.seeder-empty-checklist__toggle:hover {
+    text-decoration: underline;
+}
+
+.seeder-empty-checklist__rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.seeder-empty-checklist__row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-xs);
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.seeder-empty-checklist__row--suspect {
+    color: var(--accent-amber);
+    font-weight: 500;
+}
+
+.seeder-empty-checklist__box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    font-size: 9px;
+    border-radius: 3px;
+    background: rgba(74, 222, 128, 0.12);
+    color: var(--accent-green);
+    border: 1px solid rgba(74, 222, 128, 0.25);
+    margin-top: 1px;
+}
+
+.seeder-empty-checklist__row--suspect .seeder-empty-checklist__box {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-amber);
+    border-color: rgba(245, 158, 11, 0.3);
+}

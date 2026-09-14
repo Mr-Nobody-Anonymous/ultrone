@@ -1,0 +1,130 @@
+import { defineConfig, devices } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dir = path.dirname(fileURLToPath(import.meta.url));
+const MARKETPLACE_DIR = path.resolve(__dir, '../worldwideview-marketplace');
+const hasMarketplace = fs.existsSync(MARKETPLACE_DIR);
+
+/**
+ * See https://playwright.dev/docs/test-configuration.
+ */
+export default defineConfig({
+  timeout: 60000,
+  expect: {
+    timeout: 10000,
+  },
+  globalSetup: './tests/global.setup.ts',
+  globalTeardown: './tests/global.teardown.ts',
+  testDir: './tests',
+  // web-auth.spec.ts targets worldwideview-web (https://wwv.local:3001) — use playwright.web.config.ts
+  // marketplace-from-instance.spec.ts uses playwright.marketplace.config.ts; full-flow requires marketplace repo
+  // marketplace-redirect-handshake.spec.ts and marketplace-sign-out.spec.ts require marketplace.wwv.local:3002
+  //   — use playwright.cross-app.config.ts for these cross-origin handshake tests
+  // billing-flow.spec.ts / billing-no-org.spec.ts target the web hub billing stack (seeded globe user, hub, Supabase, Stripe)
+  //   — use the web repo's playwright.billing.config.ts (billing is web-owned, ADR-0009)
+  // example.spec.ts is a redundant smoke test — its app-boot assertions duplicate plugin-system.spec.ts's boot;
+  //   skipping it removes one full app cold-boot from every local run
+  // account-connect-e2e.spec.ts is a cross-app spec with hardcoded https://wwv.local URLs, env-gated test.skip,
+  //   and targets the web-hub accounts flow — it belongs to playwright.web.config.ts, not this main config
+  testIgnore: [
+    '**/pact/**',
+    '**/ci/**',
+    '**/web-auth.spec.ts',
+    '**/marketplace-from-instance.spec.ts',
+    '**/marketplace-redirect-handshake.spec.ts',
+    '**/marketplace-sign-out.spec.ts',
+    '**/billing-flow.spec.ts',
+    '**/billing-no-org.spec.ts',
+    '**/example.spec.ts',
+    '**/account-connect-e2e.spec.ts',
+  ],
+  /* Run tests in files in parallel */
+  fullyParallel: true,
+  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  forbidOnly: !!process.env.CI,
+  /* Retry on CI only */
+  retries: process.env.CI ? 2 : 0,
+  /* Opt out of parallel tests on CI. Restrict to 2 locally to prevent Next.js compilation overload. */
+  workers: process.env.CI ? 1 : 2,
+  /* Output artifacts folder instead of root-level test-results/ */
+  outputDir: 'playwright/output',
+  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  reporter: [['html', { outputFolder: 'playwright/report' }]],
+  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  use: {
+    /* Base URL to use in actions like `await page.goto('/')`. */
+    baseURL: 'http://localhost:3001',
+
+    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    trace: 'on-first-retry',
+  },
+
+  /* Configure projects for major browsers */
+  projects: [
+    {
+      name: 'chromium',
+      use: { 
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/user.json'
+      },
+    },
+    {
+      name: 'firefox',
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: 'playwright/.auth/user.json',
+        launchOptions: {
+          firefoxUserPrefs: {
+            // Disable MSAA/AT-SPI accessibility layer — causes hangs on Linux CI
+            'accessibility.force_disabled': 1,
+          },
+        },
+      },
+    },
+    {
+      name: 'webkit',
+      use: { 
+        ...devices['Desktop Safari'],
+        storageState: 'playwright/.auth/user.json'
+      },
+    },
+  ],
+
+  /* Run dev servers before starting the tests.
+   * The marketplace webServer entry was removed: no spec in this config's
+   * testIgnore set targets the marketplace (marketplace-*.spec.ts are all
+   * ignored here), so booting it cost time on every local run for nothing.
+   * Marketplace flows use playwright.marketplace.config.ts / cross-app config.
+   */
+  webServer: [
+    {
+      // CI: boot the production STANDALONE server (pnpm build runs in .github/workflows/playwright.yml
+      // first). `next start` cannot serve an `output: "standalone"` build — Next warns and the app
+      // never hydrates under WebKitGTK (the PR #430 webkit CI failures). scripts/serve-standalone.mjs
+      // mirrors the Dockerfile: copies static assets into .next/standalone and runs
+      // .next/standalone/server.js. Faster and more reliable than dev: no per-route compile,
+      // no HMR websocket keeping networkidle alive.
+      // Local: dev server for hot reload.
+      command: process.env.CI ? 'node scripts/serve-standalone.mjs' : 'pnpm dev',
+      env: {
+        PORT: '3001',
+        NEXT_PUBLIC_WWV_EDITION: 'cloud',
+        CROSS_SERVICE_SECRET: 'test-cross-service-secret-for-e2e',
+        NEXT_PUBLIC_APP_URL: 'http://localhost:3001',
+        NEXT_PUBLIC_MARKETPLACE_URL: 'http://localhost:3002',
+        // Empty HUB_REDIRECT_URL = local-dev mode (proxy.ts skips the hub
+        // redirect). Without this, a stale .env.local value pointing back at
+        // localhost:3001 makes the proxy 307-loop the root path, which hangs
+        // the webServer readiness probe and globalSetup's warm-up fetch.
+        NEXT_PUBLIC_HUB_REDIRECT_URL: '',
+      },
+      url: 'http://localhost:3001',
+      reuseExistingServer: !process.env.CI,
+      // Cold boots run predev (boot-db, safe-db-push, prisma generate,
+      // copy-cesium, sync-local-plugins) which can exceed 120s on first run.
+      timeout: 300 * 1000,
+    },
+  ],
+});

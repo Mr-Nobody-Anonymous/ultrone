@@ -1,0 +1,90 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    ports:
+      # Bound to loopback only so Postgres is not reachable from the host network.
+      # The app service reaches db via the internal Docker network.
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Co-located Redis for sessions, command queue, geocode cache, and rate limiters.
+  # Remove this service and the depends_on entry below when using a managed Redis
+  # (set REDIS_URL=rediss://:<password>@<host>:6380 in .env instead).
+  wwv-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-}
+    environment:
+      - "REDIS_PASSWORD=${REDIS_PASSWORD}"
+    volumes:
+      - wwv-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  wwv-cloud:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_WWV_EDITION=cloud
+    restart: always
+    environment:
+      NEXT_PUBLIC_WWV_EDITION: cloud
+      DATABASE_URL: postgresql://postgres:password@db:5432/postgres
+      NEXT_PUBLIC_SUPABASE_URL: ${SUPABASE_URL:-http://dummy}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-dummy}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-dummy}
+      # Required: high-entropy value distinct from API_KEY_HMAC_SECRET.
+      # The app fails closed (auth broken) if this is unset.
+      # Replaces legacy AUTH_SECRET from the NextAuth era.
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      # Redis session/cache/rate-limit store.
+      # Operators using a managed Redis should set REDIS_URL=rediss://:<password>@<host>:6380 in .env.
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@wwv-redis:6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # REST base URL for server-side MCP data queries (NOT the WebSocket /stream path).
+      # The engine publishes port 5000 on the host; the public URL
+      # https://dataenginev2.worldwideview.dev is reverse-proxied and needs no port.
+      # Set to the actual engine host IP/hostname visible from this container.
+      WWV_DATA_ENGINE_URL: ${WWV_DATA_ENGINE_URL:-http://<engine-host-ip>:5000}
+    ports:
+      - "3001:3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wwv.rule=HostRegexp(`{user:[a-z0-9-]+}.app.worldwideview.dev`) || Host(`app.worldwideview.dev`) || Host(`localhost`) || HostRegexp(`{user:[a-z0-9-]+}.localhost`)"
+      - "traefik.http.routers.wwv.entrypoints=web,websecure"
+      # - "traefik.http.routers.wwv.tls.certresolver=letsencrypt"
+      - "traefik.http.services.wwv.loadbalancer.server.port=3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      wwv-redis:
+        condition: service_healthy
+
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+volumes:
+  wwv-redis-data:

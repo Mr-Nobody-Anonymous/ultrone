@@ -1,0 +1,97 @@
+# Reusable compose for plugin smoke CI (consumed by wwv-plugins repo).
+#
+# Boots a full stack with a STUB seeder that emits known-good GeoEntity[]
+# data under the plugin-under-test's id. This isolates "is the frontend
+# wiring correct" from "is the real backend healthy" — a broken real seeder
+# cannot fail plugin CI.
+#
+# ─── Scope boundary (what THIS compose does vs what the workflow does) ───
+#
+# This compose only boots services. The consuming workflow's Playwright
+# `globalSetup` is responsible for:
+#   1. Inserting the test user into `users` (for NextAuth credentials login)
+#   2. Inserting the `InstalledPlugin` row with the plugin's manifest JSON
+#      (entry URL → http://localhost:3000/plugins-local/<PLUGIN_ID>/frontend.mjs)
+#   3. UI login → save storageState.json
+#   4. Running the smoke spec
+#
+# Reuse the pattern from worldwideview/tests/global.setup.ts. DB migrations
+# are handled automatically by the wwv-app entrypoint at container start.
+#
+# ─── Stub seeder source ───
+#
+# The stub seeder is baked into the `wwv-data-engine:ci` image at
+# /app/seeders/stub (see wwv-data-engine/Dockerfile.ci). The compose only needs
+# to set STUB_PLUGIN_ID — no volume mount, so a consumer repo can download just
+# this YAML and run it without the worldwideview source tree present.
+#
+# Expected env vars from consuming workflow:
+#   PLUGIN_ID         — kebab-case id of the plugin under test (e.g. "aviation")
+#   PLUGIN_BUNDLE_DIR — host path to the plugin's compiled dist/ (mounted into wwv-app)
+#   CI_IMAGE_TAG      — image tag to pull (default: ci)
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: worldwideview
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d worldwideview"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  wwv-redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  wwv-data-engine:
+    image: ghcr.io/silvertakana/wwv-data-engine:${CI_IMAGE_TAG:-ci}
+    command: ["node", "dist/server.js"]
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      REDIS_URL: redis://wwv-redis:6379
+      SEEDERS_DIR: /app/seeders
+      DB_PATH: /tmp/engine.db
+      # Stub seeder reads the target plugin id from this env var
+      STUB_PLUGIN_ID: ${PLUGIN_ID}
+      WWV_SKIP_WS_AUTH: "true"
+      NODE_ENV: ci
+    # No volume mount: the stub seeder is baked into the :ci image at
+    # /app/seeders/stub, so the engine discovers it as id "stub" with no host
+    # path dependency.
+    depends_on:
+      wwv-redis:
+        condition: service_healthy
+
+  wwv-app:
+    image: ghcr.io/silvertakana/worldwideview:${CI_IMAGE_TAG:-ci}
+    ports:
+      - "3000:3000"
+    environment:
+      BETTER_AUTH_SECRET: ci-placeholder-secret-not-used-in-tests
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/worldwideview?schema=public
+      NEXT_PUBLIC_WWV_EDITION: local
+      NEXT_PUBLIC_WWV_PLUGIN_DATA_ENGINE_URL: http://localhost:5000
+    volumes:
+      # Mount the plugin's compiled bundle so the app can load it locally
+      - ${PLUGIN_BUNDLE_DIR}:/app/public/plugins-local/${PLUGIN_ID}:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      wwv-data-engine:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s

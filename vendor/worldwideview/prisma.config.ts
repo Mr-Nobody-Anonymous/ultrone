@@ -1,0 +1,41 @@
+import fs from "fs";
+import path from "path";
+
+let dbUrl = process.env.DATABASE_URL;
+
+if (!dbUrl) {
+    try {
+        const envLocalPath = path.resolve(process.cwd(), ".env");
+        if (fs.existsSync(envLocalPath)) {
+            const envContent = fs.readFileSync(envLocalPath, "utf8");
+            const match = envContent.match(/^DATABASE_URL=["']?(.*?)["']?$/m);
+            if (match) {
+                dbUrl = match[1].trim();
+            }
+        }
+        if (!dbUrl) {
+            const envPath = path.resolve(process.cwd(), ".env");
+            if (fs.existsSync(envPath)) {
+                const envContent = fs.readFileSync(envPath, "utf8");
+                const match = envContent.match(/^DATABASE_URL=["']?(.*?)["']?$/m);
+                if (match) {
+                    dbUrl = match[1].trim();
+                }
+            }
+        }
+    } catch (e) {
+        // Ignore
+    }
+}
+
+function deriveShadowUrl(url: string | undefined): string | undefined {
+    if (!url) return url;
+    return url.replace(/\/([^/?]+)(\?|$)/, "/$1_shadow$2");
+}
+
+export default {
+    datasource: {
+        url: dbUrl,
+        shadowDatabaseUrl: process.env.SHADOW_DATABASE_URL || deriveShadowUrl(dbUrl),
+    },
+};

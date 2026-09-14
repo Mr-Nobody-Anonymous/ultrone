@@ -47,3 +47,19 @@ search_failures.txt
 test_out.txt
 test_output.txt
 test_run_final.txt
+
+# ULTRONE Global Eye (apps/globe): build/ holds upstream Vite *source*
+# (not build output) and must stay tracked; the rest is app scratch output.
+!apps/globe/build/
+!apps/globe/build/**
+apps/globe/.qa-shots/
+apps/globe/qa-shots/
+apps/globe/screenshots/
+apps/globe/output/
+apps/globe/.gev-logs/
+apps/globe/.gev-cache/
+apps/globe/.gstack/
+apps/globe/3d-models/
+apps/globe/*.log
+apps/globe/pinokio/ENVIRONMENT
+apps/globe/pinokio/.installed

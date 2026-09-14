@@ -1,0 +1,30 @@
+{
+  "name": "@worldwideview/wwv-ci-probe",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "CI probe — asserts plugin/seeder integration health (ADR-0002, WS payload contract, Redis snapshots)",
+  "main": "dist/index.js",
+  "bin": {
+    "wwv-probe": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "tsc"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "ioredis": "^5.11.1",
+    "ws": "^8.21.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "@types/ws": "^8.5.13",
+    "typescript": "^5.0.0"
+  }
+}
