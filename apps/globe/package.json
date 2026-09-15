@@ -47,6 +47,7 @@
     "test": "node scripts/run-unit-tests.mjs",
     "test:track": "node scripts/track-regression.mjs",
     "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs",
+    "qa:pages-assets": "node scripts/qa-pages-assets.mjs",
     "check:boundaries": "node scripts/check-package-boundaries.mjs",
     "dev:ultrone": "vite --config vite.config.ultrone.js"
   },
