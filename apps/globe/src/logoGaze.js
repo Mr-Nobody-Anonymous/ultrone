@@ -30,6 +30,25 @@ export function calculateLogoGaze(clientX, clientY, rect, maxOffset = MAX_GAZE_S
 }
 
 /**
+ * ULTRONE edit: re-root a public-directory asset at the Vite base, so the logo
+ * resolves when the build is mounted on a subpath (GitHub Pages serves the
+ * console from /ultrone/globe/, where a root-absolute '/logo.svg' points above
+ * the site root and 404s). The literal `import.meta.env.BASE_URL` access is
+ * deliberate — Vite replaces it at build time (dev: '/', Pages: './'), and the
+ * guard keeps plain Node (unit tests) on the '/' fallback.
+ *
+ * @param {string} assetPath - Document asset path, absolute or relative.
+ * @returns {string}
+ */
+export function resolvePublicAssetUrl(assetPath) {
+  const base = import.meta.env && typeof import.meta.env.BASE_URL === 'string' && import.meta.env.BASE_URL
+    ? import.meta.env.BASE_URL
+    : '/';
+  const root = base.endsWith('/') ? base : `${base}/`;
+  return `${root}${String(assetPath).replace(/^\/+/, '')}`;
+}
+
+/**
  * Make every same-origin logo object marked with `data-logo-gaze` follow the
  * pointer. Only the globe and its latitude/longitude cage move; the eye shell
  * remains fixed. Returns a cleanup callback.
@@ -88,7 +107,7 @@ export function initLogoGaze(root = document) {
 
   const loadInlineLogos = async () => {
     try {
-      const source = logos[0].dataset.logoSrc || '/logo.svg';
+      const source = resolvePublicAssetUrl(logos[0].dataset.logoSrc || 'logo.svg');
       const response = await window.fetch(source);
       if (!response.ok) return;
       const markup = await response.text();

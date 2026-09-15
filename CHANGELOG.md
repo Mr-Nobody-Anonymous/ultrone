@@ -22,6 +22,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Global Eye console on GitHub Pages**: the deployed console never booted
+  because every Cesium request 404'd. `vite-plugin-cesium` mirrors Vite's
+  `base` into both `CESIUM_BASE_URL` and the build output directory, so the
+  absolute `/ultrone/globe/` base copied the runtime to
+  `dist/ultrone/globe/cesium/` while the document asked for
+  `/ultrone/globe/cesium/…`. `apps/globe/vite.config.pages.js` now builds with
+  a relative base (`./`), so the build works both from `dist/` locally and
+  under the Pages subpath. Verified against a staged copy of the site: the
+  Cesium runtime, widgets CSS, workers, snapshot and logo all load from
+  `/ultrone/globe/`.
+- **Deploy regression guard**: `apps/globe/scripts/qa-pages-assets.mjs`
+  (run by `pages.yml` on the staged `site/globe` before upload, and locally via
+  `npm run qa:pages-assets`) fails the deployment when a referenced asset is
+  missing from the staged build, when a root-absolute reference escapes the
+  deployed prefix, or when the Cesium runtime is copied below the site root
+  again.
+- The Global Eye logo asset is re-rooted at the Vite base (`src/logoGaze.js`),
+  so the gaze animation loads its SVG under a subpath deployment instead of
+  silently falling back to the static logo.
 - Resolved the license contradiction: the repository uniformly uses the
   **MIT** license (README badge, `pyproject.toml`, deployment metadata).
   The stray Apache-2.0 `LICENSE` file that arrived with the Ultron merge was
