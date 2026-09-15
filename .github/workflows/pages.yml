@@ -64,6 +64,12 @@ jobs:
           cp -r apps/globe/dist/* site/globe/
           ls site site/globe | head -n 20
 
+      # The globe build is mounted at /ultrone/globe/, so every asset it
+      # references must exist under site/globe/. This is what caught the Cesium
+      # runtime being copied one directory too deep.
+      - name: Verify staged asset paths
+        run: node apps/globe/scripts/qa-pages-assets.mjs --dist site/globe --prefix /ultrone/globe/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
