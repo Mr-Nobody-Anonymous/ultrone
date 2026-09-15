@@ -18,7 +18,8 @@ export function resolveUltroneBaseUrl(override) {
 }
 
 // NOTE: keep the literal `import.meta.env.BASE_URL` access below — Vite
-// replaces it statically at build time (dev: '/', Pages: '/ultrone/globe/').
+// replaces it statically at build time (dev: '/', Pages: './', resolved
+// against the /ultrone/globe/ document URL).
 function viteBaseUrl() {
   if (
     typeof import.meta !== 'undefined' &&
