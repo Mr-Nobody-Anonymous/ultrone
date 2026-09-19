@@ -26,15 +26,29 @@ from .workers import (
     WorkerSelector,
 )
 
+from .three_agent import (
+    DAGNode,
+    F2T2EAPlanner,
+    MissionDirective,
+    MissionExecutionReport,
+    NodeStatus,
+    ROEGrader,
+    SwarmExecutionWorker,
+    TaskDAG,
+    ThreeAgentHarness,
+)
+
 __all__ = [
     "AgentHarness",
     "CheckpointData",
     "CheckpointStore",
+    "DAGNode",
     "DomainAgentWorker",
     "EvaluationResult",
     "EvaluationStatus",
     "ExecutionPolicy",
     "ExecutionStep",
+    "F2T2EAPlanner",
     "Goal",
     "GoalManager",
     "HarnessConfig",
@@ -45,9 +59,17 @@ __all__ = [
     "InvalidStateTransitionError",
     "LifecycleState",
     "LifecycleStateMachine",
+    "MissionDirective",
+    "MissionExecutionReport",
+    "NodeStatus",
+    "ROEGrader",
     "RecoveryAction",
     "RecoveryManager",
+    "SwarmExecutionWorker",
+    "TaskDAG",
+    "ThreeAgentHarness",
     "WorkerInput",
     "WorkerOutput",
     "WorkerSelector",
 ]
+

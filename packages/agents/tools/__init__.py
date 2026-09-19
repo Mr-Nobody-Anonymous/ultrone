@@ -8,7 +8,13 @@ from .permissions import PermissionDeniedError, ToolPermissionChecker
 from .registry import ToolRegistry
 from .schema import RiskLevel, ToolDefinition, ToolParameter, ToolResult
 
+try:
+    from packages.agents.mcp.bridge import McpToolBridge
+except ImportError:
+    McpToolBridge = None  # type: ignore
+
 __all__ = [
+    "McpToolBridge",
     "PermissionDeniedError",
     "RiskLevel",
     "ToolAuditEntry",
@@ -21,3 +27,4 @@ __all__ = [
     "ToolRuntime",
     "create_standard_tool_catalog",
 ]
+
