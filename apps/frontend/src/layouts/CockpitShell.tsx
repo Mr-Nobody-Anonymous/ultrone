@@ -1,6 +1,6 @@
 // Copyright (c) Ultrone Contributors. All rights reserved.
 import React, { useEffect } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
 import { useCockpitStore } from '../stores/cockpitStore';
 import {
   ShieldAlert,
@@ -25,6 +25,9 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
+  HeartPulse,
+  BellRing,
+  ScrollText,
 } from 'lucide-react';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { CommandPalette } from '../components/ui/CommandPalette';
@@ -101,6 +104,14 @@ export const CockpitShell: React.FC = () => {
     {
       title: 'SAFETY & INVARIANTS',
       links: [{ to: '/safety', label: 'Safety Center', icon: ShieldCheck }],
+    },
+    {
+      title: 'SYSTEM',
+      links: [
+        { to: '/system/health', label: 'System Health', icon: HeartPulse },
+        { to: '/system/alerts', label: 'Alerts Center', icon: BellRing },
+        { to: '/system/audit', label: 'UI Audit Trail', icon: ScrollText },
+      ],
     },
     {
       title: 'RESEARCH & GOVERNANCE',
@@ -325,13 +336,17 @@ export const CockpitShell: React.FC = () => {
               <span>EVENTS: {overview?.events?.total ?? 0}</span>
               <span>
                 ALERTS:{' '}
-                <span
+                <Link
+                  to="/system/alerts"
+                  data-testid="dock-alerts-link"
                   className={
-                    (overview?.alert_counts?.CRITICAL ?? 0) > 0 ? 'text-rose-400 font-bold' : ''
+                    (overview?.alert_counts?.CRITICAL ?? 0) > 0
+                      ? 'text-rose-400 font-bold underline decoration-dotted hover:text-rose-300'
+                      : 'underline decoration-dotted hover:text-surface-200'
                   }
                 >
                   {overview?.alerts?.length ?? 0}
-                </span>
+                </Link>
               </span>
             </div>
 

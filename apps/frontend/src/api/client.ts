@@ -171,6 +171,8 @@ export const cockpitApi = {
     }),
   search: (query: string, limit = 50) =>
     request<SearchResultItem[]>(`/search?q=${encodeURIComponent(query)}&limit=${limit}`),
+  getUiActions: (limit = 100) =>
+    request<any[]>(`/ui-actions?limit=${limit}`),
   exportReport: (format = 'json') => request<any>(`/export-report?format=${format}`),
   recordUiAction: (actor: string, action: string, target: string, detail?: any) =>
     request<any>('/ui-actions', {

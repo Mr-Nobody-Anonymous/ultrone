@@ -113,7 +113,12 @@ export const McpInspectorView: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-2 px-3 font-bold text-surface-200 truncate max-w-[160px]">
-                      {entry.tool || entry.method}
+                      <div>{entry.method}</div>
+                      {entry.tool && (
+                        <div className="text-[10px] text-surface-400 font-normal truncate">
+                          {entry.tool}
+                        </div>
+                      )}
                     </td>
                     <td className="py-2 px-3 text-surface-400 text-[11px]">
                       {entry.correlation_id}

@@ -11,6 +11,9 @@ import { DevicesView } from './features/devices/DevicesView';
 import { McpInspectorView } from './features/mcp/McpInspectorView';
 import { EventStoreView } from './features/events/EventStoreView';
 import { SafetyCenterView } from './features/safety/SafetyCenterView';
+import { SystemHealthView } from './features/system/SystemHealthView';
+import { AlertsCenterView } from './features/system/AlertsCenterView';
+import { AuditTrailView } from './features/system/AuditTrailView';
 import { EvaluationLabView } from './features/evaluation/EvaluationLabView';
 import { GovernanceView } from './features/governance/GovernanceView';
 import { RegistriesView } from './features/registries/RegistriesView';
@@ -32,6 +35,9 @@ const App: FC = () => {
         <Route path="mcp" element={<McpInspectorView />} />
         <Route path="events" element={<EventStoreView />} />
         <Route path="safety" element={<SafetyCenterView />} />
+        <Route path="system/health" element={<SystemHealthView />} />
+        <Route path="system/alerts" element={<AlertsCenterView />} />
+        <Route path="system/audit" element={<AuditTrailView />} />
         <Route path="evaluation" element={<EvaluationLabView />} />
         <Route path="governance" element={<GovernanceView />} />
         <Route path="registries" element={<RegistriesView />} />
