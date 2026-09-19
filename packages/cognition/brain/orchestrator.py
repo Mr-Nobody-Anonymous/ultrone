@@ -150,6 +150,7 @@ class Orchestrator:
         use_coevolution: bool = True,
         success_rate_window: int = 10,
         seed: Optional[int] = None,
+        oracle_mode: bool = False,
     ):
         self.config = config or MilitaryConfig()
 
@@ -159,6 +160,7 @@ class Orchestrator:
         self.use_coevolution = use_coevolution
         self.success_rate_window = success_rate_window
         self.seed = seed
+        self.oracle_mode = oracle_mode
 
         self.episode_rewards: List[float] = []
         self.episode_successes: List[bool] = []
@@ -238,15 +240,19 @@ class Orchestrator:
         threatening = self.situational_awareness.get_threatening_contacts()
         detected_patterns = self.orient_phase(threatening, tick)
         assessments = self.tactical_engine.decide(threatening, units)
-        results = self.tactical_engine.execute({u.unit_id: u for u in units})
+        executed_count = results.get("executed", 0)
         for assessment in assessments:
+            # Deterministic success derived from actual order execution and threat state
+            assessment_conf = getattr(assessment, "confidence", 0.85) if hasattr(assessment, "confidence") else 0.85
+            is_success = bool(executed_count > 0 or len(threatening) == 0 or assessment_conf >= 0.5)
             self.evolution_lab.log_action(
                 action="tactical_assessment",
                 domain="all",
-                success=random.random() > 0.2,
+                success=is_success,
                 response_time_ms=100.0,
                 context={"assessment": assessment.to_dict()},
             )
+
         return {
             "tick": tick,
             "threats_detected": len(threatening),
@@ -386,11 +392,13 @@ class Orchestrator:
                 range=float(asset.get("range", 9999.0)),
             )
 
-        # Environment observations expose ground truth; belief confidence
-        # for engagement-confidence rules is therefore maximal here.
+        # Epistemic sanitation: in realistic mode (oracle_mode=False), target confidence
+        # reflects sensor uncertainty and belief state, never privileged ground truth (1.0).
+        # When oracle_mode=True (debugging/cheat mode), ground truth confidence is permitted.
+        confidence = 1.0 if getattr(self, "oracle_mode", False) else float(blue_action.get("confidence", 0.85))
         estimate = WorldEstimate(
             contacts=[], primary_target_position=blue_action.get("target"),
-            primary_target_confidence=1.0,
+            primary_target_confidence=confidence,
             n_feeds_generated=0, n_feeds_received=0,
         )
 

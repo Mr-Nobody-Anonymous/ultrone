@@ -446,47 +446,38 @@ print(sat.analyze({'formation': 'tanks'}, {}))
 
 ---
 
-## 🚦 Roadmap
+## 🚦 Capability Maturity Matrix (L0–L6)
 
-- [x] ✅ Specialized AI perceptors (11 sensor types)
-- [x] ✅ Evolutionary COA generation
-- [x] ✅ Combinatorial tactic creation (JAM+STRIKE → Cyber-Kinetic Sync)
-- [x] ✅ Multi-agent swarm coordination (12 protocols: Consensus, Contract Net, Coalition, etc.)
-- [x] ✅ Search & Planning (12 algorithms: MCTS, HTN, A*, MAPF, PDDL, etc.)
-- [x] ✅ Reinforcement Learning (14 algorithms: PPO, SAC, TD3, DQN, Rainbow, MARL, QMIX, VDN…)
-- [x] ✅ Optimization engines (10: GA, CMA-ES, PSO, Bayesian, Ant Colony, NSGA-II…)
-- [x] ✅ Advanced Evolutionary Algorithms (9: NEAT, Novelty Search, MAP-Elites, NSGA-III…)
-- [x] ✅ Meta & Continual Learning (MAML, Reptile, Transfer, Online, Continual)
-- [x] ✅ Probabilistic Reasoning (Bayesian Networks, HMM, Kalman KF/EKF/UKF, Particle Filter)
-- [x] ✅ Game Theory (Nash, Stackelberg, CFR, Minimax, Auctions, Zero-Sum, Cooperative)
-- [x] ✅ Graph Intelligence (GNN, GAT, Knowledge Embeddings, Community Detection)
-- [x] ✅ Prediction models (LSTM, GRU, Transformer, Temporal Fusion, Trajectory)
-- [x] ✅ Explainable AI (Decision Trace, SHAP, LIME, Counterfactual, Confidence Calibration)
-- [x] ✅ Memory Systems (Episodic, Semantic, Working, Associative, Consolidation)
-- [x] ✅ World Modeling (Terrain, Weather, Resources, Logistics, Events)
-- [x] ✅ AI Architecture Patterns (Behavior Trees, GOAP, Utility AI, BDI, FSM, Blackboard)
-- [x] ✅ Performance & Scaling (Parallel, Distributed, Ray, GPU, Profiler)
-- [x] ✅ Research Tooling (Experiment Manager, Hyperparameter Opt, Benchmarking, Ablation)
-- [x] ✅ Decision Intelligence (Causal BN, Counterfactual, Influence Diagrams, SCM)
-- [x] ✅ Knowledge & RAG (Semantic Search, Vector DB, RAG Memory, Graph Embeddings)
-- [x] ✅ ML Framework Adapters (PyTorch, SB3, ONNX, Ray, XGBoost, PyG)
-- [x] ✅ Generative AI (Diffusion Planner, Normalizing Flows, Tactic Transformer, Tactic VAE)
-- [x] ✅ Backend Services (API v1, Vision — partial: most modules scaffolded)
-- [x] ✅ Frontend Dashboard (React/Vite: Tactical Map, Agent Inspector, Analytics, Admin)
-- [x] ✅ Infrastructure (Docker Compose, Helm Charts with 35 templates, Kubernetes manifests, Prometheus + Loki + Nginx)
-- [x] ✅ Comprehensive Test Suite (90+ test files, 2200+ tests)
-- [x] ✅ Frontier Intelligence (ToT, GoT, Self-Consistency, Multi-Agent Debate, Reflection/Self-Correction, Bayesian Decision, Confidence Calibration)
-- [x] ✅ Software Engineering Agent (AST analysis, repo indexing, symbol search, static analysis, test generation, bug localization, patch validation)
-- [x] ✅ Benchmark Harness (GSM8K, MMLU, HumanEval, MBPP runners, append-only history, improvement graphs)
-- [x] ✅ Battle Damage Assessment (`brain/reasoning/battle_damage_assessment.py` — multi-sensor fusion, severity/confidence scoring, re-engagement recommendations, 19 tests)
-- [x] ✅ Predictive Kill-Chain Optimization (`brain/reasoning/predictive_kill_chain.py` — Markov + EMA + ensemble models, F2T2EA forecasting, bottleneck detection, 18 tests)
-- [x] ✅ Backend module implementations (Analytics, Auth, Cache, Database, Events, Exporters, Integrations, Metrics, Middleware, Notifications, Pipeline, Plugins, Rules, Schedulers, Security, Workers — all under `backend/`)
-- [x] 🧬 **Neural Self-Improvement Milestone** (`self_improvement/neural/` — model adapter, tokenizer pipeline, LoRA trainer, curated dataset split w/ leakage detection, simulated-vs-neural capability benchmark; 63 tests)
+To maintain scientific rigor and epistemic integrity, ULTRONE replaces binary checkmarks with an explicit **L0–L6 maturity classification** governed by machine-readable [`capabilities.yaml`](capabilities.yaml):
+
+- **`L0` (Planned)**: Architecture/specification stage.
+- **`L1` (Scaffold)**: Interfaces and abstract classes exist; hardware actuation strictly disabled.
+- **`L2` (Unit-Tested)**: Modular unit test coverage without full integration.
+- **`L3` (Integrated)**: Multi-component end-to-end integration verified (e.g. MCP + CBF + SITL).
+- **`L4` (Benchmarked)**: Statistical evaluation over $N$ seeds with confidence intervals.
+- **`L5` (Reproducible)**: Evaluated on held-out datasets with frozen lockfiles.
+- **`L6` (Externally Validated)**: Validated against third-party agent harnesses (e.g. UK AISI Inspect).
+
+| Capability | Level | Status | Unit Tests | Integration | Benchmarked | Safety Boundary |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Digital Battlefield Simulator** | `L3` | integrated | Yes | Yes | No | Simulation Only |
+| **F2T2EA Dynamic Kill-Chain State Machine** | `L3` | integrated | Yes | Yes | No | Simulation Only |
+| **Control Barrier Function (CBF) & ROE Grader** | `L3` | integrated | Yes | Yes | Yes | Simulation Only |
+| **Model Context Protocol (MCP 2026-07-28)** | `L3` | integrated | Yes | Yes | No | Simulation Only |
+| **ULTRONE Device Interface Standard (UDIS / MHS)** | `L3` | integrated | Yes | Yes | No | Simulation Only |
+| **Event-Sourced Provenance & Deterministic Replay** | `L3` | integrated | Yes | Yes | No | Simulation Only |
+| **Multi-Sensor Perception & Fusion** | `L2` | unit_tested | Yes | No | No | Simulation Only |
+| **Real-Time Genome Evolution** | `L2` | unit_tested | Yes | No | No | Simulation Only |
+| **Autonomous Research & Self-Improvement Loop** | `L2` | experimental | Yes | No | No | Simulation Only |
+| **Neural Model Self-Improvement Adapter** | `L1` | scaffold | No | No | No | Simulation Only |
+| **Physical Robotics Actuation** | `L1` | simulation_scaffold | Yes | No | No | Simulation Only |
+
+### Upcoming Milestones
 - [ ] 🔌 Swap `MockNeuralAdapter` for a real open-weight model adapter (HF local or hosted inference) behind the same `ModelAdapter` seam
 - [ ] 🌐 Distributed evolution across nodes
 - [ ] 📓 Tutorial notebooks in `/notebooks/`
 - [ ] 🔌 Plugin marketplace for community algorithms
-- [ ] 🧪 Benchmark suite against standard RL environments
+- [ ] 🧪 Benchmark suite against standard RL environments and UK AISI Inspect harness integration
 
 ---
 

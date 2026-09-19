@@ -1,0 +1,134 @@
+# ULTRONE Capability Registry & Epistemic Maturity Matrix
+# Replaces binary checkmarks (✅) with rigorous L0-L6 maturity levels:
+#   L0 = Planned / Conceptual
+#   L1 = Module Exists (Scaffolding)
+#   L2 = Unit-Tested
+#   L3 = Integrated & Verified
+#   L4 = Benchmarked (N-seeds, statistical significance)
+#   L5 = Reproducible (Held-out data, lockfiles)
+#   L6 = Externally Validated (Independent test harness)
+
+version: "2026-09-19"
+schema_version: "1.0"
+
+capabilities:
+  battlefield_simulation:
+    name: "Digital Battlefield Simulator"
+    maturity_level: "L3"
+    status: "integrated"
+    unit_tests: true
+    integration_tests: true
+    benchmarked: false
+    reproducible: true
+    simulation_only: true
+    description: "Multi-domain discrete-event and kinematic environment with Blue/Red commanders."
+
+  f2t2ea_kill_chain:
+    name: "F2T2EA Dynamic Kill-Chain State Machine"
+    maturity_level: "L3"
+    status: "integrated"
+    unit_tests: true
+    integration_tests: true
+    benchmarked: false
+    reproducible: true
+    simulation_only: true
+    description: "Finite state machine with explicit phase guards, token TTL, and sensor freshness."
+
+  safety_gate_cbf:
+    name: "Control Barrier Function (CBF) & ROE Grader"
+    maturity_level: "L3"
+    status: "integrated"
+    unit_tests: true
+    integration_tests: true
+    benchmarked: true
+    reproducible: true
+    simulation_only: true
+    description: "High-order dynamic CBF verifying turning radius, braking distance, and default-fail ROE policy."
+
+  mcp_2026_07_28:
+    name: "Model Context Protocol (MCP 2026-07-28)"
+    maturity_level: "L3"
+    status: "integrated"
+    unit_tests: true
+    integration_tests: true
+    benchmarked: false
+    reproducible: true
+    simulation_only: true
+    description: "JSON-RPC 2.0 stateless core, streamable HTTP/SSE, Sensor/Actuator servers, and UDIS gateway."
+
+  udis_hardware_protocol:
+    name: "ULTRONE Device Interface Standard (UDIS / MHS)"
+    maturity_level: "L3"
+    status: "integrated"
+    unit_tests: true
+    integration_tests: true
+    benchmarked: false
+    reproducible: true
+    simulation_only: true
+    description: "Anthropic MHS-aligned manifests, explicit 10-state FSM, capability leases, and deterministic procedures."
+
+  event_sourcing_trace:
+    name: "Event-Sourced Provenance & Deterministic Replay"
+    maturity_level: "L3"
+    status: "integrated"
+    unit_tests: true
+    integration_tests: true
+    benchmarked: false
+    reproducible: true
+    simulation_only: true
+    description: "SHA-256 cryptographically chained immutable audit journal and step-by-step replay engine."
+
+  sensor_ai:
+    name: "Multi-Sensor Perception & Fusion"
+    maturity_level: "L2"
+    status: "unit_tested"
+    unit_tests: true
+    integration_tests: false
+    benchmarked: false
+    reproducible: false
+    simulation_only: true
+    description: "Multi-expert sensor processing across radar, EO/IR, sonar, SIGINT, and GPS with simulated corruption."
+
+  evolutionary_tactics:
+    name: "Real-Time Genome Evolution"
+    maturity_level: "L2"
+    status: "unit_tested"
+    unit_tests: true
+    integration_tests: false
+    benchmarked: false
+    reproducible: false
+    simulation_only: true
+    description: "Genetic algorithm evolving tactical heuristics, with deterministic reward and fitness scoring."
+
+  self_improvement:
+    name: "Autonomous Research & Self-Improvement Loop"
+    maturity_level: "L2"
+    status: "experimental"
+    unit_tests: true
+    integration_tests: false
+    benchmarked: false
+    reproducible: false
+    simulation_only: true
+    description: "Hypothesize -> Experiment -> Validate loop with promotion gates."
+
+  neural_training:
+    name: "Neural Model Self-Improvement Adapter"
+    maturity_level: "L1"
+    status: "scaffold"
+    unit_tests: false
+    integration_tests: false
+    benchmarked: false
+    reproducible: false
+    simulation_only: true
+    description: "Abstract neural adapter interface; real open-weight fine-tuning pipeline under active research."
+
+  robotics_actuation:
+    name: "Physical Robotics Actuation"
+    maturity_level: "L1"
+    status: "simulation_scaffold"
+    unit_tests: true
+    integration_tests: false
+    benchmarked: false
+    reproducible: false
+    simulation_only: true
+    description: "Physical hardware actuation disabled; mediated strictly via UDIS simulation and digital twins."

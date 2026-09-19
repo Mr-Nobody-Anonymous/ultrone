@@ -23,11 +23,13 @@ class ROEGrader(IndependentEvaluator):
         min_pid_confidence: float = 0.85,
         no_strike_entities: Optional[List[Dict[str, Any]]] = None,
         max_cde_radius_m: float = 150.0,
+        token_ttl_seconds: float = 5.0,
     ) -> None:
         super().__init__()
         self.min_pid_confidence = min_pid_confidence
         self.no_strike_entities = no_strike_entities or []
         self.max_cde_radius_m = max_cde_radius_m
+        self.token_ttl_seconds = token_ttl_seconds
 
     def add_no_strike_entity(self, name: str, lat: float, lon: float, buffer_m: float = 300.0) -> None:
         """Register a protected hospital, school, cultural, or diplomatic site."""
@@ -50,6 +52,32 @@ class ROEGrader(IndependentEvaluator):
         """
         evidence = evidence or {}
 
+        # 0. Prompt Injection Scan in sensor metadata and parameters
+        raw_corpus = " ".join([str(v) for v in list(node.parameters.values()) + list(evidence.values())]).upper()
+        injection_patterns = [
+            "IGNORE PREVIOUS INSTRUCTIONS",
+            "IGNORE ALL PREVIOUS INSTRUCTIONS",
+            "SYSTEM OVERRIDE",
+            "DROP SAFETY",
+            "DISABLE ROE",
+            "MARK AS FRIENDLY",
+            "CLASSIFY AS FRIENDLY",
+        ]
+        for pattern in injection_patterns:
+            if pattern in raw_corpus:
+                reason = f"Adversarial prompt injection attempt detected in metadata: '{pattern}'"
+                logger.error("ADVERSARIAL INJECTION BLOCKED: %s", reason)
+                return (
+                    EvaluationResult(
+                        status=EvaluationStatus.FAIL,
+                        score=0.0,
+                        reason=reason,
+                        failed_criteria=["Prompt Injection Defense"],
+                        evidence=evidence,
+                    ),
+                    None,
+                )
+
         # 1. Base Goal evaluation with default-fail semantics
         goal = Goal(
             description=node.description,
@@ -62,7 +90,28 @@ class ROEGrader(IndependentEvaluator):
             logger.warning("Grader REJECTED node '%s': %s", node.node_id, base_result.reason)
             return base_result, None
 
-        # 2. Stage-Specific Strict ROE Verification
+        # 2. Multimodal Sensor Contradiction Check
+        radar_threat = (
+            evidence.get("radar_classification") == "HOSTILE"
+            or float(evidence.get("velocity_mps", 0.0)) > 250.0
+            or float(evidence.get("rcs_m2", 0.0)) > 10.0
+        )
+        eoir_civilian = evidence.get("classification") in ("CIVILIAN_AIRLINER", "COMMERCIAL_VESSEL", "MEDICAL_CONVOY")
+        if radar_threat and eoir_civilian:
+            reason = "Multimodal sensor contradiction: Radar kinematic threat conflicts with EO/IR civilian classification."
+            logger.error("MULTIMODAL CONTRADICTION BLOCKED: %s", reason)
+            return (
+                EvaluationResult(
+                    status=EvaluationStatus.FAIL,
+                    score=0.0,
+                    reason=reason,
+                    failed_criteria=["Multimodal Sensor Consensus"],
+                    evidence=evidence,
+                ),
+                None,
+            )
+
+        # 3. Stage-Specific Strict ROE Verification
         # Check Positive Identification (PID) confidence
         if node.phase in ("TRACK", "TARGET", "ENGAGE"):
             pid_score = evidence.get("pid_score", 0.0)
@@ -112,15 +161,17 @@ class ROEGrader(IndependentEvaluator):
                         None,
                     )
 
-
-        # If ENGAGE phase successfully passes all checks, generate a one-time cryptographic ROE token
+        # If TARGET or ENGAGE phase passes, issue cryptographic ROE clearance token with TTL
         clearance_token = None
         if node.phase in ("TARGET", "ENGAGE"):
-            clearance_token = f"ROE-CLEARED-{uuid.uuid4().hex[:12].upper()}"
+            import time
+            expiry_ts = int(time.time() + self.token_ttl_seconds)
+            clearance_token = f"ROE-CLEARED-{uuid.uuid4().hex[:12].upper()}-EXP{expiry_ts}"
             evidence["roe_clearance_token"] = clearance_token
-            logger.info("Grader issued valid ROE Clearance Token: %s", clearance_token)
+            logger.info("Grader issued valid ROE Clearance Token (expires at %s): %s", expiry_ts, clearance_token)
 
         return base_result, clearance_token
+
 
     @staticmethod
     def _distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

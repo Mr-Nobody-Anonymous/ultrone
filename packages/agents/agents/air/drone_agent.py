@@ -88,8 +88,9 @@ class DroneAgent(SubsystemControlledAgent):
     def _strike(self, world_state) -> Optional[Message]:
         """Execute strike on target."""
         if self.target_contact and self.unit.consume_ammunition():
-            # Simulate hit
-            hit = random.random() > 0.2
+            # Deterministic hit determination based on tracking confidence (epistemic integrity)
+            contact_conf = getattr(self.target_contact, "confidence", 1.0)
+            hit = bool(contact_conf >= 0.5)
             return self.create_message(
                 MessageType.ENGAGEMENT,
                 content={

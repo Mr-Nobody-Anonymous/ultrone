@@ -13,14 +13,19 @@ from .protocol import McpToolInputSchema
 from .server import McpServer
 
 
+from .streaming import McpTelemetryStreamer
+
+
 class SensorMcpServer(McpServer):
     """Specialized MCP Server serving real-time and synthetic sensor streams."""
 
     def __init__(self, name: str = "ultrone-sensor-mcp", version: str = "1.0.0") -> None:
         super().__init__(name=name, version=version)
         self._tracks: Dict[str, Dict[str, Any]] = {}
+        self.streamer = McpTelemetryStreamer()
         self._init_sensor_tools()
         self._init_sensor_resources()
+
 
     def _init_sensor_tools(self) -> None:
         # 1. Radar Sweep
@@ -120,7 +125,9 @@ class SensorMcpServer(McpServer):
             "timestamp": time.time(),
         }
         self._tracks[track_id] = contact
+        self.streamer.publish("telemetry/radar", contact)
         return {"sweep_complete": True, "contacts_found": 1, "tracks": [contact]}
+
 
     def _handle_sar_capture(self, args: Dict[str, Any]) -> Dict[str, Any]:
         lat = float(args.get("target_lat", 0.0))

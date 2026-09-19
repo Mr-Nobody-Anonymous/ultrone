@@ -41,7 +41,13 @@ class SafetyFilterResult:
 
 
 class ControlBarrierSafetyFilter:
-    """Safety filter projecting proposed waypoint/velocity commands onto safe invariant set."""
+    """Safety filter projecting proposed waypoint/velocity commands onto safe invariant set.
+
+    Incorporate High-Order Dynamic Barrier Certificates (HOCBF):
+    - Aerodynamic bank angle limit (phi_max): dictates minimum turning radius R_min = v^2 / (g * tan(phi_max))
+    - Longitudinal braking deceleration limit (a_max): dictates stopping distance d_stop = v^2 / (2 * a_max)
+    - Swarm separation distance: ||p_i - p_j|| >= d_min + v * t_reaction
+    """
 
     def __init__(
         self,
@@ -49,12 +55,38 @@ class ControlBarrierSafetyFilter:
         max_speed_mps: float = 85.0,
         min_altitude_m: float = 30.0,
         max_altitude_m: float = 12500.0,
+        max_bank_angle_deg: float = 45.0,
+        max_braking_decel_mps2: float = 4.0,
+        reaction_time_s: float = 0.5,
     ) -> None:
         self.min_separation_m = min_separation_m
         self.max_speed_mps = max_speed_mps
         self.min_altitude_m = min_altitude_m
         self.max_altitude_m = max_altitude_m
+        self.max_bank_angle_deg = max_bank_angle_deg
+        self.max_braking_decel = max_braking_decel_mps2
+        self.reaction_time_s = reaction_time_s
+        self.g = 9.80665
         self._geofences: Dict[str, GeofenceZone] = {}
+
+    def min_turning_radius_m(self, speed_mps: float) -> float:
+        """Calculate minimum aerodynamically feasible turning radius R_min = v^2 / (g * tan(phi_max))."""
+        speed = max(5.0, min(speed_mps, self.max_speed_mps))
+        phi_rad = math.radians(min(80.0, max(10.0, self.max_bank_angle_deg)))
+        tan_phi = math.tan(phi_rad)
+        return (speed ** 2) / (self.g * max(0.1, tan_phi))
+
+    def stopping_distance_m(self, speed_mps: float) -> float:
+        """Calculate distance required to decelerate to minimum speed: d = v^2 / (2 * a_max)."""
+        speed = max(0.0, min(speed_mps, self.max_speed_mps))
+        return (speed ** 2) / (2.0 * max(0.5, self.max_braking_decel))
+
+    def dynamic_buffer_m(self, speed_mps: float) -> float:
+        """Combined dynamic safety buffer accounting for turn radius, braking, and latency."""
+        r_turn = self.min_turning_radius_m(speed_mps)
+        d_brake = self.stopping_distance_m(speed_mps)
+        d_latency = speed_mps * self.reaction_time_s
+        return 0.3 * r_turn + 0.5 * d_brake + d_latency
 
     def add_geofence(self, zone: GeofenceZone) -> None:
         """Register a geofence exclusion or containment boundary."""
@@ -73,7 +105,7 @@ class ControlBarrierSafetyFilter:
     ) -> SafetyFilterResult:
         """Apply Control Barrier Functions to enforce invariant safety on target waypoint.
 
-        Projects unsafe commands onto the nearest mathematically safe setpoint.
+        Projects unsafe commands onto the nearest mathematically and aerodynamically safe setpoint.
         """
         curr_lat, curr_lon, curr_alt = current_pos
         t_lat, t_lon, t_alt = proposed_target
@@ -101,30 +133,41 @@ class ControlBarrierSafetyFilter:
             t_alt = self.max_altitude_m
             modified = True
 
-        # 3. Geofence / No-Fly Zone (NFZ) Exclusion Invariants
+        # Compute dynamic aerodynamic buffer for current velocity
+        dyn_buf_m = self.dynamic_buffer_m(speed)
+
+        # 3. Geofence / No-Fly Zone (NFZ) Dynamic Exclusion Invariants
         for gz in self._geofences.values():
             dist_m = self._haversine_distance_m(t_lat, t_lon, gz.center_lat, gz.center_lon)
             in_alt_band = gz.min_alt_m <= t_alt <= gz.max_alt_m
 
+            # Effective boundary includes dynamic turning/stopping buffer
+            effective_radius_m = gz.radius_m + (dyn_buf_m if gz.is_exclusion_zone else -dyn_buf_m)
+
             if gz.is_exclusion_zone:
-                # Target penetrates NFZ
-                if dist_m < gz.radius_m and in_alt_band:
-                    violations.append(f"Waypoint violates exclusion geofence '{gz.zone_id}' (dist={dist_m:.1f}m < radius={gz.radius_m:.1f}m)")
-                    # CBF Projection: Push target out to buffer distance (radius + 25m) along bearing
+                # Target penetrates NFZ or dynamic braking envelope
+                if dist_m < effective_radius_m and in_alt_band:
+                    violations.append(
+                        f"Waypoint violates exclusion geofence '{gz.zone_id}' "
+                        f"(dist={dist_m:.1f}m < dynamic_effective_radius={effective_radius_m:.1f}m [dyn_buf={dyn_buf_m:.1f}m])"
+                    )
+                    # CBF Projection: Push target out to effective buffer distance along bearing
                     bearing = self._bearing_rad(gz.center_lat, gz.center_lon, t_lat, t_lon)
-                    safe_dist = gz.radius_m + 25.0
+                    safe_dist = effective_radius_m + 25.0
                     t_lat, t_lon = self._project_point(gz.center_lat, gz.center_lon, safe_dist, bearing)
                     modified = True
             else:
-                # Containment zone: Target must not leave
-                if dist_m > gz.radius_m and in_alt_band:
+                # Containment zone: Target must not leave containment envelope
+                min_contain_dist = max(50.0, gz.radius_m - dyn_buf_m)
+                if dist_m > min_contain_dist and in_alt_band:
                     violations.append(f"Waypoint outside containment geofence '{gz.zone_id}'")
                     bearing = self._bearing_rad(gz.center_lat, gz.center_lon, t_lat, t_lon)
-                    safe_dist = gz.radius_m - 25.0
-                    t_lat, t_lon = self._project_point(gz.center_lat, gz.center_lon, max(0.0, safe_dist), bearing)
+                    safe_dist = max(20.0, min_contain_dist - 25.0)
+                    t_lat, t_lon = self._project_point(gz.center_lat, gz.center_lon, safe_dist, bearing)
                     modified = True
 
-        # 4. Swarm Separation Distance Invariant: ||p_i - p_j|| >= d_min
+        # 4. Swarm Separation Distance Invariant with dynamic speed scaling: ||p_i - p_j|| >= d_min + v * dt
+        effective_sep_m = self.min_separation_m + (speed * self.reaction_time_s * 0.5)
         if other_units:
             for other_id, other_pos in other_units.items():
                 o_lat, o_lon, o_alt = other_pos
@@ -132,16 +175,17 @@ class ControlBarrierSafetyFilter:
                 vert_dist = abs(t_alt - o_alt)
                 total_dist = math.sqrt(horiz_dist**2 + vert_dist**2)
 
-                if total_dist < self.min_separation_m:
+                if total_dist < effective_sep_m:
                     violations.append(
-                        f"Collision hazard with unit '{other_id}': separation {total_dist:.1f}m < min {self.min_separation_m:.1f}m"
+                        f"Collision hazard with unit '{other_id}': separation {total_dist:.1f}m < dynamic_min {effective_sep_m:.1f}m"
                     )
                     # Vertical separation CBF adjustment (+30m or -30m)
                     if t_alt >= o_alt:
-                        t_alt = o_alt + self.min_separation_m + 10.0
+                        t_alt = o_alt + effective_sep_m + 10.0
                     else:
-                        t_alt = max(self.min_altitude_m, o_alt - self.min_separation_m - 10.0)
+                        t_alt = max(self.min_altitude_m, o_alt - effective_sep_m - 10.0)
                     modified = True
+
 
         is_safe = len(violations) == 0 or modified
         return SafetyFilterResult(

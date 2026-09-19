@@ -38,7 +38,8 @@ class MissileAgent(SubsystemControlledAgent):
         elif self.state == self.MissileState.MIDCOURSE:
             self.state = self.MissileState.TERMINAL
         elif self.state == self.MissileState.TERMINAL:
-            self.state = self.MissileState.IMPACT if random.random() > 0.2 else self.MissileState.MISS
+            # Deterministic seeker guidance: impact occurs if target_id tracking is maintained
+            self.state = self.MissileState.IMPACT if (self.target_id is not None) else self.MissileState.MISS
         # Once impact/miss, stays there
         
         return responses

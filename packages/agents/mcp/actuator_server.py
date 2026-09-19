@@ -24,8 +24,11 @@ class ActuatorMcpServer(McpServer):
             "UAV-ALFA-1": {"lat": 34.0522, "lon": -118.2437, "alt_m": 2500.0},
             "UAV-ALFA-2": {"lat": 34.0550, "lon": -118.2400, "alt_m": 2500.0},
         }
+        self._no_strike_entities: List[Dict[str, Any]] = []
         self._init_actuator_tools()
         self._init_actuator_resources()
+
+
 
     def _init_actuator_tools(self) -> None:
         # 1. Dispatch Waypoint
@@ -152,6 +155,11 @@ class ActuatorMcpServer(McpServer):
         self._command_history.append(record)
         return {"status": "JAMMING_ACTIVE", "unit_id": unit_id, "freq_mhz": freq, "power_watts": pwr}
 
+    def register_no_strike_entity(self, name: str, lat: float, lon: float, buffer_m: float = 300.0) -> None:
+        """Register a protected No-Strike entity for actuator-level pre-strike validation."""
+        self._no_strike_entities.append({"name": name, "lat": lat, "lon": lon, "buffer_m": buffer_m})
+
+
     def _handle_designate_target(self, args: Dict[str, Any]) -> Dict[str, Any]:
         unit_id = args["unit_id"]
         target_id = args["target_id"]
@@ -160,6 +168,29 @@ class ActuatorMcpServer(McpServer):
 
         if not token or not token.startswith("ROE-CLEARED-"):
             raise ValueError(f"Invalid ROE clearance token: '{token}'. Engagement unauthorized.")
+
+        # Verify token expiration TTL
+        if "-EXP" in token:
+            try:
+                exp_ts = float(token.split("-EXP")[-1])
+                if time.time() > exp_ts:
+                    raise ValueError(f"Clearance token expired at timestamp {exp_ts:.0f}. Strike authorization revoked.")
+            except ValueError:
+                raise
+            except Exception:
+                pass
+
+        # Pre-dispatch target drift check: ensure target is not inside NSL buffer
+        t_lat = args.get("target_lat", args.get("lat"))
+        t_lon = args.get("target_lon", args.get("lon"))
+        if t_lat is not None and t_lon is not None:
+            from packages.agents.controllers.cbf_safety_filter import ControlBarrierSafetyFilter
+            for nse in self._no_strike_entities:
+                dist = ControlBarrierSafetyFilter._haversine_distance_m(float(t_lat), float(t_lon), nse["lat"], nse["lon"])
+                if dist < nse.get("buffer_m", 300.0):
+                    raise ValueError(
+                        f"Target drifted inside No-Strike entity '{nse['name']}' buffer ({dist:.1f}m < {nse.get('buffer_m')}m) at dispatch time."
+                    )
 
         record = {
             "action": "designate_target",
@@ -177,3 +208,4 @@ class ActuatorMcpServer(McpServer):
             "mode": mode,
             "clearance": "VERIFIED",
         }
+
