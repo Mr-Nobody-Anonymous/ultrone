@@ -9,7 +9,15 @@ from .driver import BaseDeviceDriver, DigitalTwinDeviceDriver, PhysicalDeviceDri
 from .leases import CapabilityLease, LeaseManager
 from .limits import DeviceSafetyLimits, SafetyConstraint
 from .manifest import DeviceCapability, DeviceManifest, DeviceOperatingMode, DeviceSafetySpec
-from .procedures import ProcedureCompiler, ProcedureExecutionResult, ProcedureRunner, ProcedureSpec, ProcedureStep
+from .procedures import (
+    ProcedureCompiler,
+    ProcedureExecutionResult,
+    ProcedureRunner,
+    ProcedureSpec,
+    ProcedureStep,
+    ProcedureCertifier,
+    SignedProcedureArtifact,
+)
 from .registry import DeviceRegistry
 from .state import DeviceState, DeviceStateMachine, DeviceStateTransition, InvalidStateTransitionError
 from .telemetry import DeviceTelemetryMeasurement, TelemetryStreamBuffer
@@ -34,6 +42,8 @@ __all__ = [
     "ProcedureExecutionResult",
     "ProcedureCompiler",
     "ProcedureRunner",
+    "ProcedureCertifier",
+    "SignedProcedureArtifact",
     "BaseDeviceDriver",
     "SimulationDeviceDriver",
     "DigitalTwinDeviceDriver",

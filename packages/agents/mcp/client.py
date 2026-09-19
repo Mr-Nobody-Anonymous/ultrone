@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from .protocol import (
     McpRequest,
+    McpRequestMetadata,
     McpResource,
     McpResponse,
     McpToolDefinition,
@@ -41,8 +42,16 @@ class McpClient:
         self._initialized: bool = False
         self._server_capabilities: Dict[str, Any] = {}
 
+    def discover(self) -> Dict[str, Any]:
+        """MCP 2026-07-28 stateless server discovery."""
+        resp = self.send_request("server/discover", {})
+        if resp.error:
+            raise RuntimeError(f"MCP server/discover failed: {resp.error}")
+        self._server_capabilities = resp.result.get("capabilities", {}) if resp.result else {}
+        return resp.result or {}
+
     def connect(self) -> Dict[str, Any]:
-        """Establish connection and perform MCP initialization handshake."""
+        """Establish connection and perform discovery (or backward-compatible initialization)."""
         if self._command and not self._server:
             self._proc = subprocess.Popen(
                 self._command,
@@ -53,23 +62,30 @@ class McpClient:
                 bufsize=1,
             )
 
-        resp = self.send_request(
-            "initialize",
-            {
-                "protocolVersion": "2024-11-05",
-                "capabilities": {},
-                "clientInfo": {
-                    "name": self.client_name,
-                    "version": self.client_version,
+        # Attempt modern 2026-07-28 discover first
+        try:
+            res = self.discover()
+            self._initialized = True
+            return res
+        except Exception:
+            # Fallback for legacy 2024 servers
+            resp = self.send_request(
+                "initialize",
+                {
+                    "protocolVersion": "2026-07-28",
+                    "capabilities": {},
+                    "clientInfo": {
+                        "name": self.client_name,
+                        "version": self.client_version,
+                    },
                 },
-            },
-        )
-        if resp.error:
-            raise RuntimeError(f"MCP Initialize failed: {resp.error}")
+            )
+            if resp.error:
+                raise RuntimeError(f"MCP Initialize failed: {resp.error}")
 
-        self._initialized = True
-        self._server_capabilities = resp.result.get("capabilities", {}) if resp.result else {}
-        return resp.result or {}
+            self._initialized = True
+            self._server_capabilities = resp.result.get("capabilities", {}) if resp.result else {}
+            return resp.result or {}
 
     def list_tools(self) -> List[McpToolDefinition]:
         """Discover tools available on the connected MCP server."""
@@ -145,10 +161,62 @@ class McpClient:
             return ""
         return contents[0].get("text", "")
 
-    def send_request(self, method: str, params: Dict[str, Any]) -> McpResponse:
-        """Send a JSON-RPC request to the connected transport."""
+    def call_mrtr_step(self, token: str, step_input: Dict[str, Any]) -> McpResponse:
+        """Execute a Multi Round-Trip Request (MRTR) continuation step."""
+        meta = McpRequestMetadata(
+            protocol_version="2026-07-28",
+            client_info={"name": self.client_name, "version": self.client_version},
+            round_trip_token=token,
+        )
+        return self.send_request("mrtr/step", {"round_trip_token": token, "input": step_input}, metadata=meta)
+
+    def call_tool_mrtr(
+        self,
+        name: str,
+        arguments: Optional[Dict[str, Any]] = None,
+        input_responder: Optional[Callable[[List[Dict[str, Any]]], List[Dict[str, Any]]]] = None,
+    ) -> McpResponse:
+        """Execute a tool call with automatic official MRTR input resolution."""
+        initial_resp = self.send_request("tools/call", {"name": name, "arguments": arguments or {}})
+        if initial_resp.error:
+            return initial_resp
+
+        res = initial_resp.result or {}
+        if res.get("resultType") == "input_required":
+            token = res.get("roundTripToken")
+            requests = res.get("inputRequests", [])
+            responses = input_responder(requests) if input_responder else []
+            meta = McpRequestMetadata(
+                protocol_version="2026-07-28",
+                client_info={"name": self.client_name, "version": self.client_version},
+                round_trip_token=token,
+                input_responses=responses,
+            )
+            return self.send_request(
+                "tools/call",
+                {
+                    "name": name,
+                    "arguments": arguments or {},
+                    "roundTripToken": token,
+                    "inputResponses": responses,
+                },
+                metadata=meta,
+            )
+        return initial_resp
+
+    def send_request(
+        self,
+        method: str,
+        params: Dict[str, Any],
+        metadata: Optional[McpRequestMetadata] = None,
+    ) -> McpResponse:
+        """Send a JSON-RPC request carrying MCP 2026-07-28 metadata to the transport."""
         self._request_counter += 1
-        req = McpRequest(id=self._request_counter, method=method, params=params)
+        req_meta = metadata or McpRequestMetadata(
+            protocol_version="2026-07-28",
+            client_info={"name": self.client_name, "version": self.client_version},
+        )
+        req = McpRequest(id=self._request_counter, method=method, params=params, metadata=req_meta)
 
         # 1. In-process direct server invocation
         if self._server is not None:

@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional, Union
 
 
 class McpErrorCode(int, Enum):
-    """Standard JSON-RPC 2.0 and MCP error codes."""
+    """Standard JSON-RPC 2.0 and MCP 2026-07-28 error codes."""
 
     PARSE_ERROR = -32700
     INVALID_REQUEST = -32600
@@ -23,6 +23,12 @@ class McpErrorCode(int, Enum):
     INTERNAL_ERROR = -32603
     RESOURCE_NOT_FOUND = -32002
     TOOL_EXECUTION_ERROR = -32000
+    UNSUPPORTED_PROTOCOL_VERSION = -32022
+    PROTOCOL_VERSION_MISMATCH = -32022  # Alias for backward compatibility
+    HEADER_MISMATCH = -32023
+    UNAUTHORIZED = -32003
+    ROUND_TRIP_REQUIRED = -32004
+    REQUEST_TIMEOUT = -32005
 
 
 @dataclass
@@ -113,13 +119,90 @@ class McpToolResult:
 
 
 @dataclass
+class McpInputRequest:
+    """An input request issued by server during an MRTR exchange."""
+    id: str
+    type: str = "string"  # string, number, boolean, object
+    description: Optional[str] = None
+    default: Any = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        d: Dict[str, Any] = {"id": self.id, "type": self.type}
+        if self.description:
+            d["description"] = self.description
+        if self.default is not None:
+            d["default"] = self.default
+        return d
+
+
+@dataclass
+class McpInputResponse:
+    """Client response to an MRTR input request."""
+    id: str
+    value: Any
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"id": self.id, "value": self.value}
+
+
+@dataclass
+class McpMrtrResult:
+    """Wire representation of an MRTR intermediate result."""
+    roundTripToken: str
+    inputRequests: List[McpInputRequest] = field(default_factory=list)
+    resultType: str = "input_required"
+    ttlMs: int = 60000
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "resultType": self.resultType,
+            "roundTripToken": self.roundTripToken,
+            "inputRequests": [r.to_dict() for r in self.inputRequests],
+            "ttlMs": self.ttlMs,
+        }
+
+
+@dataclass
+class McpRequestMetadata:
+    """MCP 2026-07-28 request metadata travelling per-request."""
+    protocol_version: str = "2026-07-28"
+    client_info: Dict[str, Any] = field(default_factory=dict)
+    capabilities: Dict[str, Any] = field(default_factory=dict)
+    round_trip_token: Optional[str] = None
+    input_responses: Optional[List[Dict[str, Any]]] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        d: Dict[str, Any] = {
+            "protocolVersion": self.protocol_version,
+            "clientInfo": self.client_info,
+            "capabilities": self.capabilities,
+        }
+        if self.round_trip_token is not None:
+            d["roundTripToken"] = self.round_trip_token
+        if self.input_responses is not None:
+            d["inputResponses"] = self.input_responses
+        return d
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> McpRequestMetadata:
+        return cls(
+            protocol_version=data.get("protocolVersion", "2026-07-28"),
+            client_info=data.get("clientInfo", {}),
+            capabilities=data.get("capabilities", {}),
+            round_trip_token=data.get("roundTripToken"),
+            input_responses=data.get("inputResponses"),
+        )
+
+
+@dataclass
 class McpRequest:
-    """JSON-RPC 2.0 Request."""
+    """JSON-RPC 2.0 Request conforming to MCP 2026-07-28 stateless core."""
 
     method: str
     params: Optional[Dict[str, Any]] = None
     id: Optional[Union[str, int]] = None
     jsonrpc: str = "2.0"
+    metadata: Optional[McpRequestMetadata] = None
 
     def to_dict(self) -> Dict[str, Any]:
         res: Dict[str, Any] = {"jsonrpc": self.jsonrpc, "method": self.method}
@@ -127,6 +210,8 @@ class McpRequest:
             res["params"] = self.params
         if self.id is not None:
             res["id"] = self.id
+        if self.metadata is not None:
+            res["metadata"] = self.metadata.to_dict()
         return res
 
     def to_json(self) -> str:
@@ -134,11 +219,15 @@ class McpRequest:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> McpRequest:
+        meta = None
+        if "metadata" in data and isinstance(data["metadata"], dict):
+            meta = McpRequestMetadata.from_dict(data["metadata"])
         return cls(
             method=data.get("method", ""),
             params=data.get("params"),
             id=data.get("id"),
             jsonrpc=data.get("jsonrpc", "2.0"),
+            metadata=meta,
         )
 
 

@@ -165,3 +165,63 @@ class ProcedureRunner:
             step_results=step_results,
             duration_seconds=dt,
         )
+
+
+@dataclass(frozen=True)
+class SignedProcedureArtifact:
+    """Cryptographically signed, benchmark-validated deterministic procedure artifact."""
+    artifact_id: str
+    procedure_spec: ProcedureSpec
+    version: str
+    benchmark_pass_rate: float
+    certified_by: str
+    signature: str
+    created_at: float = field(default_factory=time.time)
+
+    def verify(self, signing_key: str) -> bool:
+        import hashlib
+        import hmac
+        msg = f"{self.artifact_id}:{self.procedure_spec.procedure_id}:{self.version}:{self.benchmark_pass_rate}:{self.certified_by}"
+        expected = hmac.new(signing_key.encode("utf-8"), msg.encode("utf-8"), hashlib.sha256).hexdigest()
+        return hmac.compare_digest(expected, self.signature)
+
+
+class ProcedureCertifier:
+    """Validates candidate procedures across test cases and signs immutable artifacts."""
+
+    @staticmethod
+    def certify_and_sign(
+        procedure: ProcedureSpec,
+        runner: ProcedureRunner,
+        test_cases: List[Dict[str, Any]],
+        signing_key: str,
+        certifier_id: str = "safety-certifier",
+        version: str = "1.0.0",
+    ) -> SignedProcedureArtifact:
+        import hashlib
+        import hmac
+        if not test_cases:
+            test_cases = [{}]
+
+        passes = 0
+        for tc in test_cases:
+            res = runner.execute(procedure, execution_params=tc)
+            if res.success:
+                passes += 1
+
+        pass_rate = passes / len(test_cases)
+        if pass_rate < 1.0:
+            raise ValueError(f"Procedure '{procedure.name}' failed validation (pass rate: {pass_rate:.1%})")
+
+        artifact_id = f"art-{uuid.uuid4().hex[:12]}"
+        msg = f"{artifact_id}:{procedure.procedure_id}:{version}:{pass_rate}:{certifier_id}"
+        sig = hmac.new(signing_key.encode("utf-8"), msg.encode("utf-8"), hashlib.sha256).hexdigest()
+
+        return SignedProcedureArtifact(
+            artifact_id=artifact_id,
+            procedure_spec=procedure,
+            version=version,
+            benchmark_pass_rate=pass_rate,
+            certified_by=certifier_id,
+            signature=sig,
+        )

@@ -110,3 +110,7 @@ class TelemetryStreamBuffer:
             if buf and buf[-1].is_fresh(now):
                 out[ch] = buf[-1]
         return out
+
+
+# Standard alias for telemetry measurement frame
+TelemetryFrame = DeviceTelemetryMeasurement

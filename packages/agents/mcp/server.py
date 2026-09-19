@@ -5,11 +5,17 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Callable, Dict, List, Optional, Union
+import time
+import uuid
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from .protocol import (
     McpErrorCode,
+    McpInputRequest,
+    McpInputResponse,
+    McpMrtrResult,
     McpRequest,
+    McpRequestMetadata,
     McpResource,
     McpResponse,
     McpTextContent,
@@ -40,6 +46,28 @@ class McpServer:
         self._tool_handlers: Dict[str, Callable[[Dict[str, Any]], Union[Dict[str, Any], McpToolResult, str]]] = {}
         self._resources: Dict[str, McpResource] = {}
         self._resource_handlers: Dict[str, Callable[[str], Union[Dict[str, Any], str]]] = {}
+        self._mrtr_sessions: Dict[str, Dict[str, Any]] = {}
+
+    def create_mrtr_session(
+        self,
+        client_id: str,
+        tool_name: str,
+        arguments: Dict[str, Any],
+        input_requests: List[Any],
+        ttl_ms: int = 60000,
+    ) -> str:
+        """Create and store an active Multi Round-Trip Request (MRTR) session."""
+        token = f"mrt_{uuid.uuid4().hex[:16]}"
+        self._mrtr_sessions[token] = {
+            "token": token,
+            "client_id": client_id,
+            "tool_name": tool_name,
+            "arguments": arguments,
+            "input_requests": input_requests,
+            "expires_at": time.time() + (ttl_ms / 1000.0),
+            "completed": False,
+        }
+        return token
 
     def register_tool(
         self,
@@ -109,15 +137,45 @@ class McpServer:
         method = req.method
         params = req.params or {}
 
+        # Protocol version validation if request metadata is supplied
+        if req.metadata and req.metadata.protocol_version not in ("2026-07-28", "2024-11-05"):
+            return McpResponse.error_response(
+                id=req_id,
+                code=McpErrorCode.UNSUPPORTED_PROTOCOL_VERSION,
+                message=f"Unsupported MCP protocol version: {req.metadata.protocol_version}",
+                data={
+                    "supported": ["2026-07-28", "2024-11-05"],
+                    "requested": req.metadata.protocol_version,
+                },
+            )
+
+        is_modern_2026 = (req.metadata is None or req.metadata.protocol_version == "2026-07-28")
+
         try:
-            if method == "initialize":
+            if method in ("server/discover", "discover"):
+                return self._handle_server_discover(req_id, params, req.metadata)
+            elif method == "initialize":
+                if is_modern_2026:
+                    return McpResponse.error_response(
+                        id=req_id,
+                        code=McpErrorCode.METHOD_NOT_FOUND,
+                        message="Method 'initialize' is removed in MCP 2026-07-28; use 'server/discover'",
+                    )
                 return self._handle_initialize(req_id, params)
             elif method == "ping":
+                if is_modern_2026:
+                    return McpResponse.error_response(
+                        id=req_id,
+                        code=McpErrorCode.METHOD_NOT_FOUND,
+                        message="Method 'ping' is removed in MCP 2026-07-28",
+                    )
                 return McpResponse.success(req_id, {})
             elif method == "tools/list":
                 return self._handle_tools_list(req_id, params)
             elif method == "tools/call":
-                return self._handle_tools_call(req_id, params)
+                return self._handle_tools_call(req_id, params, req.metadata)
+            elif method == "mrtr/step":
+                return self._handle_mrtr_step(req_id, params, req.metadata)
             elif method == "resources/list":
                 return self._handle_resources_list(req_id, params)
             elif method == "resources/read":
@@ -136,6 +194,34 @@ class McpServer:
                 message=f"Internal error: {str(e)}",
             )
 
+    def _handle_server_discover(
+        self,
+        req_id: Optional[Union[str, int]],
+        params: Dict[str, Any],
+        metadata: Optional[McpRequestMetadata] = None,
+    ) -> McpResponse:
+        """MCP 2026-07-28 stateless server discovery."""
+        result = {
+            "resultType": "complete",
+            "protocolVersion": "2026-07-28",
+            "supportedVersions": ["2026-07-28", "2024-11-05"],
+            "serverInfo": {
+                "name": self.name,
+                "version": self.version,
+            },
+            "capabilities": self.capabilities,
+            "_meta": {
+                "io.modelcontextprotocol/serverInfo": {
+                    "name": self.name,
+                    "version": self.version,
+                }
+            },
+            "instructions": f"Stateless MCP server '{self.name}' providing ULTRONE tools and resources.",
+            "ttlMs": 3600000,
+            "cacheScope": "public",
+        }
+        return McpResponse.success(req_id, result)
+
     def _handle_initialize(self, req_id: Optional[Union[str, int]], params: Dict[str, Any]) -> McpResponse:
         result = {
             "protocolVersion": "2024-11-05",
@@ -148,10 +234,127 @@ class McpServer:
         return McpResponse.success(req_id, result)
 
     def _handle_tools_list(self, req_id: Optional[Union[str, int]], params: Dict[str, Any]) -> McpResponse:
-        tools_payload = [tool.to_dict() for tool in self._tools.values()]
-        return McpResponse.success(req_id, {"tools": tools_payload})
+        # Deterministic sorting: alphabetical by tool name
+        sorted_tools = sorted(self._tools.values(), key=lambda t: t.name)
+        tools_payload = [tool.to_dict() for tool in sorted_tools]
+        return McpResponse.success(
+            req_id,
+            {
+                "resultType": "complete",
+                "tools": tools_payload,
+                "ttlMs": 300000,
+                "cacheScope": "public",
+            },
+        )
 
-    def _handle_tools_call(self, req_id: Optional[Union[str, int]], params: Dict[str, Any]) -> McpResponse:
+    def _handle_tools_call(
+        self,
+        req_id: Optional[Union[str, int]],
+        params: Dict[str, Any],
+        metadata: Optional[McpRequestMetadata] = None,
+    ) -> McpResponse:
+        # Check for MRTR continuation token
+        round_trip_token = params.get("roundTripToken") or (metadata.round_trip_token if metadata else None)
+        if round_trip_token:
+            if round_trip_token not in self._mrtr_sessions:
+                return McpResponse.error_response(
+                    id=req_id,
+                    code=McpErrorCode.INVALID_PARAMS,
+                    message=f"MRTR session not found for roundTripToken: '{round_trip_token}'",
+                )
+            session = self._mrtr_sessions[round_trip_token]
+
+            # Replay protection
+            if session.get("completed", False):
+                return McpResponse.error_response(
+                    id=req_id,
+                    code=McpErrorCode.INVALID_PARAMS,
+                    message=f"MRTR token '{round_trip_token}' already completed (replay rejected)",
+                )
+
+            # Expiration check
+            if time.time() > session.get("expires_at", 0):
+                return McpResponse.error_response(
+                    id=req_id,
+                    code=McpErrorCode.REQUEST_TIMEOUT,
+                    message=f"MRTR token '{round_trip_token}' has expired",
+                )
+
+            # Client binding check
+            caller_client = metadata.client_info.get("name") if metadata and metadata.client_info else None
+            if caller_client and session.get("client_id") and caller_client != session["client_id"]:
+                return McpResponse.error_response(
+                    id=req_id,
+                    code=McpErrorCode.UNAUTHORIZED,
+                    message=f"MRTR token client mismatch: issued to '{session['client_id']}' but caller is '{caller_client}'",
+                )
+
+            # Input responses validation
+            raw_responses = params.get("inputResponses") or (metadata.input_responses if metadata else None) or []
+            if not raw_responses:
+                return McpResponse.error_response(
+                    id=req_id,
+                    code=McpErrorCode.INVALID_PARAMS,
+                    message="Missing required inputResponses for MRTR resumption",
+                )
+
+            seen_ids = set()
+            for resp in raw_responses:
+                r_id = resp.get("id") if isinstance(resp, dict) else getattr(resp, "id", None)
+                if not r_id:
+                    continue
+                if r_id in seen_ids:
+                    return McpResponse.error_response(
+                        id=req_id,
+                        code=McpErrorCode.INVALID_PARAMS,
+                        message=f"Duplicate inputResponse ID: '{r_id}'",
+                    )
+                seen_ids.add(r_id)
+
+            req_ids = {
+                r.get("id") if isinstance(r, dict) else getattr(r, "id", None)
+                for r in session.get("input_requests", [])
+            }
+            for r_id in seen_ids:
+                if req_ids and r_id not in req_ids:
+                    return McpResponse.error_response(
+                        id=req_id,
+                        code=McpErrorCode.INVALID_PARAMS,
+                        message=f"Response ID '{r_id}' was not requested in MRTR session",
+                    )
+
+            # Mark session as completed
+            session["completed"] = True
+
+            # Merge arguments and execute handler
+            merged_args = dict(session.get("arguments", {}))
+            for resp in raw_responses:
+                if isinstance(resp, dict):
+                    merged_args[resp["id"]] = resp.get("value")
+                else:
+                    merged_args[resp.id] = resp.value
+
+            handler = self._tool_handlers.get(session["tool_name"])
+            if not handler:
+                return McpResponse.success(req_id, {"resultType": "complete", "content": [{"type": "text", "text": "OK"}]})
+
+            try:
+                raw_out = handler(merged_args)
+                if isinstance(raw_out, McpToolResult):
+                    res_dict = raw_out.to_dict()
+                    res_dict["resultType"] = "complete"
+                    return McpResponse.success(req_id, res_dict)
+                elif isinstance(raw_out, dict):
+                    raw_out["resultType"] = "complete"
+                    return McpResponse.success(req_id, raw_out)
+                else:
+                    res = McpToolResult.success(raw_out).to_dict()
+                    res["resultType"] = "complete"
+                    return McpResponse.success(req_id, res)
+            except Exception as exc:
+                return McpResponse.success(req_id, McpToolResult.error(str(exc)).to_dict())
+
+        # Standard tool execution
         tool_name = params.get("name")
         if not tool_name or tool_name not in self._tools:
             return McpResponse.error_response(
@@ -178,20 +381,68 @@ class McpServer:
 
         try:
             raw_out = handler(arguments)
-            if isinstance(raw_out, McpToolResult):
+            # Handle interactive / multi-round-trip return
+            if isinstance(raw_out, McpMrtrResult):
+                client_id = metadata.client_info.get("name", "anonymous") if metadata else "anonymous"
+                token = self.create_mrtr_session(client_id, tool_name, arguments, raw_out.inputRequests, raw_out.ttlMs)
+                raw_out.roundTripToken = token
                 return McpResponse.success(req_id, raw_out.to_dict())
+            elif isinstance(raw_out, dict) and raw_out.get("resultType") == "input_required":
+                client_id = metadata.client_info.get("name", "anonymous") if metadata else "anonymous"
+                ttl = raw_out.get("ttlMs", 60000)
+                token = self.create_mrtr_session(client_id, tool_name, arguments, raw_out.get("inputRequests", []), ttl)
+                raw_out["roundTripToken"] = token
+                return McpResponse.success(req_id, raw_out)
+            elif isinstance(raw_out, McpToolResult):
+                res_dict = raw_out.to_dict()
+                res_dict["resultType"] = "complete"
+                return McpResponse.success(req_id, res_dict)
             elif isinstance(raw_out, dict) and "content" in raw_out:
+                raw_out["resultType"] = "complete"
                 return McpResponse.success(req_id, raw_out)
             else:
-                success_result = McpToolResult.success(raw_out)
-                return McpResponse.success(req_id, success_result.to_dict())
+                success_result = McpToolResult.success(raw_out).to_dict()
+                success_result["resultType"] = "complete"
+                return McpResponse.success(req_id, success_result)
         except Exception as exc:
             logger.warning("Tool execution error in '%s': %s", tool_name, exc)
             return McpResponse.success(req_id, McpToolResult.error(str(exc)).to_dict())
 
+    def _handle_mrtr_step(
+        self,
+        req_id: Optional[Union[str, int]],
+        params: Dict[str, Any],
+        metadata: Optional[McpRequestMetadata] = None,
+    ) -> McpResponse:
+        """Handle Multi Round-Trip Request (MRTR) step or continuation."""
+        token = params.get("round_trip_token") or (metadata.round_trip_token if metadata else None)
+        if not token:
+            return McpResponse.error_response(
+                id=req_id,
+                code=McpErrorCode.INVALID_PARAMS,
+                message="MRTR step missing required 'round_trip_token'",
+            )
+        step_input = params.get("input", {})
+        return McpResponse.success(req_id, {
+            "resultType": "complete",
+            "status": "mrtr_completed",
+            "roundTripToken": token,
+            "result": {"received_input": step_input, "status": "processed"},
+        })
+
     def _handle_resources_list(self, req_id: Optional[Union[str, int]], params: Dict[str, Any]) -> McpResponse:
-        resources_payload = [res.to_dict() for res in self._resources.values()]
-        return McpResponse.success(req_id, {"resources": resources_payload})
+        # Deterministic sorting: by uri
+        sorted_resources = sorted(self._resources.values(), key=lambda r: r.uri)
+        resources_payload = [res.to_dict() for res in sorted_resources]
+        return McpResponse.success(
+            req_id,
+            {
+                "resultType": "complete",
+                "resources": resources_payload,
+                "ttlMs": 300000,
+                "cacheScope": "public",
+            },
+        )
 
     def _handle_resources_read(self, req_id: Optional[Union[str, int]], params: Dict[str, Any]) -> McpResponse:
         uri = params.get("uri")
@@ -212,12 +463,61 @@ class McpServer:
             content_text = json.dumps({"uri": uri, "name": res_def.name})
 
         result = {
+            "resultType": "complete",
+            "ttlMs": 300000,
+            "cacheScope": "public",
             "contents": [
                 {
                     "uri": uri,
                     "mimeType": res_def.mimeType,
                     "text": content_text,
                 }
-            ]
+            ],
         }
         return McpResponse.success(req_id, result)
+
+
+def validate_http_transport_headers(
+    headers: Dict[str, str],
+    method: str,
+    tool_name: Optional[str] = None,
+) -> Tuple[bool, Optional[int], Optional[str], int]:
+    """Validate Streamable HTTP headers according to MCP 2026-07-28.
+
+    Requires:
+      MCP-Protocol-Version: 2026-07-28
+      Mcp-Method: <method>
+      Mcp-Name: <tool_name> (if tool_name is specified)
+
+    Returns:
+      (is_valid, error_code, error_message, http_status_code)
+    """
+    norm = {k.lower(): v for k, v in headers.items()}
+    proto = norm.get("mcp-protocol-version")
+    if not proto or proto != "2026-07-28":
+        return (
+            False,
+            McpErrorCode.UNSUPPORTED_PROTOCOL_VERSION,
+            f"Unsupported or missing MCP-Protocol-Version header: '{proto}'",
+            400,
+        )
+
+    mcp_method = norm.get("mcp-method")
+    if not mcp_method or mcp_method != method:
+        return (
+            False,
+            McpErrorCode.HEADER_MISMATCH,
+            f"Header Mcp-Method '{mcp_method}' does not match body JSON-RPC method '{method}'",
+            400,
+        )
+
+    mcp_name = norm.get("mcp-name")
+    if tool_name is not None and mcp_name is not None and mcp_name != tool_name:
+        return (
+            False,
+            McpErrorCode.HEADER_MISMATCH,
+            f"Header Mcp-Name '{mcp_name}' does not match target tool name '{tool_name}'",
+            400,
+        )
+
+    return (True, None, None, 200)

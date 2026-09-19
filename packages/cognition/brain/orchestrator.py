@@ -392,10 +392,19 @@ class Orchestrator:
                 range=float(asset.get("range", 9999.0)),
             )
 
-        # Epistemic sanitation: in realistic mode (oracle_mode=False), target confidence
-        # reflects sensor uncertainty and belief state, never privileged ground truth (1.0).
-        # When oracle_mode=True (debugging/cheat mode), ground truth confidence is permitted.
-        confidence = 1.0 if getattr(self, "oracle_mode", False) else float(blue_action.get("confidence", 0.85))
+        # Causal Boundary & Epistemic Sanitation:
+        # Pre-action decision inputs MUST NOT contain post-action outcome fields.
+        try:
+            from packages.runtime.event_sourcing.causal_boundary import CausalBoundaryValidator
+            CausalBoundaryValidator.inspect_decision_inputs(blue_action)
+            if getattr(self, "oracle_mode", False):
+                confidence = 1.0
+            else:
+                conf, _ = CausalBoundaryValidator.extract_calibrated_confidence(blue_action, require_source=False)
+                confidence = conf
+        except ImportError:
+            confidence = 1.0 if getattr(self, "oracle_mode", False) else float(blue_action.get("confidence", 0.0))
+
         estimate = WorldEstimate(
             contacts=[], primary_target_position=blue_action.get("target"),
             primary_target_confidence=confidence,

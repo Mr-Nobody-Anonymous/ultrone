@@ -448,7 +448,7 @@ print(sat.analyze({'formation': 'tanks'}, {}))
 
 ## 🚦 Capability Maturity Matrix (L0–L6)
 
-To maintain scientific rigor and epistemic integrity, ULTRONE replaces binary checkmarks with an explicit **L0–L6 maturity classification** governed by machine-readable [`capabilities.yaml`](capabilities.yaml):
+To maintain scientific rigor and epistemic integrity, ULTRONE replaces binary checkmarks with an explicit **L0–L6 maturity classification** governed by machine-readable [`capabilities.yaml`](capabilities.yaml) and tracked in [`VALIDATION_STATUS.md`](VALIDATION_STATUS.md):
 
 - **`L0` (Planned)**: Architecture/specification stage.
 - **`L1` (Scaffold)**: Interfaces and abstract classes exist; hardware actuation strictly disabled.
@@ -464,13 +464,16 @@ To maintain scientific rigor and epistemic integrity, ULTRONE replaces binary ch
 | **F2T2EA Dynamic Kill-Chain State Machine** | `L3` | integrated | Yes | Yes | No | Simulation Only |
 | **Control Barrier Function (CBF) & ROE Grader** | `L3` | integrated | Yes | Yes | Yes | Simulation Only |
 | **Model Context Protocol (MCP 2026-07-28)** | `L3` | integrated | Yes | Yes | No | Simulation Only |
-| **ULTRONE Device Interface Standard (UDIS / MHS)** | `L3` | integrated | Yes | Yes | No | Simulation Only |
+| **UDIS (MHS-Inspired Device Protocol)** | `L3` | integrated | Yes | Yes | No | Simulation Only |
 | **Event-Sourced Provenance & Deterministic Replay** | `L3` | integrated | Yes | Yes | No | Simulation Only |
 | **Multi-Sensor Perception & Fusion** | `L2` | unit_tested | Yes | No | No | Simulation Only |
 | **Real-Time Genome Evolution** | `L2` | unit_tested | Yes | No | No | Simulation Only |
 | **Autonomous Research & Self-Improvement Loop** | `L2` | experimental | Yes | No | No | Simulation Only |
 | **Neural Model Self-Improvement Adapter** | `L1` | scaffold | No | No | No | Simulation Only |
 | **Physical Robotics Actuation** | `L1` | simulation_scaffold | Yes | No | No | Simulation Only |
+
+> [!NOTE]
+> UDIS is an **MHS-inspired device abstraction layer** extending the Anthropic Model Hardware Standard research preview with ULTRONE-specific safety bounds, capability leases, 10-state FSM guards, and compiled deterministic procedures. Direct physical hardware actuation remains prohibited in favor of digital-twin and simulation drivers. Detailed empirical validation progress is maintained in [`VALIDATION_STATUS.md`](VALIDATION_STATUS.md).
 
 ### Upcoming Milestones
 - [ ] 🔌 Swap `MockNeuralAdapter` for a real open-weight model adapter (HF local or hosted inference) behind the same `ModelAdapter` seam

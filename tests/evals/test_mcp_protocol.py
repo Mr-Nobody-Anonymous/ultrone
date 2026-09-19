@@ -12,15 +12,22 @@ from packages.agents.mcp import (
 from packages.agents.tools import ToolRuntime
 
 
-def test_mcp_server_client_handshake_and_ping():
+def test_mcp_server_client_discovery_and_ping():
     server = McpServer(name="test-server", version="0.1.0")
     client = McpClient(server=server)
 
     init_res = client.connect()
-    assert init_res["protocolVersion"] == "2024-11-05"
+    assert init_res["protocolVersion"] == "2026-07-28"
     assert init_res["serverInfo"]["name"] == "test-server"
 
-    ping_res = client.send_request("ping", {})
+    # Modern 2026 mode rejects ping as removed in 2026-07-28
+    ping_modern = client.send_request("ping", {})
+    assert ping_modern.error is not None
+    assert "ping" in ping_modern.error["message"]
+
+    # Legacy 2024-11-05 mode supports ping for backward compatibility
+    from packages.agents.mcp.protocol import McpRequestMetadata
+    ping_res = client.send_request("ping", {}, metadata=McpRequestMetadata(protocol_version="2024-11-05"))
     assert ping_res.result == {}
     assert ping_res.error is None
 

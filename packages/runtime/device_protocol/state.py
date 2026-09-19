@@ -188,3 +188,7 @@ class DeviceStateMachine:
     def is_operational(self) -> bool:
         """Returns True if the device can accept command execution."""
         return self._current_state in (DeviceState.READY, DeviceState.SIMULATION)
+
+
+# Standard alias for state machine
+DeviceFSM = DeviceStateMachine

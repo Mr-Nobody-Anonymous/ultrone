@@ -6,7 +6,11 @@ from .bridge import McpToolBridge
 from .client import McpClient
 from .protocol import (
     McpErrorCode,
+    McpInputRequest,
+    McpInputResponse,
+    McpMrtrResult,
     McpRequest,
+    McpRequestMetadata,
     McpResource,
     McpResponse,
     McpTextContent,
@@ -15,7 +19,7 @@ from .protocol import (
     McpToolResult,
 )
 from .sensor_server import SensorMcpServer
-from .server import McpServer
+from .server import McpServer, validate_http_transport_headers
 from .streaming import McpTelemetryStreamer, TelemetryFrame
 from .udis_gateway import UdisMcpGateway
 
@@ -24,7 +28,11 @@ __all__ = [
     "UdisMcpGateway",
     "McpClient",
     "McpErrorCode",
+    "McpInputRequest",
+    "McpInputResponse",
+    "McpMrtrResult",
     "McpRequest",
+    "McpRequestMetadata",
     "McpResource",
     "McpResponse",
     "McpServer",
@@ -36,5 +44,6 @@ __all__ = [
     "McpToolResult",
     "SensorMcpServer",
     "TelemetryFrame",
+    "validate_http_transport_headers",
 ]
 

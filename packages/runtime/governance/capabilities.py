@@ -76,3 +76,34 @@ class CapabilityRegistry:
             ]
             lines.append(f"| {' | '.join(row)} |")
         return "\n".join(lines)
+
+    @staticmethod
+    def calculate_achievable_level(entry: CapabilityEntry) -> str:
+        """Mechanically calculates the highest achievable maturity level supported by evidence."""
+        if entry.status == "planned":
+            return "L0"
+        if not entry.unit_tests:
+            return "L1"
+        if not entry.integration_tests:
+            return "L2"
+        if not entry.benchmarked:
+            return "L3"
+        if not entry.reproducible:
+            return "L4"
+        return "L5"
+
+    def verify_evidence(self) -> Dict[str, Dict[str, Any]]:
+        """Verifies whether declared levels match mechanically achievable levels."""
+        report = {}
+        for k, entry in self.entries.items():
+            achievable = self.calculate_achievable_level(entry)
+            declared_num = int(entry.maturity_level[1:]) if entry.maturity_level.startswith("L") else 0
+            achievable_num = int(achievable[1:])
+            is_valid = declared_num <= achievable_num
+            report[k] = {
+                "name": entry.name,
+                "declared_level": entry.maturity_level,
+                "achievable_level": achievable,
+                "is_valid": is_valid,
+            }
+        return report

@@ -1,7 +1,6 @@
 """Deterministic Replay Engine for ULTRONE Event Streams."""
 
-from __future__ import annotations
-
+from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from .event_store import EventStore
@@ -92,3 +91,90 @@ class DeterministicReplayEngine:
                 )
 
         return len(divergences) == 0, divergences
+
+
+# Explicit alias separating historical event playback from computational re-execution
+EventReplayEngine = DeterministicReplayEngine
+
+
+@dataclass(frozen=True)
+class ExecutionEnvelope:
+    """Complete provenance envelope required for true independent computational re-execution."""
+    git_commit_sha: str
+    python_version: str
+    random_seed: int
+    config_hash: str
+    model_weights_hash: str
+    environment_version: str = "sim-1.0.0"
+
+    def envelope_digest(self) -> str:
+        s = f"{self.git_commit_sha}:{self.python_version}:{self.random_seed}:{self.config_hash}:{self.model_weights_hash}:{self.environment_version}"
+        import hashlib
+        return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
+
+from enum import Enum
+import hashlib
+import json
+
+
+class ReproducibilityMode(str, Enum):
+    """Execution reproducibility operational modes."""
+    STRICT = "STRICT"          # Exact bit-for-bit identity across environment and outputs
+    SCIENTIFIC = "SCIENTIFIC"  # Bounded numerical drift for GPU / BLAS / floating-point operations
+
+
+def acceptable_drift(actual: float, expected: float, tolerance: float = 1e-4) -> bool:
+    """Check if numerical metric drift is bounded within acceptable tolerance."""
+    return abs(actual - expected) <= tolerance
+
+
+class DeterministicReExecutionEngine:
+    """Executes computation from genesis with frozen envelope metadata and asserts zero/bounded drift."""
+
+    def __init__(self, store: Optional[EventStore] = None):
+        self.store = store or EventStore()
+
+    def execute_and_verify(
+        self,
+        envelope: ExecutionEnvelope,
+        trace_id: str,
+        pipeline_fn: Callable[[int], Dict[str, Any]],
+        expected_digest: Optional[str] = None,
+        expected_metrics: Optional[Dict[str, float]] = None,
+        mode: ReproducibilityMode = ReproducibilityMode.STRICT,
+        drift_tolerance: float = 1e-4,
+    ) -> Tuple[bool, Dict[str, Any], str]:
+        """Runs pipeline_fn with envelope's random_seed, computes result hash, and checks match."""
+        results = pipeline_fn(envelope.random_seed)
+        serialized = json.dumps(results, sort_keys=True)
+        res_digest = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+        self.store.append(
+            trace_id=trace_id,
+            event_type=EventType.BenchmarkCompleted,
+            logical_tick=1,
+            payload={
+                "envelope_digest": envelope.envelope_digest(),
+                "result_digest": res_digest,
+                "git_commit": envelope.git_commit_sha,
+                "seed": envelope.random_seed,
+                "reproducibility_mode": mode.value,
+            },
+        )
+
+        if mode == ReproducibilityMode.STRICT:
+            match = True if expected_digest is None else (res_digest == expected_digest)
+        else:  # SCIENTIFIC mode: bounded numerical drift
+            match = True
+            if expected_metrics:
+                for k, exp_val in expected_metrics.items():
+                    act_val = results.get(k)
+                    if act_val is None or not isinstance(act_val, (int, float)):
+                        match = False
+                        break
+                    if not acceptable_drift(float(act_val), float(exp_val), tolerance=drift_tolerance):
+                        match = False
+                        break
+
+        return match, results, res_digest

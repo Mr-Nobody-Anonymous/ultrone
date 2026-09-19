@@ -119,3 +119,65 @@ def test_safety_constraints_validation():
     ok, violations = limits.verify_parameters({"speed_mps": 20.0, "altitude_m": 5.0})
     assert ok is False
     assert any("c_alt" in v for v in violations)
+
+
+def test_device_manifest_signing_and_verification():
+    """Verify that DeviceManifest can be cryptographically signed by manufacturer/author to prevent poisoning."""
+    from packages.runtime.device_protocol.manifest import AuthorityLevel, GranularScope
+    from packages.runtime.event_sourcing.event_store import EventStore
+
+    manifest = DeviceManifest(
+        device_id="sensor-radar-01",
+        device_type="radar_3d",
+        capabilities=[
+            DeviceCapability(
+                name="sweep",
+                description="Perform radar sweep",
+                authority_level=AuthorityLevel.OBSERVE,
+                required_scopes=[GranularScope.OBSERVE_TELEMETRY],
+            )
+        ],
+    )
+
+    priv_key, pub_key = EventStore.generate_ed25519_keypair()
+    other_priv, other_pub = EventStore.generate_ed25519_keypair()
+
+    # Sign manifest
+    manifest.sign(priv_key, author_identity="defense-contractor-id-01")
+    assert manifest.signature is not None
+    assert manifest.author_identity == "defense-contractor-id-01"
+
+    # Verify signature
+    valid, err = manifest.verify_signature(pub_key)
+    assert valid is True
+    assert err is None
+
+    # Verification fails with untrusted key
+    valid_bad, err_bad = manifest.verify_signature(other_pub)
+    assert valid_bad is False
+    assert "tampered" in err_bad.lower()
+
+
+def test_granular_scopes_and_authority_levels():
+    """Verify that OBSERVE and ACTUATE authority levels and granular scopes are properly represented."""
+    from packages.runtime.device_protocol.manifest import AuthorityLevel, GranularScope
+
+    cap_obs = DeviceCapability(
+        name="read_attitude",
+        description="Read IMU attitude",
+        is_read_only=True,
+        authority_level=AuthorityLevel.OBSERVE,
+        required_scopes=[GranularScope.OBSERVE_STATE],
+    )
+    assert cap_obs.authority_level == AuthorityLevel.OBSERVE
+    assert GranularScope.OBSERVE_STATE in cap_obs.required_scopes
+
+    cap_act = DeviceCapability(
+        name="fire_countermeasure",
+        description="Deploy flares",
+        is_read_only=False,
+        authority_level=AuthorityLevel.ACTUATE,
+        required_scopes=[GranularScope.PHYSICAL_EXECUTE],
+    )
+    assert cap_act.authority_level == AuthorityLevel.ACTUATE
+    assert GranularScope.PHYSICAL_EXECUTE in cap_act.required_scopes
