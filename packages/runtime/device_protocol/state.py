@@ -189,6 +189,20 @@ class DeviceStateMachine:
         """Returns True if the device can accept command execution."""
         return self._current_state in (DeviceState.READY, DeviceState.SIMULATION)
 
+    def allowed_transitions(self, from_state: Optional[DeviceState] = None) -> Set[DeviceState]:
+        """Public view of the legal successor states for the FSM diagram.
+
+        Returns the successors of *from_state* (defaults to the current state).
+        Used by the cockpit to render the 10-state machine and to explain why a
+        transition was refused.
+        """
+        source = self._current_state if from_state is None else from_state
+        return set(self._ALLOWED_TRANSITIONS.get(source, set()))
+
+    def can_transition_to(self, new_state: DeviceState) -> bool:
+        """Whether the proposed transition is legal from the current state."""
+        return new_state in self.allowed_transitions()
+
 
 # Standard alias for state machine
 DeviceFSM = DeviceStateMachine

@@ -111,6 +111,27 @@ class TelemetryStreamBuffer:
                 out[ch] = buf[-1]
         return out
 
+    def get_history(
+        self,
+        channel: str,
+        limit: int = 50,
+        require_fresh: bool = False,
+    ) -> List[DeviceTelemetryMeasurement]:
+        """Chronological measurements for one channel (most recent *limit*).
+
+        Public accessor used by the cockpit telemetry charts so that the UI never
+        needs to reach into the buffer's internals.
+        """
+        buf = self._channels.get(channel, [])
+        if require_fresh:
+            now = time.monotonic()
+            buf = [m for m in buf if m.is_fresh(now)]
+        return list(buf[-max(1, int(limit)):])
+
+    def channels(self) -> List[str]:
+        """All channels this buffer has ever observed."""
+        return sorted(self._channels.keys())
+
 
 # Standard alias for telemetry measurement frame
 TelemetryFrame = DeviceTelemetryMeasurement

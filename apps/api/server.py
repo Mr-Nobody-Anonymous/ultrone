@@ -163,6 +163,8 @@ app.include_router(repo_router.router)
 app.include_router(dashboard_router.router)
 from apps.api.routers.ai import router as ai_router
 app.include_router(ai_router)
+from apps.api.routers.cockpit import router as cockpit_router
+app.include_router(cockpit_router)
 
 if __name__ == "__main__":
     import uvicorn
