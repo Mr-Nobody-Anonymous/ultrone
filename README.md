@@ -36,61 +36,42 @@ top-level import names (`import cognitive`, `import brain`, `import agents`,
 ```text
 ULTRONE/
 │
-├── apps/                     # Product layer — what users run
-│   ├── api/                  # FastAPI service, CLI entry, scripts (main/server/ultrone)
+├── apps/                     # Product layer — runnable applications
+│   ├── api/                  # FastAPI service & REST routers (cockpit, defense, chat, neural)
 │   ├── backend/              # Research platform REST surface (api/v1, exporters, vision)
+│   ├── console/              # Interactive terminal / console utilities
+│   ├── dashboard/            # Operations & monitoring dashboard application
+│   ├── frontend/             # Next-gen React + Vite + Tailwind + Playwright UI cockpit
+│   ├── globe/                # 3D geospatial / Cesium tactical visualization app
+│   ├── simulator/            # Discrete-event tactical environment simulator
+│   ├── ultrone/              # CLI entrypoint and orchestrator application
 │   ├── cli/                  # Interactive CLI client
 │   ├── services/             # Harness/memory/skill/trajectory services
 │   └── ultrone_hitl/         # Human-in-the-loop decision workflows + audit store
 │
-├── packages/                 # Platform layer — the cognitive/runtime building blocks
-│   ├── core/                 # Core contracts, config, datasets, utils + world_model/
-│   ├── cognition/            # brain/, cognitive/, frontier/, sandbox/, self_improvement/,
-│   │                         # evolution/, game_ai/, generative/, ultrone_ai/
-│   ├── agents/               # agents/, ai_architectures/, coding_agent/, plugin_sdk/,
-│   │                         # plugins/, robotics/, skills/
-│   ├── knowledge/            # knowledge_engine/, learning/, mlops/, training_platform/,
-│   │                         # memory_cluster/
-│   ├── orchestration/        # Model/tool/memory/skill routing + traces
-│   ├── runtime/              # runtime/, compiler/, hardware/, ultrone_os/, ultrone_rt/,
-│   │                         # ultrone_bindings/, cpp/, go/, rust/
-│   ├── safety/               # security/ (permissions, sandbox, secrets, ai_safety)
-│   ├── observability/        # viz/ telemetry
-│   └── transport/            # comms/ (api server, message bus, protocol, encryption)
+├── packages/                 # Platform layer — modular domain building blocks
+│   ├── core/                 # Core contracts, config, logging, defense ontology (5-Domain & Multi-INT MHT)
+│   ├── runtime/              # DDIL CRDT World Mesh, Byzantine physical filter, event sourcing, OS kernel
+│   ├── safety/               # Machine-checked ROE / LOAC verifier, HMAC EffectorLeases, HOTL veto
+│   ├── cognition/            # Pareto kill-chain allocator, cognitive EW & anti-spoofing, AlphaWarfare MCTS
+│   ├── geospatial/           # Coordinate transforms, spherical geometry, MGRS, terrain analysis
+│   ├── investigation/        # Multi-modal intelligence investigation, timeline reconstruction
+│   ├── research/             # Literature analysis, autonomous scientific hypothesis generation
+│   ├── workflows/            # Orchestration DAGs, LangGraph pipelines, human-in-the-loop workflows
+│   ├── adapters/             # Hardware, sensor, LLM, vision, and vector DB adapters
+│   ├── simulation/           # Physics models, kinetic equations, radar cross-section profiles
+│   ├── agents/               # Multi-agent orchestrators, plugin SDK, robotics controllers
+│   ├── knowledge/            # Knowledge engine, learning platforms, memory clusters
+│   ├── observability/        # Telemetry, OpenInference, Prometheus & Grafana metrics
+│   └── transport/            # Comms, pub/sub bus, encrypted wire protocols
 │
-├── research/                 # Research layer
-│   ├── benchmarks/           # Canonical benchmarks + regression gate
-│   ├── research_db/          # Papers/experiments/benchmarks catalog (JSON/SQLite)
-│   ├── research_division/    # Autonomous research agents
-│   └── *.py                  # Reproducibility, ablation, statistical evaluation
-│
-├── simulation/               # Simulation layer
-│   ├── sim/                  # World modeling, fault injection, performance engines
-│   └── *.py                  # Core sim, digital twin, physics, runner, world
-│
-├── adapters/                 # Integration seams (ports to external systems)
-│   ├── llm/  vision/  vector_db/  database/  external/
-│
-├── data/                     # Simulation datasets + run artifacts (memory/, terrain, entities)
-├── datasets → packages/core/datasets
-│
-├── infra/                    # Deployment layer
-│   ├── docker/  helm/  kubernetes/  monitoring/  nginx/
-│   └── deploy/hf_space/      # Public simulation-only Hugging Face demo
-│
-├── vendor/                   # Third-party projects (unmodified)
-│   ├── original_source/      # Vendored Ultron collective-memory system
-│   ├── ultron/               # Import shim exposing the vendored tree as `ultron.*`
-│   └── adelise-agent-framework-main/  # Vendored agent framework + docs + examples
-│
-├── docs/                     # Architecture docs, progress, plans, assets
-├── tests/                    # Unit, integration, smoke tests
-├── scripts/                  # Utility scripts
-│
-├── _ultrone_paths.py         # Import bootstrap: puts every bucket on sys.path
-├── pyproject.toml            # Packaging (all buckets listed)
-├── pytest.ini                # Test config (all buckets on pythonpath)
-└── README.md
+├── research/                 # Autonomous research platform, benchmarks, and databases
+├── simulation/               # Digital twin simulation engines and fault injection
+├── adapters/                 # Seams to external databases, vector stores, and models
+├── infra/                    # Docker, Kubernetes, Helm, and deployment manifests
+├── tests/                    # Defense superiority, cockpit API, conformance, and E2E suites
+├── docs/                     # Specifications, architecture invariants, and deployment guides
+└── vendor/                   # Third-party baseline and imported reference libraries
 ```
 
 **Nothing was deleted in the reorganization** — every tracked file was moved
@@ -186,7 +167,7 @@ Each sensor type has its own AI expert:
 - Run: `python scripts/run_bda_predictive_kc.py`
 
 ### 🛡️ **Next-Gen Defense Superiority Architecture (Surpassing Palantir & Anduril)**
-ULTRONE incorporates a production-grade defense superiority stack engineered to surpass legacy defense AI platforms (Palantir Gotham/Foundry/AIP and Anduril Lattice OS/Menace) across 6 core pillars:
+ULTRONE incorporates a production-grade defense superiority stack engineered to surpass legacy defense AI platforms (Palantir Gotham/Foundry/AIP and Anduril Lattice OS/Menace) across 7 core capabilities:
 
 | Capability Pillar | Legacy Palantir (Gotham/AIP) | Legacy Anduril (Lattice OS) | ULTRONE Next-Gen Superiority | Artifact |
 | :--- | :--- | :--- | :--- | :--- |
@@ -196,6 +177,7 @@ ULTRONE incorporates a production-grade defense superiority stack engineered to 
 | **4. Machine-Checked ROE & LOAC** | Post-hoc audit logs & policy prompts | Human-in-the-loop fire control button | Machine-checked temporal logic verifying Distinction (PID $\ge \tau$), Proportionality (CDE $\le \tau$), 3D polygon No-Strike geofences, and HOTL cryptographic effector leases | [`packages/safety/roe/rules_of_engagement.py`](packages/safety/roe/rules_of_engagement.py) |
 | **5. Cognitive Electronic Warfare & Anti-Spoofing** | Passive intelligence feed ingestion | Sensor processing at edge | Cross-spectral radar RCS vs FLIR thermal decoy rejection, kinematic INS/GPS drift spoofing detection, and autonomous EMCON state machine | [`packages/cognition/electronic_warfare/anti_spoofing.py`](packages/cognition/electronic_warfare/anti_spoofing.py) |
 | **6. Predictive Adversarial Wargaming** | Offline simulation & planning tools | Reactive interceptor vectoring | Real-time online Monte Carlo Tree Search (AlphaWarfare MCTS) anticipating multi-step adversary counter-moves with winning probability deltas | [`packages/cognition/adversarial_wargame/predictive_wargame.py`](packages/cognition/adversarial_wargame/predictive_wargame.py) |
+| **7. Cockpit REST Defense API Subsystem** | Siloed analytics dashboards; high latency | Embedded vendor display; closed protocol | High-performance operational REST & WebSocket endpoints exposing real-time COP, CRDT mesh state, kill chain allocation, and ROE audits | [`apps/api/routers/cockpit.py`](apps/api/routers/cockpit.py) |
 
 ---
 
@@ -203,120 +185,54 @@ ULTRONE incorporates a production-grade defense superiority stack engineered to 
 
 ```
 ultrone/
-├── brain/                          # 🧠 Central AI systems
-│   ├── orchestrator.py             # Central brain orchestration
-│   ├── reasoning/                  # 🎯 Tactical decision engine
-│   │   ├── course_of_action.py     # COA generation with combinatorial tactics
-│   │   ├── evolutionary_coagen.py  # Genetic evolution of tactics
-│   │   ├── tactical_engine.py      # OODA loop execution
-│   │   ├── coevolution_engine.py   # Red vs Blue adversarial coevolution
-│   │   ├── kill_chain.py           # F2T2EA state machine
-│   │   ├── kill_chain_capsule.py   # Kill chain capsule
-│   │   ├── composite_kill_chain.py # Multi-target kill chain orchestration
-│   │   ├── secretary_council.py    # AI strategic directive deliberation
-│   │   ├── monte_carlo_engine.py   # Monte Carlo simulation planning
-│   │   ├── resource_allocator.py   # Optimal asset allocation
-│   │   ├── red_force_genomes.py    # Red Force genome definitions
-│   │   ├── swarm_genomes.py        # Swarm genome architectures
-│   │   ├── search/                 # ✅ 12 search/planning algorithms (MCTS, HTN, A*, MAPF, etc.)
-│   │   ├── game_theory/            # ✅ Nash, Stackelberg, CFR, Minimax, Auctions, Zero-Sum, Cooperative
-│   │   ├── coordination/           # ✅ 12 coordination protocols (Consensus, Contract Net, Swarm, etc.)
-│   │   └── decision_intelligence/  # ✅ Causal BN, Counterfactual, Influence Diagrams, SCM
-│   ├── perception/                 # 👁️ Multi-sensor fusion
-│   │   ├── specialized_analyzers.py# 10 AI experts per sensor type
-│   │   ├── multi_source_analyzer.py# Fusion layer
-│   │   ├── sensor_fusion.py        # Combined sensor confidence
-│   │   ├── situational_awareness.py# Battlefield state awareness
-│   │   ├── knowledge_graph.py      # Entity relationship graph
-│   │   ├── threat_classifier.py    # Threat level classification
-│   │   ├── battlefield_analyzer.py # Battlefield analysis
-│   │   ├── battlefield_3d.py       # 3D battlefield visualization
-│   │   ├── terrain_analyzer.py     # Terrain analysis
-│   │   ├── probabilistic/          # ✅ Bayesian Networks, HMM, Kalman (KF/EKF/UKF), Particle Filter
-│   │   ├── graph_intelligence/     # ✅ GNN, GAT, Knowledge Embeddings, Community Detection
-│   │   └── knowledge/              # ✅ RAG Memory, Semantic Search, Vector DB, Graph Embeddings
-│   ├── learning/                   # 📚 Experience & adaptation
-│   │   ├── evolution_lab.py        # Genome mutation engine
-│   │   ├── genome.py               # Gene/Capsule data structures
-│   │   ├── agent_evolver.py        # Domain-specialized sub-agent creation
-│   │   ├── experience_memory.py    # Cross-session memory persistence
-│   │   ├── pattern_recognizer.py   # Tactical pattern detection
-│   │   ├── llm_commander.py        # Hybrid LLM-guided command
-│   │   ├── performance_telemetry.py# Fitness & performance tracking
-│   │   ├── rl/                     # ✅ 14 RL algorithms (PPO, SAC, TD3, DQN, Rainbow, MARL, QMIX, VDN...)
-│   │   ├── optimization/           # ✅ 10 optimizers (GA, CMA-ES, PSO, Bayesian, Ant Colony, NSGA-II...)
-│   │   ├── evolutionary/           # ✅ 9 advanced evolutionary (NEAT, Novelty Search, MAP-Elites, NSGA-III...)
-│   │   ├── meta_learning/          # ✅ MAML, Reptile, Transfer, Online, Continual Learning
-│   │   ├── ml/                     # ✅ Framework adapters (PyTorch, SB3, ONNX, Ray, XGBoost, PyG)
-│   │   └── prediction/             # ✅ LSTM, GRU, Transformer, Temporal Fusion, Trajectory
-│   ├── generative/                 # ✅ Deep generative models
-│   │   ├── diffusion_planner.py    # Diffusion-based plan generation
-│   │   ├── normalizing_flows.py    # Normalizing Flows
-│   │   ├── tactic_transformer.py   # Transformer-based generative models
-│   │   └── tactic_vae.py           # VAE for tactics
-│   ├── memory/                     # ✅ Multi-tier memory systems
-│   │   ├── episodic_memory.py      # Episodic memory
-│   │   ├── semantic_memory.py      # Semantic memory
-│   │   ├── working_memory.py       # Working memory with decay
-│   │   ├── associative_memory.py   # Associative pattern recall
-│   │   └── memory_consolidation.py # Memory consolidation
-│   ├── xai/                        # ✅ Explainable AI
-│   │   ├── decision_trace.py       # Decision trace generation
-│   │   ├── shap_explainer.py       # SHAP explanations
-│   │   ├── lime_explainer.py       # LIME explanations
-│   │   ├── counterfactual.py       # Counterfactual explanations
-│   │   ├── confidence_calibration.py# Confidence calibration
-│   │   └── reasoning_graph.py      # Reasoning graph visualization
-│   └── strategy/                   # 🏛️ High-level planning
-│       ├── doctrine.py             # Military doctrine presets (4 types)
-│       ├── operational_planner.py  # Mission decomposition
-│       └── strategic_planner.py    # Campaign objective management
-├── agents/                         # 🤖 Asset controllers (AIR / LAND / SEA / SPACE / CYBER)
-├── ai_architectures/               # ✅ Behavior Trees, GOAP, Utility AI, BDI, FSM, Blackboard
-├── sim/                            # 🎮 Simulation environment (grid battlefield Gym env, world state,
-│                                   #    clock, world_modeling/, performance/)
-├── research/                       # ✅ Experiment manager, hyperparameter opt, benchmarking,
-│                                   #    reproducibility, statistical evaluation, ablation, reports
-├── backend/                        # 🔧 Backend Services (API v1, vision implemented; more scaffolded)
-├── frontend/                       # ✅ React/Vite Dashboard (TacticalMap, AgentInspector, Analytics…)
-├── infra/                          # ✅ Docker Compose, Helm Charts (35 templates)
-├── comms/                          # 📡 Async pub/sub bus, FastAPI HITL + XAI server, AES-GCM, protocol
-├── generative/                     # 🎨 Scenario generator, adversarial emulator, briefings, reports
-├── config/                         # ⚙️ Simulation parameters + doctrine presets
-├── frontier/                       # 🧠 Frontier Intelligence (agent-agnostic reasoning)
-│   ├── reasoning/                  # ✅ ToT, GoT, Self-Consistency, Multi-Agent Debate, Constitutional Critique
-│   ├── adaptation/                 # ✅ Critic Model, Reflection Engine, Self-Correction Engine
-│   ├── agents/                     # ✅ Planner, Executor, Verifier, Tool Router
-│   └── decision/                   # ✅ Bayesian Decision, Uncertainty Estimation, Confidence Calibration
-├── cognitive/                      # 🧠 15-Layer Cognitive Architecture
-│   ├── perception_layer.py         # Multimodal perception + scene-graph fusion
-│   ├── world_model_layer.py        # Predictive + causal world state
-│   ├── memory_layer.py             # Multi-tier memory (working/episodic/semantic/procedural/vector/graph)
-│   ├── reasoning_layer.py          # 12 reasoning strategies
-│   ├── planning_layer.py           # 10 planner types
-│   ├── agentic_layer.py            # Multi-agent collaboration
-│   ├── safety_layer.py             # Safety constraints
-│   ├── cognitive_agent.py          # Unified cognitive agent
-│   └── cognitive_loop.py           # Cognitive loop orchestration
-├── coding_agent/                   # 🛠️ Software Engineering Agent (full SWE stack)
-│   ├── ast_analyzer.py / repository_indexer.py / symbol_search.py
-│   ├── static_analysis.py / test_runner.py / test_generator.py
-│   └── bug_localizer.py / patch_validator.py
-├── research_division/              # 🔬 Autonomous Research Division (15 specialized agents)
-├── research_db/                    # 💾 Research Database (JSON + SQLite, versioned, audit trail)
-├── self_improvement/               # 🔄 Self-Improvement Loop
-│   ├── improvement_loop.py         # Observe → Hypothesize → Experiment → Validate → Adopt
-│   ├── neural/                     # ✅ Neural milestone: adapters, pipeline, LoRA trainer,
-│   │                               #    dataset splitting, capability benchmark — see its README
-│   └── self_training/              # Trainer, checkpoint lineage, regression suite, promotion gate
-├── knowledge_engine/               # 🧠 Knowledge Engine 2.0 (KG, RAG, multi-tier memories)
-├── automl/ / mlops/ / compiler/    # 🤖 NAS · MLOps lineage/tracking/drift · kernel optimization
-├── memory_cluster/ / security/     # 🗄️ Distributed memory backends · sandbox, permissions, secrets
-├── plugins/ / robotics/            # 🔌 Marketplace · robot interfaces
-├── ultrone_os/                     # 🖥️ AI OS (kernel, scheduler, service registry)
-├── simulation/ / datasets/         # 🎲 Digital twin, physics · dataset registry/versioning/augmentation
-├── extension_log/ / utils/         # 📝 Structured audit logging · geo/helpers/logger/probability
-└── tests/                          # ✅ 90+ test suites (2200+ tests) across every subsystem
+├── apps/                               # Operational Applications & User Surfaces
+│   ├── api/                            # FastAPI REST & WebSocket server (routers: cockpit, defense, chat, neural, tools)
+│   ├── backend/                        # Research platform REST API service (v1, exporters, vision)
+│   ├── console/                        # Interactive terminal utilities & operator REPL
+│   ├── dashboard/                      # Real-time telemetry & metrics operations dashboard
+│   ├── frontend/                       # Tactical Autonomy Cockpit (React 18, Vite, Tailwind CSS, Playwright E2E)
+│   ├── globe/                          # 3D geospatial / Cesium tactical visualization app
+│   ├── simulator/                      # Discrete-event tactical environment simulator
+│   ├── ultrone/                        # CLI orchestrator & command-line interface
+│   ├── cli/                            # Interactive CLI client
+│   ├── services/                       # Background trajectory, harness & skill workers
+│   └── ultrone_hitl/                   # Human-in-the-loop decision workflows & immutable audit store
+│
+├── packages/                           # Modular Platform Packages
+│   ├── core/                           # Foundation contracts, config, logging, and 5-Domain Defense Ontology
+│   │   ├── ontology/                   # 5-Domain Defense Ontology (Space, Air, Land, Sea, Cyber) & Multi-INT MHT
+│   │   ├── config/                     # System configuration & doctrine settings (settings.py)
+│   │   ├── core/                       # Core pipeline, safety gates, and interfaces
+│   │   └── ultrone_types/              # Core type contracts (renamed to prevent stdlib shadowing)
+│   ├── runtime/                        # Distributed State, Mesh & OS Kernel
+│   │   ├── crdt_mesh/                  # Decentralized DDIL CRDT World Mesh & Byzantine Physical Filter
+│   │   ├── event_sourcing/             # Immutable event store & deterministic replay engine
+│   │   └── ultrone_os/                 # Autonomous OS kernel & process scheduler
+│   ├── safety/                         # Safety, Formal Policy & Compliance
+│   │   ├── roe/                        # Formal Machine-Checked ROE & LOAC Verifier, HMAC EffectorLease, HOTL Veto
+│   │   └── security/                   # Sandbox execution, cryptographic permissions, secrets manager
+│   ├── cognition/                      # Cognitive Architecture, Targeting & Adversarial AI
+│   │   ├── kill_chain/                 # Pareto Sensor-to-Effector Allocator (TTI, Pk, CDE, Cost Asymmetry)
+│   │   ├── electronic_warfare/         # Cognitive EW, cross-spectral decoy rejection, GPS anti-spoofing, EMCON
+│   │   ├── adversarial_wargame/        # Real-time AlphaWarfare MCTS engine for multi-ply counter-move prediction
+│   │   ├── brain/                      # Central tactical decision engine, reasoning, and multi-tier memory
+│   │   ├── cognitive/                  # 15-Layer cognitive architecture & perception layers
+│   │   └── self_improvement/           # Autonomous learning loops, neural LoRA trainers, and genome mutation
+│   ├── geospatial/                     # Coordinate transformations, spherical geometry, MGRS, terrain analysis
+│   ├── investigation/                  # Multi-modal intelligence investigation & timeline reconstruction
+│   ├── research/                       # Scientific literature analysis, hypothesis generation, and benchmarking
+│   ├── workflows/                      # Orchestration DAGs, LangGraph stategraphs, and tactical execution plans
+│   ├── adapters/                       # Integration seams (LLM, vision, vector DB, sensor hardware)
+│   ├── simulation/                     # Kinetic equations, physics models, radar cross-section profiles
+│   ├── agents/                         # Autonomous tactical agents (air, land, maritime, space, cyber controllers)
+│   ├── knowledge/                      # Knowledge engine, graph databases, and semantic search
+│   ├── observability/                  # Telemetry, OpenInference, Prometheus & Grafana exporters
+│   └── transport/                      # Pub/sub messaging bus, encrypted transport, and wire protocols
+│
+├── infra/                              # Deployment & infrastructure manifests (Docker, Helm, Kubernetes, HF Space)
+├── tests/                              # Comprehensive test suites (defense superiority, cockpit, conformance, evals)
+├── docs/                               # Master architecture, invariants, deployment guides, and analysis
+└── vendor/                             # Vendored libraries (original_source/, ultron/ shim, adelise/)
 ```
 
 <details>
@@ -394,7 +310,7 @@ print(report.neural.measurably_better)     # actual model improved?
 
 > ⚠️ The benchmark **never merges** the simulated and neural verdicts — a simulated gain is evidence about the *surround*, not the underlying model.
 
-Full walkthrough → [`self_improvement/neural/README.md`](self_improvement/neural/README.md)
+Full walkthrough → [`packages/cognition/self_improvement/neural/README.md`](packages/cognition/self_improvement/neural/README.md)
 
 ---
 
@@ -415,7 +331,7 @@ When performance drops, ULTRONE adapts:
 
 ## ⚙️ Configuration
 
-Edit `config/settings.py` (`MilitaryConfig`) or environment variables:
+Edit `packages/core/config/settings.py` (`MilitaryConfig`) or environment variables:
 
 ```python
 @dataclass
@@ -441,11 +357,11 @@ class MilitaryConfig:
 ## 🧪 Testing
 
 ```bash
-# Run full defense superiority test suite (33 tests)
-pytest tests/test_defense_superiority.py -q
+# Run full defense superiority + Cockpit REST API test suites (45 passed)
+python -m pytest tests/test_defense_superiority.py tests/test_cockpit_api.py -q
 
-# Run Cockpit REST API test suite (12 tests)
-pytest tests/test_cockpit_api.py -q
+# Run monorepo reorganization and import validator (58 passed, 0 failures)
+python _validate_reorg.py
 
 # Run MCP wire conformance suite (30 tests)
 pytest tests/conformance/mcp_2026_07_28_wire/ -q
@@ -453,8 +369,12 @@ pytest tests/conformance/mcp_2026_07_28_wire/ -q
 # Just the neural milestone suite (63 tests)
 pytest tests/test_neural_module.py -q
 
-# Run Playwright E2E Cockpit suite (25 tests)
-cd apps/frontend && npx playwright test
+# Run frontend TypeScript typecheck (0 errors)
+cd apps/frontend && npm run typecheck
+
+# Run Playwright E2E Cockpit suite (25 passed, serial execution required)
+cd apps/frontend && npx playwright test --workers=1
+# Alternatively: npm run test:e2e
 
 # Test specialized analyzers
 python -c "from brain.perception.specialized_analyzers import SatelliteImageAI; sat = SatelliteImageAI(); print(sat.analyze({'formation': 'tanks'}, {}))"
@@ -546,7 +466,7 @@ Introduces **COA-GPT**, an algorithm using LLMs to generate military Courses of 
 #### 2024.10.26 — [Fine-Tuning and Evaluating Open-Source Large Language Models for the Army Domain](https://arxiv.org/abs/2410.20297)
 📄 *D. C. Ruiz & J. Sell — arXiv:2410.20297 · featured on [Hugging Face Daily Papers](https://huggingface.co/papers?q=battlefield+applications)*
 
-Explores **TRACLM**, a family of open-source LLMs fine-tuned specifically for US Army applications — addressing the challenge of adapting general-purpose models with Army-specific terminology, doctrine, and operational data. Evaluated on intelligence analysis, report generation, and operational planning tasks, TRACLM demonstrated improved performance over unmodified models in domain-specific language understanding, with particular promise for resource-constrained environments. This work directly informs ULTRONE's LoRA fine-tuning strategy in [`self_improvement/neural/`](self_improvement/neural/README.md).
+Explores **TRACLM**, a family of open-source LLMs fine-tuned specifically for US Army applications — addressing the challenge of adapting general-purpose models with Army-specific terminology, doctrine, and operational data. Evaluated on intelligence analysis, report generation, and operational planning tasks, TRACLM demonstrated improved performance over unmodified models in domain-specific language understanding, with particular promise for resource-constrained environments. This work directly informs ULTRONE's LoRA fine-tuning strategy in [`packages/cognition/self_improvement/neural/`](packages/cognition/self_improvement/neural/README.md).
 
 #### 2024.01.29 — [Escalation Risks from Language Models in Military and Diplomatic Decision-Making](https://arxiv.org/abs/2401.03408)
 📄 *J.-P. Rivera, G. Mukobi, A. Reuel, M. Lamparth, C. Smith & J. Schneider — arXiv:2401.03408 · published at [FAccT 2024](https://facctconference.org/static/papers24/facct24-57.pdf) ([Stanford HAI policy brief](https://hai.stanford.edu/policy/policy-brief-escalation-risks-llms-military-and-diplomatic-contexts)) · press coverage: [Vice](https://www.vice.com/en/article/ai-launches-nukes-in-worrying-war-simulation-i-just-want-to-have-peace-in-the-world/) · [The Register](https://www.theregister.com/software/2024/02/06/boffins_find_ai_models_tend_to_escalate_conflicts/) · [TechStrongAI](https://techstrong.ai/articles/research-shows-risk-in-using-llms-for-military-decision-making/)*
@@ -594,11 +514,11 @@ The summaries are intended solely for informational and educational purposes. Re
 
 ## 🚀 Deployment (free)
 
-See **[DEPLOYMENT.md](DEPLOYMENT.md)**: GitHub Actions runs the test suite and benchmarks; a slim **simulation-only** Hugging Face Space demo (`deploy/hf_space/`) syncs automatically on push. Setup steps, verified ZeroGPU quotas, and the public-safety scoping are documented there.
+See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**: GitHub Actions runs the test suite and benchmarks; a slim **simulation-only** Hugging Face Space demo (`infra/deploy/hf_space/`) syncs automatically on push. Setup steps, verified ZeroGPU quotas, and the public-safety scoping are documented there.
 
 ## 🧠 Neural Milestone Docs
 
-Deep dive into the simulated-vs-neural capability split, LoRA trainer contract, dataset splitting and benchmark design → [`self_improvement/neural/README.md`](self_improvement/neural/README.md).
+Deep dive into the simulated-vs-neural capability split, LoRA trainer contract, dataset splitting and benchmark design → [`packages/cognition/self_improvement/neural/README.md`](packages/cognition/self_improvement/neural/README.md).
 
 ---
 

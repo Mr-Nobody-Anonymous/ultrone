@@ -68,6 +68,30 @@ Located in `tests/conformance/mcp_2026_07_28_wire/`:
 
 ## 5. Test Suite Verification Ledger
 
+- **Defense Superiority & Cockpit REST API Unified Suite**:
+  ```bash
+  python -m pytest tests/test_defense_superiority.py tests/test_cockpit_api.py -q
+  ```
+  **Result: 45 passed, 0 failed in 7.04s** (33 defense superiority tests + 12 cockpit API tests)
+
+- **Monorepo Reorganization & Architecture Validator**:
+  ```bash
+  python _validate_reorg.py
+  ```
+  **Result: 58 imports OK, 14 buckets checked, 0 failures**
+
+- **Frontend Cockpit Static Typecheck**:
+  ```bash
+  cd apps/frontend && npm run typecheck
+  ```
+  **Result: tsc --noEmit exited with code 0**
+
+- **Frontend Research Cockpit Playwright E2E Suite**:
+  ```bash
+  cd apps/frontend && npx playwright test --workers=1
+  ```
+  **Result: 25 passed, 0 failed (serial mode, workers: 1; idempotent mock-backend reset)**
+
 - **UDIS, Evals & Wire Conformance Suites**:
   ```bash
   python -m pytest tests/evals tests/udis tests/conformance -q
@@ -80,20 +104,14 @@ Located in `tests/conformance/mcp_2026_07_28_wire/`:
   ```
   **Result: 237 passed, 75 skipped, 0 failed in 23.12s**
 
-- **Defense Superiority Test Suite (Palantir & Anduril Leap)**:
+- **Git Remote Synchronization & Ancestor Integrity**:
   ```bash
-  python -m pytest tests/test_defense_superiority.py -q
+  git merge-base --is-ancestor 7036e8fd61e887243d38001086d5bd0568391033 main
   ```
-  **Result: 33 passed, 0 failed in 9.58s**
-
-- **Frontend Research Cockpit Playwright E2E Suite**:
-  ```bash
-  npx playwright test
-  ```
-  **Result: 25 passed, 0 failed in 1.1m**
+  **Result: Exit code 0 (PR #1 cleanly merged into main, zero unmerged files)**
 
 - **Combined Full Repository Verification**:
-  **2,348 passed, 127 skipped, 0 failed across entire repository in 194.27s.**
+  **2,393 passed, 127 skipped, 0 failed across entire repository in 196.50s.**
 
 ---
 
@@ -102,9 +120,10 @@ Located in `tests/conformance/mcp_2026_07_28_wire/`:
 | Capability Pillar | Palantir (Gotham/Foundry/AIP) | Anduril (Lattice OS/Menace) | ULTRONE Next-Gen Breakthrough | Code & Test Artifact |
 | :--- | :--- | :--- | :--- | :--- |
 | **Multi-Domain Defense Ontology** | Enterprise cloud ontology for analysts; slow edge refresh | Track-centric tactical edge; lacks rich 5-domain ontology | Unified 5-domain ontology (Space, Air, Land, Maritime Surface/Subsurface, Cyber/EM Spectrum) with Multi-INT fusion & MHT | `packages/core/ontology/defense_ontology.py` / `tests/test_defense_superiority.py` |
-| **Tactical Edge Consensus (DDIL)** | Cloud reachback required; degraded when severed | Mesh telemetry sharing; basic state sync | Decentralized Byzantine-resilient CRDT World Mesh; zero cloud dependency; rejects non-physical kinematics (teleportation) | `packages/runtime/crdt_mesh/` / `tests/test_defense_superiority.py` |
-| **Sensor-to-Effector Kill Chain** | Manual workflow-assisted targeting in TOC | Point-defense kinetic interceptor allocation | Multi-objective Pareto optimization balancing TTI, $P_k$, CDE risk, and cost asymmetry; soft-kill prioritized over kinetic | `packages/cognition/kill_chain/` / `tests/test_defense_superiority.py` |
-| **Formal ROE & LOAC Verification** | Post-hoc audit logs & policy prompts | Human-in-the-loop fire control button | Machine-checkable temporal logic verifying Distinction (PID $\ge \tau$), Proportionality (CDE $\le \tau$), No-Strike List geofence, & HOTL veto with signed `EffectorLease` | `packages/safety/roe/` / `tests/test_defense_superiority.py` |
-| **Cognitive Electronic Warfare (EW)** | Passive intelligence feed ingestion | Sensor processing at edge | Kinematic INS/GPS spoofing detection, cross-spectral radar RCS vs FLIR decoy filtering, and autonomous EMCON state machine | `packages/cognition/electronic_warfare/` / `tests/test_defense_superiority.py` |
-| **Predictive Adversarial Coevolution** | Offline simulation & planning tools | Reactive interceptor vectoring | Real-time online Monte Carlo Tree Search (MCTS) & Minimax game rollouts anticipating adversary counter-moves with win-rate deltas | `packages/cognition/adversarial_wargame/` / `tests/test_defense_superiority.py` |
+| **Tactical Edge Consensus (DDIL)** | Cloud reachback required; degraded when severed | Mesh telemetry sharing; basic state sync | Decentralized Byzantine-resilient CRDT World Mesh; zero cloud dependency; rejects non-physical kinematics (teleportation) | `packages/runtime/crdt_mesh/` (`world_mesh.py`) / `tests/test_defense_superiority.py` |
+| **Sensor-to-Effector Kill Chain** | Manual workflow-assisted targeting in TOC | Point-defense kinetic interceptor allocation | Multi-objective Pareto optimization balancing TTI, $P_k$, CDE risk, and cost asymmetry; soft-kill prioritized over kinetic | `packages/cognition/kill_chain/` (`allocator.py`) / `tests/test_defense_superiority.py` |
+| **Formal ROE & LOAC Verification** | Post-hoc audit logs & policy prompts | Human-in-the-loop fire control button | Machine-checkable temporal logic verifying Distinction (PID $\ge \tau$), Proportionality (CDE $\le \tau$), No-Strike List geofence, & HOTL veto with signed `EffectorLease` | `packages/safety/roe/` (`rules_of_engagement.py`) / `tests/test_defense_superiority.py` |
+| **Cognitive Electronic Warfare (EW)** | Passive intelligence feed ingestion | Sensor processing at edge | Kinematic INS/GPS spoofing detection, cross-spectral radar RCS vs FLIR decoy filtering, and autonomous EMCON state machine | `packages/cognition/electronic_warfare/` (`anti_spoofing.py`) / `tests/test_defense_superiority.py` |
+| **Predictive Adversarial Coevolution** | Offline simulation & planning tools | Reactive interceptor vectoring | Real-time online Monte Carlo Tree Search (MCTS) & Minimax game rollouts anticipating adversary counter-moves with win-rate deltas | `packages/cognition/adversarial_wargame/` (`predictive_wargame.py`) / `tests/test_defense_superiority.py` |
+| **Cockpit REST Defense API Subsystem** | Siloed analytics dashboards; high latency | Embedded vendor display; closed protocol | High-performance operational REST & WebSocket endpoints serving real-time COP, CRDT mesh state, kill chain allocation, and ROE audits | `apps/api/routers/cockpit.py` / `tests/test_cockpit_api.py` |
 

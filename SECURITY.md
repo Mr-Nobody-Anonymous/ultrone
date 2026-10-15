@@ -29,8 +29,8 @@ and will not be fixed as security issues:
 
 - Attacks that require connecting the platform to live weapon systems,
   live brokers, or real operational data — such connections violate the
-  project's core constraints and are not supported configurations.
-- The public Gradio demo (`deploy/hf_space/`) running with untrusted
+  project's core constraints and are not supported configurations (see `docs/ARCHITECTURE_INVARIANTS.md`).
+- The public Gradio demo (`infra/deploy/hf_space/`) running with untrusted
   inputs beyond documented abuse of free hosting quotas.
 
 ## Hardening expectations for deployments

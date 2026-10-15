@@ -5,9 +5,13 @@ project:
 
 ## Ultrone Core (battlefield AI research platform)
 
+- [ARCHITECTURE.md](ARCHITECTURE.md) — unified master architecture, 14 buckets, 7 defense capabilities, and cockpit subsystem
 - [ARCHITECTURE_INVARIANTS.md](ARCHITECTURE_INVARIANTS.md) — non-negotiable
   architectural rules (plane separation, safety-gate independence, canonical
   execution path)
+- [FOLDER_STRUCTURE_ANALYSIS.md](FOLDER_STRUCTURE_ANALYSIS.md) — repository directory tree and monorepo structure
+- [ULTRONE_MONOREPO_REORG.md](ULTRONE_MONOREPO_REORG.md) — monorepo reorganization architectural decision record (ADR)
+- [DEPLOYMENT.md](DEPLOYMENT.md) — deployment guides, container builds, and Hugging Face space
 - [COGNITIVE_ARCHITECTURE.md](COGNITIVE_ARCHITECTURE.md) — perception →
   cognition → decision → action loop
 - [SITUATIONAL_AWARENESS.md](SITUATIONAL_AWARENESS.md) — multi-source sensor
@@ -27,8 +31,8 @@ project:
 
 ## Ultron (collective-memory system, vendored)
 
-Source lives in [`original_source/`](../original_source/) and is importable
-as the `ultron` package via the [`ultron/`](../ultron/) shim.
+Source lives in [`vendor/original_source/`](../vendor/original_source/) and is importable
+as the `ultron` package via the [`vendor/ultron/`](../vendor/ultron/) shim.
 
 - [docs/ultron/en/](ultron/en/) — English docs (API, Components, GetStarted,
   Showcase)
@@ -37,11 +41,10 @@ as the `ultron` package via the [`ultron/`](../ultron/) shim.
 The Ultron server (`server.py` at the repo root) requires an embedding
 backend: `dashscope` (default), `openai` (OpenAI-compatible endpoint), or
 `local` (sentence-transformers). Configure via `ULTRON_EMBEDDING_BACKEND` and
-see `original_source/core/embeddings.py` for the full list of environment
+see `vendor/original_source/core/embeddings.py` for the full list of environment
 variables.
 
 ## Adelise / bee-agent-framework (vendored)
 
-Source lives in [`adelise-agent-framework-main/`](../adelise-agent-framework-main/).
-
-- [docs/framework/](framework/) — framework documentation and examples
+Source lives in [`vendor/adelise-agent-framework-main/`](../vendor/adelise-agent-framework-main/).
+See `vendor/adelise-agent-framework-main/README.md` for framework documentation and examples.

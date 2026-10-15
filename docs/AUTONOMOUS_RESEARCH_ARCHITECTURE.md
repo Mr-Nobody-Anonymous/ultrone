@@ -6,23 +6,23 @@ ULTRONE has been extended into a continuously improving AI research platform wit
 
 ## Architecture Extension Summary
 
-### New Packages Added
+### Monorepo Packages Added
 
-| Package | Purpose | Files |
-|---------|---------|-------|
-| `knowledge_engine/` | Multi-layer knowledge system | 15 modules |
-| `research_db/` | Structured research records | 3 modules |
-| `research_division/` | 15 specialized AI agents + coordinator | 17 modules |
-| `self_improvement/` | Continuous improvement loop | 4 modules |
-| `plugin_sdk/` | Hot-swappable plugin system | 3 modules |
-| `extension_log/` | Comprehensive logging system | 2 modules |
-| `backend/api/v1/` | REST API routers | 3 new routers |
+| Package | Monorepo Bucket Path | Purpose | Files |
+|---------|---------------------|---------|-------|
+| `knowledge_engine/` | `packages/knowledge/knowledge_engine/` | Multi-layer knowledge system | 15 modules |
+| `research_db/` | `research/research_db/` | Structured research records | 3 modules |
+| `research_division/` | `research/research_division/` | 15 specialized AI agents + coordinator | 17 modules |
+| `self_improvement/` | `packages/cognition/self_improvement/` | Continuous improvement loop | 4 modules |
+| `plugin_sdk/` | `packages/agents/plugin_sdk/` | Hot-swappable plugin system | 3 modules |
+| `extension_log/` | `packages/core/extension_log/` | Comprehensive logging system | 2 modules |
+| `backend/api/v1/` | `apps/backend/api/v1/` | REST API routers | 3 new routers |
 
-### Existing Files Extended (No Replacement)
+### Monorepo Paths for Extended Modules
 
-- `comms/protocol.py` — `RESEARCH_*` MessageTypes added
-- `config/settings.py` — `ResearchPlatformConfig` added
-- `backend/api/v1/` — `research.py`, `knowledge.py`, `improvements.py` routers added
+- `packages/transport/comms/protocol.py` — `RESEARCH_*` MessageTypes added
+- `packages/core/config/settings.py` — `ResearchPlatformConfig` added
+- `apps/backend/api/v1/` — `research.py`, `knowledge.py`, `improvements.py` routers added
 
 ---
 

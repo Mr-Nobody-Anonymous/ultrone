@@ -758,6 +758,62 @@ pipeline (tokenizer/model loading, real transformers training loop,
 checkpoint serialization) plugs into the same `ModelPipeline`
 protocol behind the same seam -- no orchestration code touched.
 
+---
+
+## Sprint G: Monorepo Modular Reorganization & Architecture Invariants — *Complete (100%)*
+
+### Status
+Monorepo restructured into 14 distinct semantic buckets (`apps/`, `packages/{core,runtime,safety,cognition,geospatial,investigation,research,workflows,adapters,simulation}`, `infra/`, `tests/`, `docs/`, `vendor/`).
+
+### Deliverables
+- `_ultrone_paths.py` bootstrap contract ensuring all buckets exist on `sys.path`.
+- Invariant validator `_validate_reorg.py` ensuring zero regressions across 58 packages.
+- Zero lost files or commit regressions; legacy imports maintained transparently.
+
+---
+
+## Sprint H: UDIS Protocol & MCP 2026-07-28 Wire Conformance — *Complete (100%)*
+
+### Status
+Implemented MHS-inspired Unified Defense Intelligence System (UDIS) device abstraction layer and official MCP 2026-07-28 wire conformance suite.
+
+### Deliverables
+- 10-state FSM device state machine with formal transition guards and terminal emergency stop.
+- Asymmetric Ed25519 checkpoint signing and SHA-256 event-sourced authenticity chains.
+- 11 MCP wire conformance test suites in `tests/conformance/mcp_2026_07_28_wire/` (30 tests).
+- 105 passed unit tests across `tests/evals/`, `tests/udis/`, and `tests/conformance/`.
+
+---
+
+## Sprint I: Next-Gen Multi-Domain Defense Superiority — *Complete (100%)*
+
+### Status
+Implemented all seven defense superiority capabilities surpassing legacy Palantir and Anduril platforms.
+
+### Deliverables
+1. **5-Domain Defense Ontology & Multi-INT MHT** (`packages/core/ontology/defense_ontology.py`): 5 domains, 6 modalities, Chi-Square gating, and Bayesian hypothesis tracking.
+2. **Decentralized Tactical World Mesh** (`packages/runtime/crdt_mesh/`): LWW-CRDT edge state reconciliation with Byzantine Physical Filter rejecting teleportation (>3000 kts) and $dt=0$ divergence.
+3. **Sensor-to-Effector Pareto Kill Chain Allocator** (`packages/cognition/kill_chain/`): Multi-objective optimization balancing TTI, $P_k$, CDE, and cost asymmetry with soft-kill fallback.
+4. **Machine-Checked ROE & LOAC Verifier** (`packages/safety/roe/`): Machine-checked Distinction ($PID \ge \tau$), Proportionality ($CDE \le \tau$), 3D No-Strike List geofencing, and HMAC signed `EffectorLease`.
+5. **Cognitive Electronic Warfare & Anti-Spoofing** (`packages/cognition/electronic_warfare/`): Multi-spectral radar RCS vs FLIR thermal decoy filtering, GPS anti-spoofing, and EMCON state machine.
+6. **Predictive Adversarial Wargaming (AlphaWarfare MCTS)** (`packages/cognition/adversarial_wargame/`): Multi-ply MCTS tree search with numerically safe sigmoid evaluations.
+7. **Cockpit REST Defense API Subsystem** (`apps/api/routers/cockpit.py`): Operational endpoints serving real-time COP, CRDT mesh state, kill-chain allocation, and ROE audits.
+- Verification: 33 defense tests (`tests/test_defense_superiority.py`) + 12 cockpit API tests (`tests/test_cockpit_api.py`) passing 100% (45 passed).
+
+---
+
+## Sprint J: Unified Cockpit UI & Playwright End-to-End Suite — *Complete (100%)*
+
+### Status
+High-performance React 18 / TypeScript Tactical Autonomy Cockpit validated with comprehensive browser automation tests.
+
+### Deliverables
+- Dual-mode architecture: Live FastAPI REST backend and deterministic headless mock-backend (`apps/frontend/e2e/mock-backend.ts`).
+- 25 passed Playwright E2E tests (`e2e/safety.spec.ts`, `e2e/shell.spec.ts`, `e2e/system.spec.ts`) executed in serial mode (`--workers=1`).
+- Test harness robustness: `/__test__/scenario` reset handler restores `runtime.playing = false` for 100% idempotent runs.
+- Frontend static TypeScript typecheck (`npm run typecheck`) exiting with code 0.
+
+
 
 
 

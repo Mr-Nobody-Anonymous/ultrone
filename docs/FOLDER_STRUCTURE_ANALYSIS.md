@@ -46,30 +46,55 @@ integrated into it.
 ultrone/
 │
 ├── apps/                      # Application layer
-│   ├── api/                   # FastAPI public API
+│   ├── api/                   # FastAPI public API & REST routers (cockpit, defense, chat, neural)
 │   ├── backend/               # Backend services (auth, cache, events, workers, ...)
 │   ├── cli/                   # CLI client
 │   ├── console/               # ★ Operational Console (React/TypeScript/MapLibre/Deck.gl)
 │   ├── dashboard/             # Monitoring dashboard
-│   ├── frontend/              # Original web frontend (React/Vite)
+│   ├── frontend/              # Modern React + Vite + Tailwind UI Cockpit (Playwright E2E)
+│   ├── globe/                 # ★ 3D Geospatial / Cesium tactical visualization app
 │   ├── services/              # Background services (ingestion, training, harness, ...)
 │   ├── simulator/             # Simulation UI/API
-│   └── ultrone_hitl/          # Human-in-the-loop workflow
+│   ├── ultrone/               # CLI orchestrator entrypoint
+│   └── ultrone_hitl/          # Human-in-the-loop workflow & audit store
 │
 ├── packages/                  # Core platform packages
-│   ├── core/                  # Core domain types
+│   ├── core/                  # Core domain types & foundation
 │   │   ├── config/            # Doctrine presets, settings
 │   │   ├── core/              # Pipeline, DB, storage, models, safety_gate, LLM service
 │   │   ├── datasets/          # Dataset management (download, augment, validate, version)
 │   │   ├── entities/          # ★ Canonical Entity type (entity_id, position, provenance, ...)
 │   │   ├── events/            # ★ Canonical Event system (EventType, Event, EventBus)
 │   │   ├── extension_log/     # Audit and extension stores
+│   │   ├── ontology/          # ★ 5-Domain Defense Ontology & Multi-INT Multiple Hypothesis Tracking (MHT)
 │   │   ├── ultrone_types/     # ★ Shared enums, type aliases, protocols
 │   │   ├── utils/             # Utilities (geo, helpers, intent, LLM orchestrator, sanitizer, ...)
 │   │   ├── world/             # ★ World module re-export (bridges world_model + entities + events)
 │   │   └── world_model/       # World model implementation
 │   │
-│   ├── cognition/             # Cognitive architecture
+│   ├── runtime/               # Distributed State, OS & Mesh Runtime
+│   │   ├── crdt_mesh/         # ★ Decentralized DDIL CRDT World Mesh & Byzantine Physical Filter
+│   │   ├── event_sourcing/    # ★ Immutable event store, Ed25519 checkpoints, deterministic replay
+│   │   ├── compiler/          # ULTRONE compiler
+│   │   ├── cpp/               # C++ runtime
+│   │   ├── go/                # Go runtime
+│   │   ├── hardware/          # Hardware abstraction
+│   │   ├── rust/              # Rust runtime
+│   │   ├── runtime/           # Core runtime
+│   │   ├── ultrone_bindings/  # Language bindings
+│   │   ├── ultrone_os/        # ULTRONE OS (kernel, scheduler, service_registry)
+│   │   └── ultrone_rt/        # ULTRONE real-time runtime
+│   │
+│   ├── safety/                # Safety, Formal ROE & Security
+│   │   ├── roe/               # ★ Formal Machine-Checked ROE & LOAC Verifier, EffectorLease, HOTL Veto
+│   │   ├── constraints/       # ★ Constraint definitions (geofence, authority, rate limits)
+│   │   ├── policy/            # ★ Policy enforcement (escalation, autonomy bounds)
+│   │   └── security/          # Security controls & sandboxing
+│   │
+│   ├── cognition/             # Cognitive architecture & targeting
+│   │   ├── kill_chain/        # ★ Pareto Sensor-to-Effector Allocator (TTI, Pk, CDE, Cost Asymmetry)
+│   │   ├── electronic_warfare/# ★ Cognitive EW, cross-spectral decoy rejection, GPS anti-spoofing
+│   │   ├── adversarial_wargame/# ★ AlphaWarfare MCTS engine for multi-ply counter-move prediction
 │   │   ├── adaptive/          # Adaptive parameter optimization, promotion
 │   │   ├── brain/             # Orchestrator + perception, reasoning, learning, memory, XAI
 │   │   ├── cognitive/         # ★ 15-layer cognitive architecture (crown jewel)
@@ -78,8 +103,14 @@ ultrone/
 │   │   ├── game_ai/           # Game AI arena, commander
 │   │   ├── generative/        # Scenario/briefing generation
 │   │   ├── sandbox/           # Evaluation sandbox, UCL, machines
-│   │   ├── self_improvement/  # Self-improvement loop, neural, self-training
+│   │   ├── self_improvement/  # Self-improvement loop, neural LoRA, self-training
 │   │   └── ultrone_ai/        # Code intelligence, reasoning
+│   │
+│   ├── geospatial/            # ★ Coordinate transformations, spherical geometry, MGRS, terrain
+│   ├── investigation/         # ★ Multi-modal intelligence investigation & timeline reconstruction
+│   ├── research/              # ★ Autonomous scientific hypothesis generation & benchmarking
+│   ├── workflows/             # ★ Orchestration DAGs, LangGraph stategraphs, and tactical execution plans
+│   ├── adapters/              # ★ Hardware, sensor, LLM, vision, and vector DB adapters
 │   │
 │   ├── agents/                # Agent runtime
 │   │   ├── agents/            # Multi-domain agents (air, land, sea, space, cyber, ...)
@@ -109,28 +140,12 @@ ultrone/
 │   │   ├── sensors/           # Sensor models
 │   │   └── world/             # Simulation world state
 │   │
-│   ├── safety/                # Safety & security
-│   │   ├── constraints/       # ★ Constraint definitions (geofence, authority, rate limits)
-│   │   ├── policy/            # ★ Policy enforcement (escalation, autonomy bounds)
-│   │   └── security/          # Security controls
-│   │
 │   ├── observability/         # Observability
 │   │   ├── events/            # ★ Event bus observability layer
 │   │   ├── logging/           # ★ Structured JSON logging
 │   │   ├── metrics/           # ★ Prometheus-compatible metrics
 │   │   ├── tracing/           # ★ OpenTelemetry distributed tracing
 │   │   └── viz/               # Visualization
-│   │
-│   ├── runtime/               # OS-level runtime
-│   │   ├── compiler/          # ULTRONE compiler
-│   │   ├── cpp/               # C++ runtime
-│   │   ├── go/                # Go runtime
-│   │   ├── hardware/          # Hardware abstraction
-│   │   ├── rust/              # Rust runtime
-│   │   ├── runtime/           # Core runtime
-│   │   ├── ultrone_bindings/  # Language bindings
-│   │   ├── ultrone_os/        # ULTRONE OS (kernel, scheduler, service_registry)
-│   │   └── ultrone_rt/        # ULTRONE real-time runtime
 │   │
 │   └── transport/             # Communication
 │       └── comms/             # Communication protocols and message routing
@@ -171,6 +186,9 @@ ultrone/
 │   └── security/              # ★ Auth/RBAC infrastructure
 │
 ├── tests/                     # Test suites
+│   ├── conformance/           # ★ MCP 2026-07-28 wire protocol conformance suites
+│   ├── udis/                  # ★ UDIS MHS-inspired device layer unit tests
+│   ├── evals/                 # ★ Causal boundary, taint tracking & benchmark evals
 │   ├── api/                   # API tests
 │   ├── cli/                   # CLI tests
 │   ├── core/                  # Core tests
@@ -181,6 +199,8 @@ ultrone/
 │   ├── services/              # Services tests
 │   ├── unit/                  # ★ Unit tests
 │   ├── utils/                 # Utility tests
+│   ├── test_defense_superiority.py # ★ 33 comprehensive defense superiority tests
+│   ├── test_cockpit_api.py    # ★ 12 cockpit REST defense endpoint tests
 │   └── test_*.py              # Existing flat test files (96+)
 │
 ├── vendor/                    # Vendored third-party projects
@@ -189,6 +209,7 @@ ultrone/
 │   └── ultron/                # Ultron compatibility shim
 │
 ├── docs/                      # Documentation
+│   ├── ARCHITECTURE.md        # ★ Unified monorepo master architecture
 │   ├── ARCHITECTURE_EXTENSION_PLAN.md
 │   ├── ARCHITECTURE_INVARIANTS.md
 │   ├── AUTONOMOUS_RESEARCH_ARCHITECTURE.md

@@ -78,6 +78,19 @@ model-free today. When you do want an LLM in the loop:
    LLM is a demo garnish, not a workhorse. Optimize accordingly
    (quantization, small models, caching).
 
+## Running the Cockpit & Defense API Service
+
+The core REST and WebSocket services reside in `apps/api/` with modular routers defined in `apps/api/routers/` (including `cockpit.py` for defense endpoints, `chat.py`, `neural.py`, `memory.py`, and `tools.py`).
+
+To start the API service locally or in production:
+```bash
+python -m uvicorn apps.api.main:app --host 0.0.0.0 --port 8000
+```
+
+The frontend cockpit (`apps/frontend/`) connects directly to `http://localhost:8000/api/cockpit/*` or uses the deterministic mock backend when running standalone (`ULTRONE_MOCK_BACKEND=1 npm run dev`).
+
+---
+
 ## Troubleshooting
 
 - **Deploy fails with "Set SPACE_REPO_ID"** → you skipped step 3.
@@ -86,4 +99,4 @@ model-free today. When you do want an LLM in the loop:
   staged payload comes close.
 - **Space build errors** → check the Space's logs tab; the staged
   runtime is just `gradio` plus stdlib-pure Python, so failures are
-  almost always version pins in `deploy/hf_space/requirements.txt`.
+  almost always version pins in `infra/deploy/hf_space/requirements.txt`.

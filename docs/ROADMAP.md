@@ -18,7 +18,7 @@ section of `README.md`.
   `benchmarks.self_training_benchmark` — not the simulated in-sample score.
 - [ ] **Distributed evolution runs.** Parallelize `evolution/` evaluation
   across workers without breaking the single canonical execution path
-  (`core/pipeline.py`).
+  (`packages/core/core/pipeline.py`).
 
 ## Next
 
@@ -34,17 +34,17 @@ section of `README.md`.
 - [ ] **Ultron server hardening.** Authentication and multi-tenant
   isolation for `server.py` beyond the current research-oriented setup.
 - [ ] **Adelise framework evaluation.** Decide whether the vendored
-  `adelise-agent-framework-main/` becomes an integration target or is
+  `vendor/adelise-agent-framework-main/` becomes an integration target or is
   dropped from the monorepo.
 
 ## Completed (high level)
 
+- Semantic monorepo reorganization into 14 distinct buckets with `_ultrone_paths.py` and invariant validator `_validate_reorg.py` (58/58 modules, 0 failures).
+- Next-Gen Multi-Domain Defense Superiority: 5-Domain Ontology & Multi-INT MHT, Decentralized DDIL CRDT World Mesh, Pareto Kill Chain Allocator, Machine-Checked ROE/LOAC Verifier, Cognitive EW & Anti-Spoofing, and AlphaWarfare MCTS.
+- High-performance Tactical Autonomy Cockpit UI (`apps/frontend/`) with 25 passing Playwright E2E browser tests and dedicated defense REST endpoints (`apps/api/routers/cockpit.py`).
+- UDIS MHS-inspired device layer with 10-state FSM, asymmetric Ed25519 audit checkpoints, and official MCP 2026-07-28 wire conformance suites.
 - 15-layer cognitive architecture with a single canonical execution path.
 - 7-tier memory system and tamper-evident HITL audit chain.
-- Canonical benchmark suite with per-run research records
-  (`research_db/`).
-- Ultron collective-memory integration (Trajectory / Memory / Skill /
-  Harness hubs) with a compatibility package (`ultron/`) and full test
-  coverage.
-- Simulation-only public demo on Hugging Face Spaces
-  (`deploy/hf_space/`).
+- Canonical benchmark suite with per-run research records (`research/research_db/`).
+- Ultron collective-memory integration with a compatibility package (`vendor/ultron/`) and full test coverage.
+- Simulation-only public demo on Hugging Face Spaces (`infra/deploy/hf_space/`).

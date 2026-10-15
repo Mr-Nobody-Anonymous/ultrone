@@ -278,6 +278,7 @@ async function handle(
   if (url.startsWith('/__test__/scenario')) {
     const body = await readBody(req);
     runtime.scenario = body.scenario || body.scenario_id || 'standard_patrol';
+    runtime.playing = false;
     runtime.alertOverrides = {};
     return json(res, { ok: true, scenario: runtime.scenario });
   }

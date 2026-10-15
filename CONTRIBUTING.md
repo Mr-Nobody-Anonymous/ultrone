@@ -8,11 +8,11 @@ research platform, and contributions of all kinds are welcome.
 1. **Simulation only.** Ultrone models battlefield dynamics for research
    purposes. Never wire it to live hardware, real weapon systems, or
    real-world operational data. See `docs/ARCHITECTURE_INVARIANTS.md`.
-2. **Safety gates stay independent.** `core/safety_gate.py` must remain
+2. **Safety gates stay independent.** `packages/core/core/safety_gate.py` must remain
    outside the optimization path. Do not make the safety gate learnable,
    tunable, or bypassable by the systems it supervises.
 3. **One canonical execution path.** All decisions flow through
-   `core/pipeline.py` (`DecisionPipeline`). Do not add side doors.
+   `packages/core/core/pipeline.py` (`DecisionPipeline`). Do not add side doors.
 4. **HITL audit chain is append-only.** Never rewrite or delete entries in
    the JSONL hash-chained audit store.
 
