@@ -84,7 +84,7 @@ Located in `tests/conformance/mcp_2026_07_28_wire/`:
   ```bash
   python -m pytest tests/test_defense_superiority.py -q
   ```
-  **Result: 27 passed, 0 failed in 15.93s**
+  **Result: 33 passed, 0 failed in 9.58s**
 
 - **Frontend Research Cockpit Playwright E2E Suite**:
   ```bash

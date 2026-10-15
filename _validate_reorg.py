@@ -85,6 +85,13 @@ IMPORTS = [
     ("ultron", None),
     ("ultron.api.paths", None),
     ("ultron.core.models", None),
+    # next-gen defense superiority architecture
+    ("packages.core.ontology.defense_ontology", None),
+    ("packages.runtime.crdt_mesh", None),
+    ("packages.cognition.kill_chain", None),
+    ("packages.safety.roe", None),
+    ("packages.cognition.electronic_warfare", None),
+    ("packages.cognition.adversarial_wargame", None),
 ]
 
 for module_name, _ in IMPORTS:

@@ -66,7 +66,7 @@ class KinematicState:
         a = (math.sin(dlat / 2) ** 2 +
              math.cos(math.radians(self.lat)) * math.cos(math.radians(other_lat)) *
              math.sin(dlon / 2) ** 2)
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(max(0.0, 1.0 - a)))
         return (6371.0 * c) * 0.539957
 
     def bearing_to_deg(self, other_lat: float, other_lon: float) -> float:
@@ -266,7 +266,7 @@ class MultiHypothesisTracker:
 
     def prune_stale_tracks(self, current_time: Optional[float] = None) -> List[str]:
         """Prune tracks that have not received fresh observations within horizon."""
-        now = current_time or time.time()
+        now = time.time() if current_time is None else current_time
         stale_ids = [
             t_id for t_id, track in self.tracks.items()
             if (now - track.last_updated) > self.max_track_staleness_sec

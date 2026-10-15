@@ -74,7 +74,7 @@ class EffectorAsset:
             * math.cos(math.radians(track.kinematics.lat))
             * math.sin(dlon / 2) ** 2
         )
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(max(0.0, 1.0 - a)))
         return (6371.0 * c) * 0.539957
 
 
@@ -130,14 +130,14 @@ class SensorToEffectorAllocator:
             if e.ready_state == EffectorState.READY and e.inventory_count > 0
         ]
 
-        assigned_effector_ids = set()
+        assigned_counts: Dict[str, int] = {}
         new_plans: List[EngagementPlan] = []
 
         for target in threat_tracks:
             candidates: List[Tuple[float, EngagementPlan, EffectorAsset]] = []
 
             for eff in available_effectors:
-                if eff.effector_id in assigned_effector_ids:
+                if assigned_counts.get(eff.effector_id, 0) >= eff.inventory_count:
                     continue
 
                 dist_nm = eff.distance_to_track_nm(target)
@@ -209,7 +209,7 @@ class SensorToEffectorAllocator:
                         # Try next available effector candidate rather than abandoning target
                         continue
 
-                assigned_effector_ids.add(plan.effector_id)
+                assigned_counts[plan.effector_id] = assigned_counts.get(plan.effector_id, 0) + 1
                 new_plans.append(plan)
                 self.active_plans[plan.plan_id] = plan
                 break

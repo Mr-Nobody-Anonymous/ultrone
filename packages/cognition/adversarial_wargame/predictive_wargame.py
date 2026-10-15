@@ -54,6 +54,8 @@ class BattlefieldState:
         blue_strength = sum(u.health_pct * (1 + u.ammo_rounds * 0.05) for u in self.blue_units)
         red_strength = sum(u.health_pct * (1 + u.ammo_rounds * 0.05) for u in self.red_units)
 
+        if not self.red_units and not self.blue_units:
+            return 0.0
         if not self.red_units:
             return 1000.0
         if not self.blue_units:

@@ -56,7 +56,7 @@ class NoStrikeZone:
             * math.cos(math.radians(target_lat))
             * math.sin(dlon / 2) ** 2
         )
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(max(0.0, 1.0 - a)))
         dist_nm = (6371.0 * c) * 0.539957
         return dist_nm <= self.radius_nm
 
@@ -97,7 +97,7 @@ class EffectorLease:
     def is_valid(self, current_time: Optional[float] = None) -> bool:
         if self.is_revoked:
             return False
-        now = current_time or time.time()
+        now = time.time() if current_time is None else current_time
         return self.issued_at <= now <= self.expires_at
 
     def revoke(self, reason: str = "MANUAL_VETO") -> None:

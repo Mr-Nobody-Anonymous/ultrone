@@ -888,3 +888,193 @@ def test_cockpit_api_defense_summary_endpoint(api_client):
     assert "active_leases" in data
     assert "gps_integrity" in data
     assert "emcon" in data
+
+
+def test_antipodal_coordinates_haversine_floating_point_safety():
+    """Verify Haversine calculations never raise ValueError: math domain error on antipodal coordinates."""
+    k = KinematicState(lat=45.0, lon=0.0)
+    # Antipodal coordinate: lat=-45.0, lon=180.0
+    dist = k.distance_to_nm(-45.0, 180.0)
+    assert dist > 10700.0  # Approx half Earth circumference in nautical miles
+
+    # Effector distance check
+    eff = EffectorAsset(
+        effector_id="EFF-GLOBAL",
+        name="Global Effector",
+        effector_type=EffectorType.HARD_KINETIC_INTERCEPTOR,
+        domain=WarfightingDomain.AIR,
+        lat=45.0,
+        lon=0.0,
+    )
+    target = MultiIntTrack(
+        track_id="TRK-ANTIPODAL",
+        domain=WarfightingDomain.AIR,
+        affiliation=Affiliation.HOSTILE,
+        kinematics=KinematicState(lat=-45.0, lon=180.0),
+    )
+    eff_dist = eff.distance_to_track_nm(target)
+    assert eff_dist > 10700.0
+
+    # NoStrikeZone contains check
+    from packages.safety.roe.rules_of_engagement import NoStrikeZone
+    zone = NoStrikeZone(
+        zone_id="NSL-TEST",
+        name="Test Zone",
+        category="HOSPITAL",
+        lat=45.0,
+        lon=0.0,
+        radius_nm=1.0,
+    )
+    assert zone.contains(-45.0, 180.0) is False
+
+
+def test_discrete_simulation_time_zero_staleness_and_lease():
+    """Verify simulation time 0.0 is not treated as falsy, preventing premature pruning and lease expiration."""
+    # 1. Lease validity at time 0.0
+    lease = EffectorLease(
+        lease_id="LSE-T0",
+        target_track_id="TRK-01",
+        effector_id="EFF-01",
+        purpose="TACTICAL_ENGAGEMENT",
+        issued_at=0.0,
+        expires_at=60.0,
+        policy_version="ROE-POL-2026.1",
+        signature="",
+    )
+    assert lease.is_valid(current_time=0.0) is True
+    assert lease.is_valid(current_time=30.0) is True
+    assert lease.is_valid(current_time=61.0) is False
+
+    # 2. Track pruning at simulation time 0.0
+    tracker = MultiHypothesisTracker(max_track_staleness_sec=60.0)
+    obs = TrackObservation(
+        observation_id="OBS-T0",
+        modality=SensorModality.RADAR,
+        sensor_id="RADAR-01",
+        lat=32.0,
+        lon=34.8,
+        timestamp=0.0,
+    )
+    tracker.ingest_observation(obs)
+    assert len(tracker.tracks) == 1
+
+    # Pruning at sim time 0.0 must NOT delete the freshly observed track
+    pruned = tracker.prune_stale_tracks(current_time=0.0)
+    assert len(pruned) == 0
+    assert len(tracker.tracks) == 1
+
+    # Pruning at sim time 70.0 should prune it
+    pruned_later = tracker.prune_stale_tracks(current_time=70.0)
+    assert len(pruned_later) == 1
+    assert len(tracker.tracks) == 0
+
+
+def test_crdt_concurrent_same_timestamp_deterministic_convergence():
+    """Verify concurrent CRDT updates with identical timestamps and owner node converge deterministically across peers."""
+    mesh1 = DecentralizedWorldMesh("NODE-ALPHA")
+    mesh2 = DecentralizedWorldMesh("NODE-BRAVO")
+
+    state_a = CRDTEntityState(
+        entity_id="TRK-SHARED",
+        owner_node="SOURCE-NODE",
+        properties={"status": "ALPHA_UPDATE", "speed": 200.0},
+        vector_clock=VectorClock(),
+        wall_time=1000.0,
+    )
+    state_b = CRDTEntityState(
+        entity_id="TRK-SHARED",
+        owner_node="SOURCE-NODE",
+        properties={"status": "BRAVO_UPDATE", "speed": 350.0},
+        vector_clock=VectorClock(),
+        wall_time=1000.0,
+    )
+
+    delta_a = SyncDelta("SRC", 1, [state_a], 1000.0)
+    delta_a.mac = delta_a.compute_mac(mesh1.shared_secret)
+
+    delta_b = SyncDelta("SRC", 2, [state_b], 1000.0)
+    delta_b.mac = delta_b.compute_mac(mesh2.shared_secret)
+
+    # Mesh 1 receives Delta A then Delta B
+    res1_a = mesh1.receive_delta(delta_a)
+    assert res1_a["accepted"] is True
+    res1_b = mesh1.receive_delta(delta_b)
+    assert res1_b["accepted"] is True
+
+    # Mesh 2 receives Delta B then Delta A
+    res2_b = mesh2.receive_delta(delta_b)
+    assert res2_b["accepted"] is True
+    res2_a = mesh2.receive_delta(delta_a)
+    assert res2_a["accepted"] is True
+
+    # Both meshes MUST have converged to the exact same state
+    val1 = mesh1.entities["TRK-SHARED"].properties["status"]
+    val2 = mesh2.entities["TRK-SHARED"].properties["status"]
+    assert val1 == val2, f"CRDT Divergence: mesh1={val1}, mesh2={val2}"
+
+
+def test_effector_inventory_capacity_multi_target_allocation():
+    """Verify an effector with inventory_count > 1 can be allocated to multiple targets up to its capacity."""
+    allocator = SensorToEffectorAllocator()
+
+    battery = EffectorAsset(
+        effector_id="EFF-PATRIOT-BATTERY",
+        name="Patriot Interceptor Battery",
+        effector_type=EffectorType.HARD_KINETIC_INTERCEPTOR,
+        domain=WarfightingDomain.AIR,
+        lat=32.0,
+        lon=34.8,
+        range_max_nm=120.0,
+        inventory_count=3,  # Capacity for 3 engagements
+    )
+
+    targets = [
+        MultiIntTrack(
+            track_id=f"TRK-HOSTILE-{i}",
+            domain=WarfightingDomain.AIR,
+            affiliation=Affiliation.HOSTILE,
+            kinematics=KinematicState(lat=32.1 + i * 0.05, lon=34.8),
+            threat_score=0.85 - i * 0.05,
+            pid_confidence=0.92,
+        )
+        for i in range(5)
+    ]
+
+    plans = allocator.compute_optimal_assignments(targets, [battery])
+    # Exactly 3 targets allocated (capped by inventory_count = 3), not 1
+    assert len(plans) == 3
+    assert all(p.effector_id == "EFF-PATRIOT-BATTERY" for p in plans)
+    assigned_target_ids = {p.target_track_id for p in plans}
+    assert len(assigned_target_ids) == 3
+
+
+def test_anti_spoof_flir_thermal_anomaly_and_bounded_confidence():
+    """Verify FLIR negative thermal delta anomaly detection and confidence bounding in [0.0, 0.99]."""
+    engine = CognitiveAntiSpoofEngine()
+
+    # Extreme cold decoy: -80C FLIR in 20C ambient
+    valid_cold, conf_cold, reason_cold = engine.verify_target_signature(
+        radar_rcs_m2=1.0,
+        flir_thermal_celsius=-80.0,
+        ambient_celsius=20.0,
+    )
+    assert valid_cold is False
+    assert 0.0 <= conf_cold <= 1.0
+    assert "THERMAL ANOMALY" in reason_cold
+
+    # Normal aircraft FLIR (+50C above ambient)
+    valid_norm, conf_norm, _ = engine.verify_target_signature(
+        radar_rcs_m2=2.0,
+        flir_thermal_celsius=70.0,
+        ambient_celsius=20.0,
+    )
+    assert valid_norm is True
+    assert 0.70 <= conf_norm <= 0.99
+
+
+def test_predictive_wargame_both_sides_eliminated_draw():
+    """Verify BattlefieldState payoff is a neutral draw (0.0) when both sides are eliminated."""
+    state_empty = BattlefieldState(blue_units=[], red_units=[])
+    payoff = state_empty.evaluate_payoff()
+    assert payoff == 0.0
+

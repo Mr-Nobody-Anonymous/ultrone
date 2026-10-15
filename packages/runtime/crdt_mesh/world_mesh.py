@@ -216,8 +216,8 @@ class DecentralizedWorldMesh:
             elif remote_state.wall_time > curr.wall_time:
                 should_apply = True
             elif remote_state.wall_time == curr.wall_time:
-                # Deterministic tie-breaker using node_id lexicographical order
-                if remote_state.owner_node > curr.owner_node:
+                # Deterministic tie-breaker using node_id and state digest for total ordering
+                if (remote_state.owner_node, remote_state.digest()) > (curr.owner_node, curr.digest()):
                     should_apply = True
 
             if should_apply:

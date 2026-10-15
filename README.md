@@ -441,7 +441,7 @@ class MilitaryConfig:
 ## 🧪 Testing
 
 ```bash
-# Run full defense superiority test suite (27 tests)
+# Run full defense superiority test suite (33 tests)
 pytest tests/test_defense_superiority.py -q
 
 # Run Cockpit REST API test suite (12 tests)
