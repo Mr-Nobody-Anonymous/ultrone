@@ -165,7 +165,12 @@ class CognitiveAntiSpoofEngine:
 
         # Cryogenic / extreme negative thermal anomaly
         if delta_temp < -15.0:
-            return False, 0.15, f"THERMAL ANOMALY: Target FLIR ({flir_thermal_celsius:.1f}°C) is severely below ambient ({ambient_celsius:.1f}°C); decoy suspected."
+            return (
+                False,
+                0.15,
+                f"THERMAL ANOMALY: Target FLIR ({flir_thermal_celsius:.1f}°C) is severely below "
+                f"ambient ({ambient_celsius:.1f}°C); decoy suspected.",
+            )
 
         # Authentic aircraft or engine exhaust has distinct thermal signature
         confidence = max(0.0, min(0.99, 0.70 + min(0.25, delta_temp / 100.0)))

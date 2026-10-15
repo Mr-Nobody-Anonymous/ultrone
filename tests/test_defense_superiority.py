@@ -1077,4 +1077,3 @@ def test_predictive_wargame_both_sides_eliminated_draw():
     state_empty = BattlefieldState(blue_units=[], red_units=[])
     payoff = state_empty.evaluate_payoff()
     assert payoff == 0.0
-

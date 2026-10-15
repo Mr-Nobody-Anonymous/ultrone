@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Dict
+from typing import Dict
 
 
 def calculate_bearing_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> Dict[str, float]:
