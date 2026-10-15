@@ -22,7 +22,7 @@ import threading
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
@@ -44,6 +44,32 @@ from packages.runtime.device_protocol.registry import DeviceRegistry
 from packages.runtime.event_sourcing.event_store import EventStore
 from packages.runtime.event_sourcing.events import EventType
 from packages.runtime.safety.invariants.registry import InvariantRegistry
+
+from packages.core.ontology.defense_ontology import (
+    Affiliation,
+    MultiHypothesisTracker,
+    SensorModality,
+    TrackObservation,
+    WarfightingDomain,
+)
+from packages.runtime.crdt_mesh import DecentralizedWorldMesh
+from packages.cognition.kill_chain import (
+    EffectorAsset,
+    EffectorState,
+    EffectorType,
+    SensorToEffectorAllocator,
+)
+from packages.safety.roe import RulesOfEngagementEngine
+from packages.cognition.electronic_warfare import (
+    CognitiveAntiSpoofEngine,
+    GpsTelemetry,
+    ImuMeasurement,
+)
+from packages.cognition.adversarial_wargame import (
+    BattlefieldState,
+    PredictiveWargameEngine,
+    UnitState,
+)
 
 from .scenarios import DEFAULT_SCENARIO_ID, SCENARIOS, FaultConfig, ScenarioSpec, get_scenario
 from .world import WorldEngine, WorldHooks
@@ -299,6 +325,7 @@ class CockpitRuntime:
         self.trace_id = self.scenario.scenario_id
         self.environment = "simulation"
         self.mcp_protocol_version = MCP_PROTOCOL_VERSION
+        self.alert_overrides: Dict[str, Dict[str, Any]] = {}
 
         # ── real subsystems ────────────────────────────────────────────────
         self.event_store = EventStore()
@@ -331,6 +358,16 @@ class CockpitRuntime:
         for _ in range(6):
             self.world.step()
 
+        # ── Next-Gen Multi-Domain Defense Subsystems ─────────────────────────
+        self.defense_tracker = MultiHypothesisTracker()
+        self.world_mesh = DecentralizedWorldMesh(node_id="COCKPIT_C2_ALPHA")
+        self.kill_chain_allocator = SensorToEffectorAllocator()
+        self.roe_engine = RulesOfEngagementEngine()
+        self.anti_spoof_engine = CognitiveAntiSpoofEngine()
+        self.wargame_engine = PredictiveWargameEngine()
+        self._effectors: List[EffectorAsset] = []
+        self._init_defense_capabilities()
+
     # ── construction helpers ────────────────────────────────────────────────
     @staticmethod
     def _generate_key() -> Any:
@@ -356,6 +393,157 @@ class CockpitRuntime:
             lease_issue=self._issue_lease,
             device_state=self._device_state,
             execute_command=self._execute_command,
+        )
+
+    def _init_defense_capabilities(self) -> None:
+        """Seed multi-domain defense tracks, heterogeneous effectors, and initial plans."""
+        now = time.time()
+        initial_obs = [
+            TrackObservation(
+                observation_id="OBS-AIR-01",
+                modality=SensorModality.RADAR,
+                sensor_id="AESA_RADAR_NORTH",
+                lat=32.45,
+                lon=35.12,
+                altitude_m=8500.0,
+                confidence=0.94,
+                raw_measurements={"rcs_m2": 0.08, "doppler_velocity_kts": 520.0},
+                timestamp=now,
+            ),
+            TrackObservation(
+                observation_id="OBS-AIR-02",
+                modality=SensorModality.EO_IR,
+                sensor_id="SENTRY_FLIR_POD_01",
+                lat=32.44,
+                lon=35.11,
+                altitude_m=8450.0,
+                confidence=0.91,
+                raw_measurements={"thermal_celsius": 185.0},
+                timestamp=now,
+            ),
+            TrackObservation(
+                observation_id="OBS-UAV-SWARM-01",
+                modality=SensorModality.SIGINT,
+                sensor_id="RF_DIRECTION_FINDER_02",
+                lat=32.30,
+                lon=34.95,
+                altitude_m=1200.0,
+                confidence=0.88,
+                raw_measurements={"rf_khz": 2400000, "waveform": "FHSS_DRONE_TELEMETRY"},
+                timestamp=now,
+            ),
+            TrackObservation(
+                observation_id="OBS-MARITIME-01",
+                modality=SensorModality.SAR_SATELLITE,
+                sensor_id="COSMO_SAR_SAT_03",
+                lat=31.85,
+                lon=34.30,
+                altitude_m=0.0,
+                confidence=0.96,
+                raw_measurements={"vessel_length_m": 45.0, "wake_knots": 32.0},
+                timestamp=now,
+            ),
+            TrackObservation(
+                observation_id="OBS-CYBER-01",
+                modality=SensorModality.CYBER_TELEMETRY,
+                sensor_id="DEFENSIVE_CYBER_C2_MONITOR",
+                lat=32.05,
+                lon=34.78,
+                altitude_m=0.0,
+                confidence=0.99,
+                raw_measurements={"intrusion_vector": "SCADA_EXPLOIT_ATTEMPT", "source_ip": "198.51.100.42"},
+                timestamp=now,
+            ),
+        ]
+        for obs in initial_obs:
+            track = self.defense_tracker.ingest_observation(obs)
+            if "AIR" in obs.observation_id:
+                track.affiliation = Affiliation.HOSTILE
+                track.entity_class = "STEALTH_CRUISE_MISSILE"
+                track.kinematics.heading_deg = 185.0
+                track.kinematics.speed_knots = 540.0
+            elif "SWARM" in obs.observation_id:
+                track.affiliation = Affiliation.SUSPECT
+                track.entity_class = "UAV_SWARM"
+                track.kinematics.heading_deg = 140.0
+                track.kinematics.speed_knots = 95.0
+            elif "MARITIME" in obs.observation_id:
+                track.affiliation = Affiliation.UNKNOWN
+                track.entity_class = "FAST_ATTACK_CRAFT"
+                track.kinematics.heading_deg = 45.0
+                track.kinematics.speed_knots = 34.0
+            self.defense_tracker._evaluate_threat(track)
+            self.world_mesh.upsert_local_entity(track.track_id, {
+                "domain": track.domain.value,
+                "affiliation": track.affiliation.value,
+                "lat": track.kinematics.lat,
+                "lon": track.kinematics.lon,
+                "threat_score": track.threat_score,
+            })
+
+        self._effectors = [
+            EffectorAsset(
+                effector_id="EFF-LASER-DEW-01",
+                name="HELIOS Directed Energy Laser Array",
+                effector_type=EffectorType.HARD_DIRECTED_ENERGY_LASER,
+                domain=WarfightingDomain.LAND,
+                lat=32.22,
+                lon=35.01,
+                altitude_m=120.0,
+                speed_max_knots=0.0,
+                range_max_nm=8.0,
+                inventory_count=99,
+                cost_usd=25.0,
+                is_soft_kill=False,
+            ),
+            EffectorAsset(
+                effector_id="EFF-AESA-JAMMER-01",
+                name="SPECTRUM AESA Directional RF Jammer",
+                effector_type=EffectorType.SOFT_RF_JAMMER,
+                domain=WarfightingDomain.ELECTROMAGNETIC_SPECTRUM,
+                lat=32.18,
+                lon=34.92,
+                altitude_m=50.0,
+                speed_max_knots=0.0,
+                range_max_nm=22.0,
+                inventory_count=999,
+                cost_usd=5.0,
+                is_soft_kill=True,
+            ),
+            EffectorAsset(
+                effector_id="EFF-KINETIC-INTERCEPTOR-01",
+                name="ROADRUNNER-M Autonomous High-G Interceptor",
+                effector_type=EffectorType.HARD_KINETIC_INTERCEPTOR,
+                domain=WarfightingDomain.AIR,
+                lat=32.10,
+                lon=34.85,
+                altitude_m=20.0,
+                speed_max_knots=620.0,
+                range_max_nm=65.0,
+                inventory_count=4,
+                cost_usd=85000.0,
+                is_soft_kill=False,
+            ),
+            EffectorAsset(
+                effector_id="EFF-CYBER-PAYLOAD-01",
+                name="TITAN Cyber C2 Disruption Daemon",
+                effector_type=EffectorType.SOFT_CYBER_INJECTION,
+                domain=WarfightingDomain.CYBER,
+                lat=32.05,
+                lon=34.78,
+                altitude_m=0.0,
+                speed_max_knots=0.0,
+                range_max_nm=999.0,
+                inventory_count=10,
+                cost_usd=100.0,
+                is_soft_kill=True,
+            ),
+        ]
+
+        self.kill_chain_allocator.compute_optimal_assignments(
+            tracks=list(self.defense_tracker.tracks.values()),
+            effectors=self._effectors,
+            roe_verifier=self.roe_engine,
         )
 
     # ── UDIS bindings (every call lands on a real UDIS object) ──────────────
@@ -1841,6 +2029,63 @@ class CockpitRuntime:
         return alerts
 
     # ── UI action audit trail ───────────────────────────────────────────────
+
+    def acknowledge_alert(self, alert_id: str, actor: str = "operator", note: str = "") -> Dict[str, Any]:
+        with self._lock:
+            self.alert_overrides[alert_id] = {
+                "status": "acknowledged",
+                "acknowledged_at": time.time(),
+                "acknowledged_by": actor,
+                "note": note,
+            }
+            self.record_ui_action(
+                actor=actor,
+                action="ACKNOWLEDGE_ALERT",
+                target=alert_id,
+                page="alerts",
+                detail={"note": note},
+                before="open",
+                after="acknowledged",
+            )
+            return {"ok": True, "alert_id": alert_id, "status": "acknowledged"}
+
+    def resolve_alert(self, alert_id: str, actor: str = "operator", note: str = "") -> Dict[str, Any]:
+        with self._lock:
+            self.alert_overrides[alert_id] = {
+                "status": "resolved",
+                "resolved_at": time.time(),
+                "resolved_by": actor,
+                "note": note,
+            }
+            self.record_ui_action(
+                actor=actor,
+                action="RESOLVE_ALERT",
+                target=alert_id,
+                page="alerts",
+                detail={"note": note},
+                before="acknowledged",
+                after="resolved",
+            )
+            return {"ok": True, "alert_id": alert_id, "status": "resolved"}
+
+    def reopen_alert(self, alert_id: str, actor: str = "operator", note: str = "") -> Dict[str, Any]:
+        with self._lock:
+            self.alert_overrides[alert_id] = {
+                "status": "open",
+                "reopened_at": time.time(),
+                "reopened_by": actor,
+            }
+            self.record_ui_action(
+                actor=actor,
+                action="REOPEN_ALERT",
+                target=alert_id,
+                page="alerts",
+                detail={"note": note},
+                before="resolved",
+                after="open",
+            )
+            return {"ok": True, "alert_id": alert_id, "status": "open"}
+
     def record_ui_action(
         self,
         actor: str,
@@ -1973,6 +2218,7 @@ class CockpitRuntime:
                 for severity in ("CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO")
             },
             "truth": self.system_truth(),
+            "defense": self.defense_summary(),
         }
 
     # ── universal search (Ctrl+K) ──────────────────────────────────────────
@@ -2141,6 +2387,179 @@ class CockpitRuntime:
         }
         return report
 
+    # ── Next-Gen Defense Accessors ──────────────────────────────────────────
+    def defense_cop(self) -> Dict[str, Any]:
+        """Return real-time Common Operational Picture across all warfighting domains."""
+        return self.defense_tracker.get_common_operational_picture()
+
+    def defense_mesh(self) -> Dict[str, Any]:
+        """Return decentralized CRDT world mesh status and Byzantine filter health."""
+        return self.world_mesh.get_snapshot()
+
+    def defense_kill_chain(self) -> Dict[str, Any]:
+        """Return sensor-to-effector matching plans, F2T2EA stage, and Pareto scores."""
+        plans = [
+            {
+                "plan_id": p.plan_id,
+                "target_track_id": p.target_track_id,
+                "effector_id": p.effector_id,
+                "effector_type": p.effector_type.value,
+                "stage": p.stage.value,
+                "tti_sec": p.estimated_tti_sec,
+                "p_k": p.probability_of_kill,
+                "cde_risk": p.collateral_damage_risk,
+                "pareto_score": p.score,
+                "authorized_by_roe": p.authorized_by_roe,
+                "roe_lease_id": p.roe_lease_id,
+                "rationale": p.rationale,
+            }
+            for p in self.kill_chain_allocator.active_plans.values()
+        ]
+        effectors = [
+            {
+                "effector_id": e.effector_id,
+                "name": e.name,
+                "type": e.effector_type.value,
+                "domain": e.domain.value,
+                "state": e.ready_state.value,
+                "inventory": e.inventory_count,
+                "is_soft_kill": e.is_soft_kill,
+                "range_nm": e.range_max_nm,
+            }
+            for e in self._effectors
+        ]
+        return {
+            "timestamp": time.time(),
+            "active_plans_count": len(plans),
+            "effectors_ready": sum(1 for e in self._effectors if e.ready_state == EffectorState.READY),
+            "plans": plans,
+            "effectors": effectors,
+        }
+
+    def defense_roe(self) -> Dict[str, Any]:
+        """Return Rules of Engagement verification state, No-Strike List, and active leases."""
+        leases = [
+            {
+                "lease_id": l.lease_id,
+                "target_track_id": l.target_track_id,
+                "effector_id": l.effector_id,
+                "purpose": l.purpose,
+                "issued_at": l.issued_at,
+                "expires_at": l.expires_at,
+                "valid": l.is_valid(),
+                "policy_version": l.policy_version,
+            }
+            for l in self.roe_engine.issued_leases.values()
+        ]
+        nsl = [
+            {
+                "zone_id": z.zone_id,
+                "name": z.name,
+                "category": z.category,
+                "lat": z.lat,
+                "lon": z.lon,
+                "radius_nm": z.radius_nm,
+                "active": z.active,
+            }
+            for z in self.roe_engine.no_strike_list
+        ]
+        return {
+            "status": "ENFORCED",
+            "active_leases_count": len([l for l in leases if l["valid"]]),
+            "no_strike_zones_count": len(nsl),
+            "leases": leases,
+            "no_strike_list": nsl,
+            "veto_log": self.roe_engine.veto_log,
+        }
+
+    def defense_veto_lease(self, lease_id: str, operator_id: str = "operator", reason: str = "Operator manual abort") -> Dict[str, Any]:
+        """Execute human-on-the-loop (HOTL) veto aborting an active effector lease."""
+        success = self.roe_engine.record_human_veto(lease_id, operator_id, reason)
+        if success:
+            self.record_ui_action(
+                actor=operator_id,
+                action="HOTL_ROE_VETO",
+                target=lease_id,
+                page="defense_c2",
+                detail={"reason": reason},
+            )
+        return {"success": success, "lease_id": lease_id, "reason": reason}
+
+    def defense_anti_spoofing(self) -> Dict[str, Any]:
+        """Return GPS/INS integrity analysis, cross-spectral decoy verification, and EMCON state."""
+        gps_mock = GpsTelemetry(
+            lat=32.22,
+            lon=35.01,
+            altitude_m=120.0,
+            ground_speed_knots=0.0,
+            satellites_tracked=11,
+            hdop=0.9,
+        )
+        imu_mock = ImuMeasurement(
+            accel_x_mps2=0.02,
+            accel_y_mps2=0.01,
+            accel_z_mps2=9.81,
+            gyro_yaw_rate_dps=0.0,
+        )
+        is_auth, conf, diag = self.anti_spoof_engine.verify_gps_integrity(gps_mock, imu_mock)
+        return {
+            "gps_integrity": {
+                "authentic": is_auth,
+                "confidence": conf,
+                "diagnostic": diag,
+                "satellites": gps_mock.satellites_tracked,
+                "hdop": gps_mock.hdop,
+            },
+            "emcon_state": self.anti_spoof_engine.emcon_state.value,
+            "anti_decoy_filter": "ACTIVE",
+        }
+
+    def defense_wargame(self) -> Dict[str, Any]:
+        """Return online Monte Carlo Tree Search game rollouts and counter-tactic recommendations."""
+        blue_units = [
+            UnitState("BLUE-CELL-01", "BLUE", lat=32.10, lon=34.85, health_pct=100.0, ammo_rounds=12),
+            UnitState("BLUE-CELL-02", "BLUE", lat=32.15, lon=34.90, health_pct=95.0, ammo_rounds=8),
+        ]
+        red_units = [
+            UnitState("RED-SWARM-01", "RED", lat=32.30, lon=34.95, health_pct=85.0, ammo_rounds=6),
+            UnitState("RED-BATTERY-02", "RED", lat=32.40, lon=35.05, health_pct=100.0, ammo_rounds=16),
+        ]
+        battle_state = BattlefieldState(blue_units=blue_units, red_units=red_units)
+        recommendations = self.wargame_engine.synthesize_counter_tactics(battle_state)
+        return {
+            "simulation_rollouts": self.wargame_engine.rollout_count,
+            "depth": self.wargame_engine.simulation_depth,
+            "baseline_payoff": round(battle_state.evaluate_payoff(), 2),
+            "recommendations": [
+                {
+                    "action": r.action.value,
+                    "target": r.target_unit_id,
+                    "predicted_win_rate": r.predicted_win_rate,
+                    "win_rate_delta": r.win_rate_delta,
+                    "adversary_response": r.adversary_anticipated_response.value,
+                    "rationale": r.rationale,
+                }
+                for r in recommendations
+            ],
+        }
+
+    def defense_summary(self) -> Dict[str, Any]:
+        """Aggregate high-level defense metrics for overview dashboard."""
+        cop = self.defense_cop()
+        plans = self.defense_kill_chain()
+        roe = self.defense_roe()
+        anti_spoof = self.defense_anti_spoofing()
+        return {
+            "total_tracks": cop["total_tracks"],
+            "critical_threats": cop["threat_distribution"]["critical"],
+            "active_plans": plans["active_plans_count"],
+            "effectors_ready": plans["effectors_ready"],
+            "roe_enforced": roe["status"] == "ENFORCED",
+            "active_leases": roe["active_leases_count"],
+            "gps_integrity": anti_spoof["gps_integrity"]["authentic"],
+            "emcon": anti_spoof["emcon_state"],
+        }
+
 
 _GLOBAL_RUNTIME: Optional[CockpitRuntime] = None
 _RUNTIME_LOCK = threading.Lock()
@@ -2154,4 +2573,4 @@ def get_runtime(scenario_id: Optional[str] = None) -> CockpitRuntime:
             if _GLOBAL_RUNTIME is not None:
                 _GLOBAL_RUNTIME.shutdown()
             _GLOBAL_RUNTIME = CockpitRuntime(scenario_id=scenario_id or DEFAULT_SCENARIO_ID)
-        return _GLOBAL_RUNTIME
+        return _GLOBAL_RUNTIME

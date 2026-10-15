@@ -32,7 +32,9 @@ test('global dock shows live chain and policy status', async ({ page }) => {
 
 test('command palette opens with Ctrl+K and executes search', async ({ page }) => {
   await page.keyboard.press('Control+KeyK');
-  await expect(page.getByPlaceholder(/search/i)).toBeVisible();
+  const searchInput = page.getByPlaceholder(/search/i);
+  await expect(searchInput).toBeVisible();
+  await searchInput.focus();
   await page.keyboard.type('device-17');
   await expect(page.getByText('device-17').first()).toBeVisible();
 });

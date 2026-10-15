@@ -7,6 +7,18 @@ Tests the Learning + Long-Term Memory layer by running:
 4. Promotion
 """
 import sys
+from pathlib import Path
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+import _ultrone_paths
+_ultrone_paths.ensure_on_syspath(REPO_ROOT)
 
 def test_pipeline():
     print("=" * 60)
@@ -46,6 +58,7 @@ def test_pipeline():
     print("\n" + "=" * 60)
     print("ALL CORE COMPONENTS LOADED SUCCESSFULLY")
     print("=" * 60)
+    return True
 
 if __name__ == "__main__":
     try:

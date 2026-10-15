@@ -10,8 +10,10 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+from _ultrone_paths import ensure_on_syspath
+ensure_on_syspath(ROOT)
 
-__all__ = ["Orchestrator", "MilitaryConfig"]
+__all__ = ["Orchestrator", "MilitaryConfig", "Ultrone"]
 __version__ = "1.0.0"
 
 
@@ -26,4 +28,7 @@ def __getattr__(name: str) -> Any:
     if name == "MilitaryConfig":
         from config import MilitaryConfig as _MilitaryConfig
         return _MilitaryConfig
+    if name == "Ultrone":
+        from apps.api.ultrone import Ultrone as _Ultrone
+        return _Ultrone
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

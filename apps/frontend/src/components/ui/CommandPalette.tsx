@@ -67,7 +67,7 @@ export const CommandPalette: React.FC = () => {
 
   useEffect(() => {
     if (commandPaletteOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
+      inputRef.current?.focus();
     } else {
       setSelectedPreview(null);
     }
@@ -146,6 +146,7 @@ export const CommandPalette: React.FC = () => {
           <Search className="w-5 h-5 text-cyan-400 flex-shrink-0" />
           <input
             ref={inputRef}
+            autoFocus
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

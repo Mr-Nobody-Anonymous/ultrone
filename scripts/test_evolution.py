@@ -6,8 +6,15 @@ import logging
 import sys
 import os
 
+# Force UTF-8 output on Windows consoles
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 # Ensure we can import from parent directory
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import _ultrone_paths
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger()

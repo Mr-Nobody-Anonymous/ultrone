@@ -16,6 +16,7 @@ const runtime = {
   tick: 42,
   speed: 1.0,
   uiActions: [] as any[],
+  alertOverrides: {} as Record<string, any>,
   t0: Date.UTC(2026, 6, 28, 14, 32, 0) / 1000,
 };
 
@@ -226,7 +227,10 @@ const alerts = () => {
       decision_id: 'DEC-281',
     });
   }
-  return list;
+  return list.map((a) => {
+    const ov = runtime.alertOverrides[a.alert_id];
+    return ov ? { ...a, ...ov } : a;
+  });
 };
 
 const json = (res: ServerResponse, body: unknown, status = 200) => {
@@ -274,6 +278,7 @@ async function handle(
   if (url.startsWith('/__test__/scenario')) {
     const body = await readBody(req);
     runtime.scenario = body.scenario || body.scenario_id || 'standard_patrol';
+    runtime.alertOverrides = {};
     return json(res, { ok: true, scenario: runtime.scenario });
   }
 
@@ -380,6 +385,83 @@ async function handle(
 
       case 'GET /alerts':
         return json(res, alerts());
+
+      case 'POST /alerts/acknowledge': {
+        const body = await post();
+        const alertId = body.alert_id;
+        runtime.alertOverrides[alertId] = {
+          status: 'acknowledged',
+          acknowledged_at: now(),
+          acknowledged_by: body.actor ?? 'operator',
+          note: body.note ?? '',
+        };
+        runtime.uiActions.push({
+          action_id: `UIACT-${String(runtime.uiActions.length + 1).padStart(5, '0')}`,
+          actor: body.actor ?? 'operator',
+          timestamp: now(),
+          page: 'alerts',
+          action: 'ACKNOWLEDGE_ALERT',
+          target: alertId,
+          run_id: 'RUN-004281',
+          environment: 'simulation',
+          authorization: 'cockpit-role',
+          detail: { note: body.note ?? 'Operator acknowledged' },
+          before: 'open',
+          after: 'acknowledged',
+        });
+        return json(res, { ok: true, alert_id: alertId, status: 'acknowledged' });
+      }
+
+      case 'POST /alerts/resolve': {
+        const body = await post();
+        const alertId = body.alert_id;
+        runtime.alertOverrides[alertId] = {
+          status: 'resolved',
+          resolved_at: now(),
+          resolved_by: body.actor ?? 'operator',
+          note: body.note ?? '',
+        };
+        runtime.uiActions.push({
+          action_id: `UIACT-${String(runtime.uiActions.length + 1).padStart(5, '0')}`,
+          actor: body.actor ?? 'operator',
+          timestamp: now(),
+          page: 'alerts',
+          action: 'RESOLVE_ALERT',
+          target: alertId,
+          run_id: 'RUN-004281',
+          environment: 'simulation',
+          authorization: 'cockpit-role',
+          detail: { note: body.note ?? 'Operator resolved' },
+          before: 'acknowledged',
+          after: 'resolved',
+        });
+        return json(res, { ok: true, alert_id: alertId, status: 'resolved' });
+      }
+
+      case 'POST /alerts/reopen': {
+        const body = await post();
+        const alertId = body.alert_id;
+        runtime.alertOverrides[alertId] = {
+          status: 'open',
+          reopened_at: now(),
+          reopened_by: body.actor ?? 'operator',
+        };
+        runtime.uiActions.push({
+          action_id: `UIACT-${String(runtime.uiActions.length + 1).padStart(5, '0')}`,
+          actor: body.actor ?? 'operator',
+          timestamp: now(),
+          page: 'alerts',
+          action: 'REOPEN_ALERT',
+          target: alertId,
+          run_id: 'RUN-004281',
+          environment: 'simulation',
+          authorization: 'cockpit-role',
+          detail: { note: body.note ?? 'Operator reopened' },
+          before: 'resolved',
+          after: 'open',
+        });
+        return json(res, { ok: true, alert_id: alertId, status: 'open' });
+      }
 
       case 'GET /world': {
         const stale = runtime.scenario === 'stale_device';
@@ -697,6 +779,78 @@ async function handle(
         runtime.uiActions.push(entry);
         return json(res, entry);
       }
+
+      case 'GET /defense/summary':
+        return json(res, {
+          total_tracks: 3,
+          critical_threats: 1,
+          active_plans: 1,
+          effectors_ready: 2,
+          roe_enforced: true,
+          active_leases: 1,
+          gps_integrity: true,
+          emcon: 'TACTICAL',
+        });
+
+      case 'GET /defense/cop':
+        return json(res, {
+          timestamp: now(),
+          total_tracks: 3,
+          threat_distribution: { critical: 1, elevated: 1, nominal: 1 },
+          tracks: [
+            { track_id: 'TRK-01', domain: 'AIR', affiliation: 'HOSTILE', class: 'UAV_SWARM', lat: 32.2, lon: 34.9, altitude_m: 3000, speed_knots: 150, heading_deg: 180, threat_score: 0.88, pid_confidence: 0.95, anti_spoof_confidence: 1.0, observations: 4 },
+          ],
+        });
+
+      case 'GET /defense/mesh':
+        return json(res, {
+          node_id: 'NODE-EDGE-01',
+          entities_count: 5,
+          vector_clock: { 'NODE-EDGE-01': 12 },
+          quarantined_count: 0,
+          entities: {},
+        });
+
+      case 'GET /defense/kill-chain':
+        return json(res, {
+          timestamp: now(),
+          active_plans_count: 1,
+          effectors_ready: 2,
+          plans: [],
+          effectors: [],
+        });
+
+      case 'GET /defense/roe':
+        return json(res, {
+          status: 'ENFORCED',
+          active_leases_count: 1,
+          no_strike_zones_count: 5,
+          leases: [],
+          no_strike_list: [],
+          veto_log: [],
+        });
+
+      case 'POST /defense/roe/veto': {
+        const body = await post();
+        return json(res, { success: true, lease_id: body.lease_id, reason: body.reason });
+      }
+
+      case 'GET /defense/anti-spoofing':
+        return json(res, {
+          gps_integrity: { authentic: true, confidence: 0.98, diagnostic: 'GPS TELEMETRY VERIFIED AUTHENTIC', satellites: 11, hdop: 0.9 },
+          emcon_state: 'TACTICAL',
+          anti_decoy_filter: 'ACTIVE',
+        });
+
+      case 'GET /defense/wargame':
+        return json(res, {
+          simulation_rollouts: 20,
+          depth: 3,
+          baseline_payoff: 15.0,
+          recommendations: [
+            { action: 'DEFENSIVE_SCREEN', target: 'SWARM_COORDINATION_CELL', predicted_win_rate: 0.82, win_rate_delta: 0.15, adversary_response: 'DISPERSE_SWARM', rationale: 'Defensive screen established.' },
+          ],
+        });
 
       default:
         return json(res, { detail: `mock backend: unhandled route ${route}` }, 404);

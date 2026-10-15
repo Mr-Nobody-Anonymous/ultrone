@@ -9,13 +9,14 @@ from fastapi.testclient import TestClient
 
 from apps.api.routers.cockpit import router as cockpit_router
 
-test_app = FastAPI(title="Ultrone Cockpit Test API")
-test_app.include_router(cockpit_router)
+cockpit_test_app = FastAPI(title="Ultrone Cockpit Test API")
+cockpit_test_app.__test__ = False  # Prevent PytestCollectionWarning
+cockpit_test_app.include_router(cockpit_router)
 
 
 @pytest.fixture(scope="module")
 def client():
-    return TestClient(test_app)
+    return TestClient(cockpit_test_app)
 
 
 def test_cockpit_status_and_truth(client):
@@ -194,7 +195,6 @@ def test_cockpit_evaluation_and_governance(client):
     gov_data = gov_res.json()
     assert "capabilities" in gov_data
     assert "levels" in gov_data
-
 
 
 def test_cockpit_universal_search(client):

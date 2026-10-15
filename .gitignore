@@ -63,3 +63,6 @@ apps/globe/3d-models/
 apps/globe/*.log
 apps/globe/pinokio/ENVIRONMENT
 apps/globe/pinokio/.installed
+test-results/
+playwright-report/
+_validation.txt

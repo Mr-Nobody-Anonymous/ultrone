@@ -1,6 +1,12 @@
 """Quick verification that the evolution module works."""
 import sys, os
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+import _ultrone_paths
 
 # Test 1: import evolution module
 from evolution import EvolutionLab, GenomeEngine, PerformanceTelemetry, Genome, Gene, Capsule

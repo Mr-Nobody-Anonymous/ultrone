@@ -53,6 +53,21 @@ export const cockpitApi = {
   getTruth: () => request<SystemTruth>('/truth'),
   getHealth: () => request<any>('/health'),
   getAlerts: () => request<AlertItem[]>('/alerts'),
+  acknowledgeAlert: (alertId: string, actor = 'operator', note = '') =>
+    request<any>('/alerts/acknowledge', {
+      method: 'POST',
+      body: JSON.stringify({ alert_id: alertId, actor, note }),
+    }),
+  resolveAlert: (alertId: string, actor = 'operator', note = '') =>
+    request<any>('/alerts/resolve', {
+      method: 'POST',
+      body: JSON.stringify({ alert_id: alertId, actor, note }),
+    }),
+  reopenAlert: (alertId: string, actor = 'operator', note = '') =>
+    request<any>('/alerts/reopen', {
+      method: 'POST',
+      body: JSON.stringify({ alert_id: alertId, actor, note }),
+    }),
 
   // Simulation controls
   getWorld: () => request<WorldSnapshot>('/world'),
@@ -179,6 +194,20 @@ export const cockpitApi = {
       method: 'POST',
       body: JSON.stringify({ actor, action, target, detail }),
     }),
+
+  // Next-Gen Multi-Domain Defense Capabilities
+  getDefenseSummary: () => request<any>('/defense/summary'),
+  getDefenseCop: () => request<any>('/defense/cop'),
+  getDefenseMesh: () => request<any>('/defense/mesh'),
+  getDefenseKillChain: () => request<any>('/defense/kill-chain'),
+  getDefenseRoe: () => request<any>('/defense/roe'),
+  vetoDefenseRoe: (leaseId: string, actor = 'operator', reason = 'Operator manual abort') =>
+    request<any>('/defense/roe/veto', {
+      method: 'POST',
+      body: JSON.stringify({ lease_id: leaseId, actor, reason }),
+    }),
+  getDefenseAntiSpoofing: () => request<any>('/defense/anti-spoofing'),
+  getDefenseWargame: () => request<any>('/defense/wargame'),
 };
 
 /**

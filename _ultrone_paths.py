@@ -84,6 +84,10 @@ def ensure_on_syspath(root: Path | None = None) -> Path:
     return repo_root
 
 
+# Ensure buckets are on sys.path whenever this module is imported.
+ensure_on_syspath()
+
+
 if __name__ == "__main__":
     root = ensure_on_syspath()
     print(f"ULTRONE repo root: {root}")

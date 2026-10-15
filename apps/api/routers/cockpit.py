@@ -14,7 +14,6 @@ from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconn
 from pydantic import BaseModel, Field
 
 from apps.api.cockpit import get_runtime
-from apps.api.cockpit.runtime import CockpitRuntime
 
 router = APIRouter(prefix="/api/cockpit", tags=["cockpit"])
 
@@ -112,6 +111,27 @@ def get_health() -> Dict[str, Any]:
 @router.get("/alerts")
 def get_alerts() -> List[Dict[str, Any]]:
     return get_runtime().alerts()
+
+
+class AlertActionRequest(BaseModel):
+    alert_id: str
+    actor: str = "operator"
+    note: str = ""
+
+
+@router.post("/alerts/acknowledge")
+def acknowledge_alert(req: AlertActionRequest) -> Dict[str, Any]:
+    return get_runtime().acknowledge_alert(req.alert_id, actor=req.actor, note=req.note)
+
+
+@router.post("/alerts/resolve")
+def resolve_alert(req: AlertActionRequest) -> Dict[str, Any]:
+    return get_runtime().resolve_alert(req.alert_id, actor=req.actor, note=req.note)
+
+
+@router.post("/alerts/reopen")
+def reopen_alert(req: AlertActionRequest) -> Dict[str, Any]:
+    return get_runtime().reopen_alert(req.alert_id, actor=req.actor, note=req.note)
 
 
 # ── Simulation & Dual World ──────────────────────────────────────────────────
@@ -496,3 +516,55 @@ async def cockpit_websocket(websocket: WebSocket):
         pass
     except Exception:
         pass
+
+
+# ── Next-Gen Multi-Domain Defense Capabilities ──────────────────────────────
+
+class RoeVetoRequest(BaseModel):
+    lease_id: str
+    actor: str = "operator"
+    reason: str = "Operator manual abort"
+
+
+@router.get("/defense/cop")
+def get_defense_cop() -> Dict[str, Any]:
+    return get_runtime().defense_cop()
+
+
+@router.get("/defense/mesh")
+def get_defense_mesh() -> Dict[str, Any]:
+    return get_runtime().defense_mesh()
+
+
+@router.get("/defense/kill-chain")
+def get_defense_kill_chain() -> Dict[str, Any]:
+    return get_runtime().defense_kill_chain()
+
+
+@router.get("/defense/roe")
+def get_defense_roe() -> Dict[str, Any]:
+    return get_runtime().defense_roe()
+
+
+@router.post("/defense/roe/veto")
+def veto_defense_roe(req: RoeVetoRequest) -> Dict[str, Any]:
+    return get_runtime().defense_veto_lease(
+        lease_id=req.lease_id,
+        operator_id=req.actor,
+        reason=req.reason,
+    )
+
+
+@router.get("/defense/anti-spoofing")
+def get_defense_anti_spoofing() -> Dict[str, Any]:
+    return get_runtime().defense_anti_spoofing()
+
+
+@router.get("/defense/wargame")
+def get_defense_wargame() -> Dict[str, Any]:
+    return get_runtime().defense_wargame()
+
+
+@router.get("/defense/summary")
+def get_defense_summary() -> Dict[str, Any]:
+    return get_runtime().defense_summary()

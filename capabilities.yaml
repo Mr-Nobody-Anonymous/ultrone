@@ -132,3 +132,69 @@ capabilities:
     reproducible: false
     simulation_only: true
     description: "Physical hardware actuation disabled; mediated strictly via UDIS simulation and digital twins."
+
+  multi_domain_defense_ontology:
+    name: "Multi-Domain Defense Ontology & Multi-INT Graph"
+    maturity_level: "L3"
+    status: "integrated"
+    unit_tests: true
+    integration_tests: true
+    benchmarked: false
+    reproducible: true
+    simulation_only: true
+    description: "Unified 5-domain ontology (Space, Air, Land, Maritime, Cyber/EW) with Multi-INT fusion, track lifecycle, and multiple hypothesis tracking."
+
+  crdt_tactical_world_mesh:
+    name: "Decentralized Byzantine-Resilient CRDT World Mesh"
+    maturity_level: "L3"
+    status: "integrated"
+    unit_tests: true
+    integration_tests: true
+    benchmarked: false
+    reproducible: true
+    simulation_only: true
+    description: "DDIL tactical edge mesh with LWW-Element-Set CRDT, delta replication, and kinematic plausibility validation."
+
+  pareto_kill_chain_allocator:
+    name: "Dynamic Multi-Objective Pareto Sensor-to-Effector Allocator"
+    maturity_level: "L3"
+    status: "integrated"
+    unit_tests: true
+    integration_tests: true
+    benchmarked: false
+    reproducible: true
+    simulation_only: true
+    description: "Multi-objective Pareto frontier optimizer balancing time-to-intercept, P_k, collateral risk, and cost asymmetry."
+
+  formal_roe_loac_verifier:
+    name: "Machine-Checked Rules of Engagement & LOAC Verification Engine"
+    maturity_level: "L3"
+    status: "integrated"
+    unit_tests: true
+    integration_tests: true
+    benchmarked: false
+    reproducible: true
+    simulation_only: true
+    description: "Formal Distinction (PID), Proportionality (CDE), 3D polygon No-Strike geofencing, and cryptographically signed effector leases."
+
+  cognitive_electronic_warfare:
+    name: "Cognitive Electronic Warfare & Multi-Spectral Anti-Spoofing"
+    maturity_level: "L3"
+    status: "integrated"
+    unit_tests: true
+    integration_tests: true
+    benchmarked: false
+    reproducible: true
+    simulation_only: true
+    description: "Multi-spectral decoy filtering, kinematic INS/GPS drift anomaly detector, and autonomous EMCON state machine."
+
+  adversarial_mcts_wargame:
+    name: "Real-Time Game-Theoretic Adversarial Wargaming (AlphaWarfare MCTS)"
+    maturity_level: "L3"
+    status: "integrated"
+    unit_tests: true
+    integration_tests: true
+    benchmarked: false
+    reproducible: true
+    simulation_only: true
+    description: "Real-time Monte Carlo Tree Search predicting adversary counter-moves and winning probability deltas."

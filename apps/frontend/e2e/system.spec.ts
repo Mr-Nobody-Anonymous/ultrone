@@ -96,3 +96,67 @@ test('ui audit trail records operator control actions', async ({ page }) => {
   await expect(page.getByText('operator').first()).toBeVisible();
   await expect(page.getByText('cockpit-role').first()).toBeVisible();
 });
+
+test('operator can acknowledge and resolve alerts with UI audit logging', async ({ page }) => {
+  await page.request.post('/api/cockpit/__test__/scenario', { data: { scenario: 'stale_device' } });
+  await page.goto('/system/alerts');
+  await expect(page.getByTestId('alerts-center-view')).toBeVisible();
+
+  const alert = page.getByTestId('alert-ALRT-0001');
+  await expect(alert).toBeVisible();
+
+  // Acknowledge the alert
+  const ackBtn = alert.getByRole('button', { name: /Acknowledge/i });
+  await expect(ackBtn).toBeVisible();
+  await ackBtn.click();
+  await expect(alert.getByText('acknowledged', { exact: false }).first()).toBeVisible();
+
+  // Resolve the alert
+  const resolveBtn = alert.getByRole('button', { name: /Resolve/i });
+  await expect(resolveBtn).toBeVisible();
+  await resolveBtn.click();
+  await expect(alert.getByText('resolved', { exact: false }).first()).toBeVisible();
+
+  // Check UI audit trail records both actions
+  await page.goto('/system/audit');
+  await expect(page.getByTestId('audit-trail-view')).toBeVisible();
+  await expect(page.getByText('ACKNOWLEDGE_ALERT').first()).toBeVisible();
+  await expect(page.getByText('RESOLVE_ALERT').first()).toBeVisible();
+  await expect(page.getByText('ALRT-0001').first()).toBeVisible();
+  await page.request.post('/api/cockpit/__test__/scenario', { data: { scenario: 'standard_patrol' } });
+});
+
+test('alerts center supports keyword search and status tabs', async ({ page }) => {
+  await page.request.post('/api/cockpit/__test__/scenario', { data: { scenario: 'stale_device' } });
+  await page.goto('/system/alerts');
+  await expect(page.getByTestId('alerts-center-view')).toBeVisible();
+
+  const searchInput = page.getByPlaceholder(/Search by ID, title/i);
+  await expect(searchInput).toBeVisible();
+
+  // Filter by matching keyword
+  await searchInput.fill('telemetry');
+  await expect(page.getByTestId('alert-ALRT-0001')).toBeVisible();
+
+  // Filter by non-matching keyword
+  await searchInput.fill('nonexistent-error-xyz');
+  await expect(page.getByTestId('alert-ALRT-0001')).toBeHidden();
+  await expect(page.getByText('NO MATCHING ALERTS')).toBeVisible();
+
+  // Clear search
+  await searchInput.fill('');
+  await expect(page.getByTestId('alert-ALRT-0001')).toBeVisible();
+
+  // Filter by status tabs
+  const resolvedTab = page.getByRole('button', { name: /^RESOLVED/i });
+  await expect(resolvedTab).toBeVisible();
+  await resolvedTab.click();
+  await expect(page.getByTestId('alert-ALRT-0001')).toBeHidden();
+
+  const openTab = page.getByRole('button', { name: /^OPEN/i });
+  await expect(openTab).toBeVisible();
+  await openTab.click();
+  await expect(page.getByTestId('alert-ALRT-0001')).toBeVisible();
+
+  await page.request.post('/api/cockpit/__test__/scenario', { data: { scenario: 'standard_patrol' } });
+});

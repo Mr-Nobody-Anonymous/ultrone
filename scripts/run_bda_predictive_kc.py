@@ -15,8 +15,13 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
-# Make project root importable
-sys.path.insert(0, ".")
+# Make project root and monorepo buckets importable
+from pathlib import Path
+_ROOT = Path(__file__).resolve().parents[1]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+import _ultrone_paths
+_ultrone_paths.ensure_on_syspath(_ROOT)
 
 from brain.reasoning.battle_damage_assessment import (
     BattleDamageAssessment,

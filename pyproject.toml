@@ -1,6 +1,6 @@
 [project]
 name = "ultrone"
-version = "3.0.0-EVO"
+version = "3.0.0"
 description = "Multi-Domain AI Architecture for Battlefield Simulation with Self-Evolution"
 readme = "README.md"
 requires-python = ">=3.10"
