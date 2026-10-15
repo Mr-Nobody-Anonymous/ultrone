@@ -9,6 +9,14 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+# Monorepo: packages keep their original import names but live in buckets
+# (see _ultrone_paths.py). NOTE: PYTHONPATH is intentionally NOT set globally
+# here. A workflow-level PYTHONPATH is exported into *every* step, including
+# actions/setup-python's pip-cache step and `pip install` itself; any bucket
+# entry that shadows a stdlib module (e.g. packages/core/types shadowing
+# `types`) then breaks pip before tests even start. Instead, PYTHONPATH is set
+# per-step below, only on the steps that import repo code. (pytest itself is
+# additionally covered by pytest.ini's `pythonpath`, which lists every bucket.)
 
 jobs:
   test:
@@ -26,14 +34,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install dependencies
+      - name: Check for stdlib module shadowing
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Stdlib-shadowing regression guard
-        run: |
-          python - <<'PYEOF'
+          python - <<'PY'
           import sys
           from pathlib import Path
           # Every directory that lands on sys.path (see _ultrone_paths.BUCKETS
@@ -60,7 +63,12 @@ jobs:
               print("\n".join(f"  - {s}" for s in shadows))
               sys.exit(1)
           print(f"OK: no stdlib shadowing ({len(sys.stdlib_module_names)} stdlib names checked)")
-          PYEOF
+          PY
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Run tests
         env:
@@ -91,6 +99,8 @@ jobs:
           python-version: "3.11"
           cache: pip
       - name: Install linter
+        # Pinned: unpinned linters drift, and a new black/flake8 release can
+        # flip --check from green to red with no repo change.
         run: pip install flake8==7.3.0 black==26.5.1 mypy
       - name: Stdlib-shadowing regression guard
         run: |

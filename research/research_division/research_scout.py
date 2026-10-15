@@ -324,8 +324,8 @@ class SemanticScholarClient(SourceClient):
                 "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
                 ["Lewis et al."],
                 "",
-                "We describe a retrieval-augmented language model "
-                "that combines a large pre-trained knowledge database.",
+                "We describe a retrieval-augmented language model that combines "
+                "a large pre-trained knowledge database.",
             ),
             (
                 "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models",
