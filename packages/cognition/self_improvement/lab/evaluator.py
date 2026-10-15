@@ -35,8 +35,6 @@ from sandbox.planning import Skill, SkillRegistry, backchain
 from sandbox.prediction import BayesianBeliefAgent, PredictionBenchmark
 from self_improvement.lab.genome import Genome
 
-from self_improvement.lab.genome import Genome
-
 CAPABILITY_DIMENSIONS = (
     "reasoning",
     "planning",
