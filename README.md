@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/images.png" alt="ULTRONE Battlefield AI" width="640"/>
+<img src="docs/assets/images.png" alt="ULTRONE Battlefield AI" width="320"/>
 
 # ⚡ ULTRONE
 
